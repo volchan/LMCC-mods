@@ -169,7 +169,7 @@ state.now = 60
 a:update()
 local cut = a:signals()
 t.check('gas cut shown with the clear speed', #cut == 1 and cut[1].flag.id == 'gasCut'
-  and cut[1].instruction == 'Lift off or drop below 35 km/h')
+  and cut[1].instruction == 'Lift off for 3s or drop below 35 km/h')
 state.flagType = F.None
 
 -- No game state: nothing changes.
