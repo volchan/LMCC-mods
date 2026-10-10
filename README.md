@@ -30,7 +30,13 @@ A car is listed when it is behind you on track within the search range and ahead
 
 Requires Custom Shaders Patch.
 
-For drivers: copy `apps/lua/LmccFlags` into `<Assetto Corsa>/apps/lua/`.
+For drivers: drag `LmccFlags-<version>.zip` into Content Manager, or extract it into the Assetto Corsa folder (it holds `apps/lua/LmccFlags`).
+
+To build that zip from the committed tree (refuses uncommitted app changes, version read from `manifest.ini`):
+
+```powershell
+./scripts/build.ps1                   # -> dist/LmccFlags-<version>.zip
+```
 
 For development, link the folder instead of copying it:
 
@@ -76,6 +82,7 @@ apps/lua/LmccFlags/
   src/history_view.lua   history window
   src/setup_view.lua     setup window
 scripts/gen_sounds.js    regenerates the wav files
+scripts/build.ps1        builds the release zip
 tests/                   one *_test.lua per module, helper.lua and ui_stub.lua shared
 ```
 
