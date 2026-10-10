@@ -17,7 +17,7 @@ It uses the flags and penalties the game already raises, so it works on any serv
   - test any flag or penalty for 6 seconds (panel, strips and sound, with sample location text), never written to the history
   - "Show panel" button to reopen the panel window, and snap it to a screen position (top, centre, bottom; left, centre, right)
   - sound on or off, master volume, volume per cue with a test button
-  - strip height, pulse on or off, show or hide the green flag
+  - strip height, pulse on or off, show or hide the green flag (shown 5 seconds, since the game keeps it raised all session)
   - blue flag search range (100 to 1000 m behind you)
 
 Flags shown: green, yellow, blue, white, checkered, black, penalty (return to pits, slow down, pit within N laps, wait N seconds in pits). The game also defines red, code 60, slippery, slow vehicle, ambulance, mechanical, warning, pit closed and black flag withdrawn; those only appear if a server script raises them, and the app displays them correctly when it does.
