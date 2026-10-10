@@ -15,7 +15,7 @@ t.check('yellow key', signal.key(yellow) == 'yellow')
 
 local penaltyOnly = signal.resolve(F.None, P.SlowDown, 3)
 t.check('penalty alone', #penaltyOnly == 1 and penaltyOnly[1].flag.id == 'slowDown')
-t.check('penalty instruction has parameter', penaltyOnly[1].instruction == 'Lift off throttle for 3 s')
+t.check('penalty instruction has parameter', penaltyOnly[1].instruction == 'Lift off for 3 s or drop below 35 km/h')
 
 local both = signal.resolve(F.FasterCar, P.SlowDown, 5)
 t.check('penalty sorted before blue', #both == 2 and both[1].flag.id == 'slowDown' and both[2].flag.id == 'blue')

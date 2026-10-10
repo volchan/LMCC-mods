@@ -44,7 +44,7 @@ end
 p:start(slowDown, 10)
 local sig = p:active(11)
 t.check('preview resolves the option', sig and sig[1].flag.id == 'slowDown')
-t.check('penalty preview uses sample parameter', sig[1].instruction == 'Lift off throttle for ' .. preview.PENALTY_PARAMETER .. ' s')
+t.check('penalty preview uses sample parameter', sig[1].instruction == 'Lift off for ' .. preview.PENALTY_PARAMETER .. ' s or drop below 35 km/h')
 t.check('remaining time counts down', t.near(p:remaining(12), preview.DURATION - 2))
 t.check('expires after duration', p:active(10 + preview.DURATION) == nil and p:remaining(30) == 0)
 t.check('penalty preview has no location', p.detail == nil)
