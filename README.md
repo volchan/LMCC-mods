@@ -20,7 +20,7 @@ It uses the flags and penalties the game already raises, so it works on any serv
   - strip height, pulse on or off, show or hide the green flag (shown 5 seconds, since the game keeps it raised all session)
   - blue flag search range (100 to 1000 m behind you)
 
-Flags shown: green, yellow, blue, white, checkered, black, penalties: drive through (jump start or pit lane speeding, laps left to serve it), back to pits (teleported to the pit box, controls locked N seconds), slow down (track cut, lift off N seconds), black flag. The game also defines red, code 60, slippery, slow vehicle, ambulance, mechanical, warning, pit closed and black flag withdrawn; those only appear if a server script raises them, and the app displays them correctly when it does.
+Flags shown: green, yellow, blue, white, checkered, black, penalties: drive through (jump start or pit lane speeding, laps left to serve it), back to pits (teleported to the pit box, controls locked N seconds), slow down (track cut, lift off N seconds or drop below 35 km/h), black flag. The game also defines red, code 60, slippery, slow vehicle, ambulance, mechanical, warning, pit closed and black flag withdrawn; those only appear if a server script raises them, and the app displays them correctly when it does.
 
 ### How the blue flag list works
 
