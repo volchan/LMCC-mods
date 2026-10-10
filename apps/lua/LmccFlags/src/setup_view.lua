@@ -90,6 +90,8 @@ local function drawDisplay(s)
   local value, changed = ui.slider('##glowThickness', s.glowThickness * 100, 1, 15, 'Glow width: %.0f%% of screen')
   if changed then s.glowThickness = value / 100 end
   toggle(s, 'showGreen', 'Show green flag')
+  local range, rangeChanged = ui.slider('##blueRange', s.blueRange, 100, 1000, 'Blue flag: list cars within %.0f m')
+  if rangeChanged then s.blueRange = range end
 end
 
 ---@param s table @Loaded settings, edited in place.

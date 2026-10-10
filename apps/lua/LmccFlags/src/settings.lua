@@ -1,5 +1,6 @@
 -- User preferences, persisted by CSP between sessions.
 local SOUND = require('src/flags').SOUND
+local blue = require('src/blue')
 
 local M = {}
 
@@ -10,6 +11,7 @@ M.DEFAULTS = {
   sound = true,
   volume = 0.8, -- master volume, multiplied by the volume of each cue
   showGreen = true, -- show the green flag at race start and when the track clears
+  blueRange = blue.DEFAULT_RANGE, -- metres behind the player to look for lapping cars
 }
 
 ---Settings key holding the volume of one cue, e.g. `volume_caution`.

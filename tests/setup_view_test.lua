@@ -82,6 +82,11 @@ setup.draw(s, { previewRemaining = 0, snapFailed = false }, actions)
 t.check('master volume written', t.near(s.volume, 0.4))
 t.check('cue volume written', t.near(s.volume_severe, 0.75))
 t.check('glow width written', t.near(s.glowThickness, 0.08))
+t.check('blue range untouched', s.blueRange == settings.DEFAULTS.blueRange)
+uiStub.reset()
+uiStub.sliders['##blueRange'] = 600
+setup.draw(s, { previewRemaining = 0, snapFailed = false }, actions)
+t.check('blue range written', s.blueRange == 600)
 local unchanged = s.volume_blue == 1
 t.check('untouched sliders keep value', unchanged)
 
