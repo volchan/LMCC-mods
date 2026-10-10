@@ -1,1 +1,2 @@
-*.wav binary
+# Shell scripts must keep LF endings or bash fails, also when checked out on Windows.
+*.sh text eol=lf

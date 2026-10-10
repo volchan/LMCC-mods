@@ -1,0 +1,63 @@
+# Builds and publishes a release when a version tag is pushed, e.g. `git tag v1.0.1 && git push origin v1.0.1`.
+# The tag sets VERSION in the zipped manifest; the release notes give the server checksum and the changelog.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history and tags for the changelog
+
+      # LuaJIT is what CSP runs.
+      - uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: luajit-openresty
+
+      - name: Test
+        run: |
+          for f in tests/*_test.lua; do
+            echo "== $f"
+            luajit "$f"
+          done
+
+      - name: Build
+        id: build
+        env:
+          TAG: ${{ github.ref_name }}
+        run: ./scripts/build.sh "${TAG#v}"
+
+      - name: Release notes
+        env:
+          TAG: ${{ github.ref_name }}
+          CHECKSUM: ${{ steps.build.outputs.checksum }}
+        run: |
+          {
+            echo "## Server checksum"
+            echo
+            echo "Required Apps file: \`apps/lua/LmccFlags/manifest.ini\`"
+            echo
+            echo "MD5: \`$CHECKSUM\`"
+            echo
+            echo "## Changes"
+            echo
+            ./scripts/changelog.sh "$TAG"
+          } > notes.md
+          cat notes.md
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          ZIP: ${{ steps.build.outputs.zip }}
+          VERSION: ${{ steps.build.outputs.version }}
+        run: gh release create "$TAG" "$ZIP" --title "LMCC Flags $VERSION" --notes-file notes.md
