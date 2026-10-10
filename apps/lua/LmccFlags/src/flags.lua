@@ -49,7 +49,7 @@ M.BY_FLAG = {
   [M.FLAG.Stop] = spec('black', 'BLACK', 'Disqualified: return to pits', C.black, C.textLight, 90, S.severe, true),
   [M.FLAG.SlowVehicle] = spec('slowVehicle', 'SLOW VEHICLE', 'Slow vehicle on track', C.white, C.textDark, 55, S.caution, true),
   [M.FLAG.Ambulance] = spec('ambulance', 'AMBULANCE', 'Emergency vehicle on track', C.white, C.textDark, 65, S.caution, true),
-  [M.FLAG.ReturnToPits] = spec('returnToPits', 'PENALTY', 'Return to pits', C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
+  [M.FLAG.ReturnToPits] = spec('returnToPits', 'PENALTY', 'Serve your penalty', C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
   [M.FLAG.MechanicalFailure] = spec('mechanical', 'MECHANICAL', 'Car damaged: pit now', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
   [M.FLAG.Unsportsmanlike] = spec('warning', 'WARNING', 'Unsportsmanlike behaviour', C.black, C.textLight, 70, S.severe, true, P.diagonal, C.white),
   [M.FLAG.StopCancel] = spec('blackCancelled', 'BLACK CANCELLED', 'Black flag withdrawn', C.grey, C.textLight, 30, S.info, false),
@@ -69,10 +69,16 @@ for flagType, causeAt in pairs({
   M.BY_FLAG[flagType].causeAt = causeAt
 end
 
+-- What raises each penalty on a stock server with CSP:
+-- - MandatoryPits: drive-through, parameter = laps left to serve it (jump start with START_RULE=2,
+--   pit lane speeding with SPEEDING_PENALTY=DRIVE_THROUGH); unserved means disqualification.
+-- - TeleportToPits: car sent back to its pit box with controls locked for parameter seconds (jump start
+--   with START_RULE=1, repeated pit lane speeding, back to pits from the pause menu).
+-- - SlowDown: lift off for parameter seconds after cutting the track (RACE_GAS_PENALTY_DISABLED=0).
 ---@type table<integer, FlagSpec>
 M.BY_PENALTY = {
-  [M.PENALTY.MandatoryPits] = spec('pitPenalty', 'PIT PENALTY', 'Pit within %d laps', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
-  [M.PENALTY.TeleportToPits] = spec('teleported', 'PIT STOP', 'Wait %d s in pits', C.black, C.textLight, 80, S.severe, false, P.disc, C.orange),
+  [M.PENALTY.MandatoryPits] = spec('driveThrough', 'DRIVE THROUGH', 'Drive through the pit lane, laps left: %d', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
+  [M.PENALTY.TeleportToPits] = spec('teleported', 'BACK TO PITS', 'Controls locked for %d s', C.black, C.textLight, 80, S.severe, false, P.disc, C.orange),
   [M.PENALTY.SlowDown] = spec('slowDown', 'SLOW DOWN', 'Lift off throttle for %d s', C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
   [M.PENALTY.BlackFlag] = M.BY_FLAG[M.FLAG.Stop],
 }

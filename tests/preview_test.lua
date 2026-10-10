@@ -12,7 +12,7 @@ end
 t.check('options sorted by priority', sorted)
 t.check('options start with the red flag', options[1].label == 'RED')
 t.check('black flag listed once despite penalty alias', labels['BLACK'] == 1)
-t.check('penalties listed', labels['SLOW DOWN'] == 1 and labels['PIT PENALTY'] == 1)
+t.check('penalties listed', labels['SLOW DOWN'] == 1 and labels['DRIVE THROUGH'] == 1 and labels['BACK TO PITS'] == 1)
 
 local flagCount = 0
 for _, v in pairs(flags.FLAG) do

@@ -21,7 +21,7 @@ local both = signal.resolve(F.FasterCar, P.SlowDown, 5)
 t.check('penalty sorted before blue', #both == 2 and both[1].flag.id == 'slowDown' and both[2].flag.id == 'blue')
 
 local yellowAndPit = signal.resolve(F.Caution, P.MandatoryPits, 2)
-t.check('pit penalty sorted before yellow', yellowAndPit[1].flag.id == 'pitPenalty' and yellowAndPit[2].flag.id == 'yellow')
+t.check('drive through sorted before yellow', yellowAndPit[1].flag.id == 'driveThrough' and yellowAndPit[2].flag.id == 'yellow')
 
 local black = signal.resolve(F.Stop, P.BlackFlag)
 t.check('black flag and black penalty shown once', #black == 1 and black[1].flag.id == 'black')
