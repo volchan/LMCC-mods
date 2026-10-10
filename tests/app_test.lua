@@ -161,16 +161,16 @@ a:update()
 state.now, state.inPitlane = 52, false
 a:update()
 t.check('pit penalty and its flag gone after the pit lane', #a:signals() == 0)
-state.flagType, state.penaltyType, state.penaltyParameter = F.None, P.None, 0
+state.now, state.flagType = 53, F.None
+a:update()
 
--- Gas cut as the game reports it: the penalty flag alone, no penalty.
-state.flagType = F.ReturnToPits
-state.now = 60
+-- Gas cut after that served drive-through, while the game still reports the old penalty.
+state.now, state.flagType = 60, F.ReturnToPits
 a:update()
 local cut = a:signals()
 t.check('gas cut shown with the clear speed', #cut == 1 and cut[1].flag.id == 'gasCut'
   and cut[1].instruction == 'Lift off for 3s or drop below 35 km/h')
-state.flagType = F.None
+state.flagType, state.penaltyType, state.penaltyParameter = F.None, P.None, 0
 
 -- No game state: nothing changes.
 readsNil = true

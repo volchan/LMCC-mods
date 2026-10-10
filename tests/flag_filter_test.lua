@@ -38,6 +38,9 @@ t.check('checkered hidden in the pit lane', f:effective(F.Finished, 300 + B, 7, 
 -- Gas cut flag: shown alone, hidden while a real penalty is reported.
 f = filter.new()
 t.check('gas cut shown alone', f:effective(F.ReturnToPits, 0, 1, false, true, false) == F.ReturnToPits)
-t.check('gas cut flag hidden behind a reported penalty', f:effective(F.ReturnToPits, 1, 1, false, true, true) == F.None)
+t.check('gas cut flag hidden behind an active penalty', f:effective(F.ReturnToPits, 1, 1, false, true, true) == F.None)
+t.check('same raise stays hidden after the penalty is served', f:effective(F.ReturnToPits, 2, 1, false, true, false) == F.None)
+f:effective(F.None, 3, 1, false, true, false)
+t.check('new raise after the penalty is a gas cut', f:effective(F.ReturnToPits, 4, 1, false, true, false) == F.ReturnToPits)
 
 t.finish()
