@@ -13,12 +13,11 @@ It uses the flags and penalties the game already raises, so it works on any serv
 - **Screen-edge strips**: solid strips in the flag colour along the top and bottom of the screen with the flag name scrolling across, in the style of the CMRT HUD flag banner. They slide in when a flag appears or changes, slide out when it clears and pulse for urgent flags, so the flag is seen without looking at the panel. Always on: drivers cannot turn them off.
 - **Sound cues**: a short sound when the flag changes. Four cues: caution (yellow, code 60, slippery, slow vehicle, ambulance), blue, severe (black, red, penalties), info (green, white, checkered, pit closed).
 - **Flag history**: every flag of the session with lap, session time, duration and location.
-- **Setup window**:
-  - test any flag or penalty for 6 seconds (panel, strips and sound, with sample location text), never written to the history
-  - "Show panel" button to reopen the panel window, and snap it to a screen position (top, centre, bottom; left, centre, right)
-  - sound on or off, master volume, volume per cue with a test button
-  - strip height, pulse on or off, show or hide the green flag (shown 5 seconds, since the game keeps it raised all session)
-  - blue flag search range (100 to 1000 m behind you)
+- **Setup window**, in four tabs:
+  - Alerts: test any alert for 6 seconds (panel, strips and sound, with sample location text), never written to the history. Buttons in the flag colours, grouped as race flags, penalties and server script flags. "Game data" shows the raw values the game reports.
+  - Panel: reopen the panel window, lock it, and snap it to a screen position on a 3x3 grid.
+  - Display: pulse urgent flags, show or hide the green flag (shown 5 seconds, since the game keeps it raised all session), strip height, blue flag search range (100 to 1000 m behind you).
+  - Sound: sound on or off, master volume, volume per cue with a test button (hover a cue name to see its alerts).
 
 Flags shown: green, yellow, blue, white, checkered, black, penalties: drive through (jump start, laps left to serve it), pit penalty (laps left to go through the pits), gas cut (track cut: lift off for the seconds left, read from the AC shared memory since it depends on the track, or drop below 35 km/h; reported by the game as its penalty flag), black flag. The game also defines red, code 60, slippery, slow vehicle, ambulance, mechanical, warning, pit closed and black flag withdrawn; those only appear if a server script raises them, and the app displays them correctly when it does.
 
