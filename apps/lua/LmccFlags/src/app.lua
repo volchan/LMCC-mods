@@ -11,6 +11,8 @@ local M = {}
 M.__index = M
 
 M.DETAIL_INTERVAL = 0.25 -- seconds between distance updates
+-- The game keeps the green flag raised for the whole session, so it is only shown briefly.
+M.GREEN_DURATION = 5 -- seconds
 local GREEN_ID = flags.forFlag(flags.FLAG.Start).id
 
 ---@class AppDeps
@@ -33,22 +35,25 @@ function M.new(deps)
     detailAt = -math.huge,
     detailKey = nil,
     -- Inputs of the last resolve, so signals are only rebuilt when something changed.
-    lastFlag = nil, lastPenalty = nil, lastParameter = nil, lastShowGreen = nil,
+    lastFlag = nil, lastPenalty = nil, lastParameter = nil, lastGreenShown = nil,
+    greenSince = -math.huge, -- when the game last raised the green flag
   }, M)
 end
 
 ---@private
 function M:refreshVisible(snap)
-  local s = self.deps.settings
   local penaltyType = self.penalty:effective(snap.penaltyType, snap.penaltyParameter, snap.inPitlane)
+  local isGreen = snap.flagType == flags.FLAG.Start
+  if isGreen and self.lastFlag ~= flags.FLAG.Start then self.greenSince = snap.now end
+  local greenShown = isGreen and self.deps.settings.showGreen and snap.now - self.greenSince < M.GREEN_DURATION
   if snap.flagType == self.lastFlag and penaltyType == self.lastPenalty
-    and snap.penaltyParameter == self.lastParameter and s.showGreen == self.lastShowGreen then
+    and snap.penaltyParameter == self.lastParameter and greenShown == self.lastGreenShown then
     return
   end
-  self.lastFlag, self.lastPenalty, self.lastParameter, self.lastShowGreen =
-    snap.flagType, penaltyType, snap.penaltyParameter, s.showGreen
+  self.lastFlag, self.lastPenalty, self.lastParameter, self.lastGreenShown =
+    snap.flagType, penaltyType, snap.penaltyParameter, greenShown
   local real = signal.resolve(snap.flagType, penaltyType, snap.penaltyParameter)
-  self.visible = s.showGreen and real or signal.without(real, GREEN_ID)
+  self.visible = greenShown and real or signal.without(real, GREEN_ID)
 end
 
 ---Location line for a signal: lapping cars under blue, otherwise the car that caused the flag.

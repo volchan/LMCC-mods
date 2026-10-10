@@ -87,6 +87,12 @@ s.showGreen = true
 state.now = 3.1
 a:update()
 t.check('green shown again when enabled', a:signals()[1].flag.id == 'green')
+state.now = 3 + app.GREEN_DURATION - 0.1
+a:update()
+t.check('green still shown just before it expires', a:signals()[1].flag.id == 'green')
+state.now = 3 + app.GREEN_DURATION
+a:update()
+t.check('green hidden after its duration while the game keeps it', #a:signals() == 0)
 
 -- Sound off: no cue.
 local count = #played
