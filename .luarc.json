@@ -1,0 +1,9 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "LuaJIT",
+  "workspace.library": [
+    "D:/SteamLibrary/steamapps/common/assettocorsa/extension/internal/lua-sdk/ac_apps"
+  ],
+  "workspace.preloadFileSize": 2000,
+  "workspace.checkThirdParty": false
+}
