@@ -38,7 +38,7 @@ local s = {}
 for k, v in pairs(settings.DEFAULTS) do s[k] = v end
 s.volume = 0.5
 
-local a = app.new({ game = game, sound = sound, settings = s, tracker = tracker.new({ hold = 0 }), preview = preview.new() })
+local a = app.new({ game = game, sound = sound, settings = s, tracker = tracker.new({ hold = 0 }), preview = preview.new(function() return 2 end) })
 
 -- Clear track.
 a:update()
@@ -120,7 +120,7 @@ a:stopPreview()
 for _, o in ipairs(preview.options()) do
   if o.label == 'BLUE' then a:startPreview(o) end
 end
-t.check('blue preview shows sample lapping cars', a:displayDetail() == preview.sampleDetail(flags.forFlag(F.FasterCar)))
+t.check('blue preview shows sample lapping cars', a:displayDetail() == preview.sampleDetail(flags.forFlag(F.FasterCar), 2))
 a:startPreview(red)
 t.check('preview cue played', played[#played].cue == 'severe')
 t.check('preview not in history', #a.deps.tracker.history == historySize)

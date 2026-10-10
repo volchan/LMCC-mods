@@ -50,9 +50,29 @@ t.check('expires after duration', p:active(10 + preview.DURATION) == nil and p:r
 t.check('penalty preview has no location', p.detail == nil)
 
 local F = flags.FLAG
-t.check('yellow sample describes an incident', preview.sampleDetail(flags.forFlag(F.Caution)) == 'Incident 250 m ahead, Turn 1, Sample Driver')
-t.check('blue sample lists lapping cars', preview.sampleDetail(flags.forFlag(F.FasterCar)) == 'Let 2 cars pass: P1 Leader 80 m, P2 Second 240 m')
-t.check('white sample has no location', preview.sampleDetail(flags.forFlag(F.OneLapLeft)) == nil)
+t.check('yellow sample describes an incident', preview.sampleDetail(flags.forFlag(F.Caution), 1) == 'Incident 250 m ahead, Turn 1, Sample Driver')
+local blueSpec = flags.forFlag(F.FasterCar)
+t.check('blue sample lists one car', preview.sampleDetail(blueSpec, 1) == 'Let 1 car pass: P1 Leader 80 m')
+t.check('blue sample lists three cars', preview.sampleDetail(blueSpec, 3) == 'Let 3 cars pass: P1 Leader 80 m, P2 Second 240 m, P3 Third 390 m')
+t.check('white sample has no location', preview.sampleDetail(flags.forFlag(F.OneLapLeft), 1) == nil)
+
+-- blue preview picks 1..3 cars through the injected random
+local blueOption
+for _, o in ipairs(options) do
+  if o.label == 'BLUE' then blueOption = o end
+end
+local asked
+local fixed = preview.new(function(m, n) asked = { m, n }; return 2 end)
+fixed:start(blueOption, 0)
+t.check('random asked for 1 to 3 cars', asked[1] == 1 and asked[2] == 3)
+t.check('blue preview uses the random count', fixed.detail == preview.sampleDetail(blueSpec, 2))
+local counts = {}
+local seeded = preview.new()
+for _ = 1, 200 do
+  seeded:start(blueOption, 0)
+  counts[tonumber(seeded.detail:match('Let (%d)'))] = true
+end
+t.check('default random covers 1 to 3 cars', counts[1] and counts[2] and counts[3] and not counts[4])
 
 p:start(options[1], 0)
 p:stop()

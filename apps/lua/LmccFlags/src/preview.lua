@@ -13,7 +13,12 @@ M.PENALTY_PARAMETER = 3 -- shown in penalty instructions, e.g. "Pit within 3 lap
 
 -- Fake surroundings so previews show a realistic location line.
 M.SAMPLE_CAUSE = { mySpline = 0.10, causeSpline = 0.1625, trackLength = 4000, causeName = 'Sample Driver', causeSector = 'Turn 1' }
-M.SAMPLE_LAPPING = { { name = 'Leader', racePosition = 1, gap = 80 }, { name = 'Second', racePosition = 2, gap = 240 } }
+-- Blue previews list a random number of these, closest first.
+M.SAMPLE_LAPPING = {
+  { name = 'Leader', racePosition = 1, gap = 80 },
+  { name = 'Second', racePosition = 2, gap = 240 },
+  { name = 'Third', racePosition = 3, gap = 390 },
+}
 
 ---@class PreviewOption
 ---@field label string
@@ -47,21 +52,27 @@ end
 
 ---Location line a real flag of this kind would show, built from sample data.
 ---@param flag FlagSpec
+---@param lapping integer @Sample cars to let pass, 1..#SAMPLE_LAPPING.
 ---@return string?
-function M.sampleDetail(flag)
-  if flag.causeAt == flags.CAUSE.behind then return blue.describe(M.SAMPLE_LAPPING) end
+function M.sampleDetail(flag, lapping)
+  if flag.causeAt == flags.CAUSE.behind then
+    local list = {}
+    for i = 1, lapping do list[i] = M.SAMPLE_LAPPING[i] end
+    return blue.describe(list)
+  end
   return context.describe(flag, M.SAMPLE_CAUSE)
 end
 
-function M.new()
-  return setmetatable({ signals = nil, detail = nil, startedAt = 0 }, M)
+---@param random (fun(m: integer, n: integer): integer)? @Picks the sample car count, `math.random` by default.
+function M.new(random)
+  return setmetatable({ signals = nil, detail = nil, startedAt = 0, random = random or math.random }, M)
 end
 
 ---@param option PreviewOption
 ---@param now number @Seconds.
 function M:start(option, now)
   self.signals = signal.resolve(option.flagType, option.penaltyType, M.PENALTY_PARAMETER)
-  self.detail = M.sampleDetail(self.signals[1].flag)
+  self.detail = M.sampleDetail(self.signals[1].flag, self.random(1, #M.SAMPLE_LAPPING))
   self.startedAt = now
 end
 
