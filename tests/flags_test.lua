@@ -55,6 +55,22 @@ for _, value in pairs({ P.MandatoryPits, P.TeleportToPits, P.SlowDown }) do
 end
 t.check('parametrised penalties expect a number', penaltiesValid)
 
+-- Labels per sound cue.
+local blueLabels = flags.labelsForSound(flags.SOUND.blue)
+t.check('blue cue used by blue flag only', #blueLabels == 1 and blueLabels[1] == 'BLUE')
+local severe = flags.labelsForSound(flags.SOUND.severe)
+local blackCount, sortedLabels = 0, true
+for i, l in ipairs(severe) do
+  if l == 'BLACK' then blackCount = blackCount + 1 end
+  if i > 1 and severe[i - 1] > l then sortedLabels = false end
+end
+t.check('severe labels sorted and black listed once', blackCount == 1 and sortedLabels)
+local everyCueUsed = true
+for _, cue in pairs(flags.SOUND) do
+  if #flags.labelsForSound(cue) == 0 then everyCueUsed = false end
+end
+t.check('every cue is used by a flag', everyCueUsed)
+
 -- Instruction formatting.
 t.check('instruction fills parameter', flags.instruction(flags.forPenalty(P.SlowDown), 5) == 'Lift off throttle for 5 s')
 t.check('instruction defaults missing parameter to 0', flags.instruction(flags.forPenalty(P.MandatoryPits)) == 'Pit within 0 laps')

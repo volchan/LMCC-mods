@@ -89,6 +89,23 @@ function M.forPenalty(penaltyType)
   return M.BY_PENALTY[penaltyType]
 end
 
+---Labels of every flag and penalty using a sound cue, sorted, without duplicates.
+---@param cue string @One of `M.SOUND`.
+---@return string[]
+function M.labelsForSound(cue)
+  local seen, labels = {}, {}
+  for _, catalog in ipairs({ M.BY_FLAG, M.BY_PENALTY }) do
+    for _, spec in pairs(catalog) do
+      if spec.sound == cue and not seen[spec.label] then
+        seen[spec.label] = true
+        labels[#labels + 1] = spec.label
+      end
+    end
+  end
+  table.sort(labels)
+  return labels
+end
+
 ---Instruction text with the penalty parameter filled in, when the spec expects one.
 ---@param flag FlagSpec
 ---@param parameter integer?
