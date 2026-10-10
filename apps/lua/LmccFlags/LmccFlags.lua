@@ -8,6 +8,9 @@ local tracker = require('src/tracker')
 local preview = require('src/preview')
 local windowMover = require('src/window_mover')
 local panelView = require('src/panel_view')
+local panelInput = require('src/panel_input')
+local lock = require('src/lock')
+local lockView = require('src/lock_view')
 local glowView = require('src/glow_view')
 local historyView = require('src/history_view')
 local setupView = require('src/setup_view')
@@ -20,6 +23,13 @@ local controller = app.new({
   game = game, sound = sound, settings = prefs, tracker = tracker.new(), preview = preview.new(),
   panel = { show = function() windowMover.show(PANEL_TITLE) end },
 })
+
+-- Real time for the lock animation, so it plays even while the game is paused.
+local panelLock = lock.new(prefs.panelLocked)
+local panelActions = {
+  toggleLock = function() prefs.panelLocked = panelLock:toggle(ui.time()) end,
+  resize = function(size) windowMover.resize(PANEL_TITLE, size) end,
+}
 
 local setupState = { previewLabel = nil, previewRemaining = 0, panelMissing = false, raw = controller.snapshot }
 local actions = {
@@ -42,6 +52,8 @@ end
 
 function script.windowPanel(dt)
   panelView.draw(controller:signals(), controller:displayDetail(), controller.now)
+  local hovered = panelInput.update(panelLock.locked, panelActions)
+  lockView.draw(panelLock, ui.time(), hovered)
 end
 
 function script.windowHistory(dt)

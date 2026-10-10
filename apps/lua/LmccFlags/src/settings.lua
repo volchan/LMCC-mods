@@ -11,6 +11,7 @@ M.DEFAULTS = {
   volume = 0.8, -- master volume, multiplied by the volume of each cue
   showGreen = true, -- show the green flag for a few seconds at race start and when the track clears
   blueRange = blue.DEFAULT_RANGE, -- metres behind the player to look for lapping cars
+  panelLocked = false, -- right click on the panel toggles it
 }
 
 ---Settings key holding the volume of one cue, e.g. `volume_caution`.

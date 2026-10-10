@@ -1,4 +1,4 @@
--- Moves one of the app's own windows, found by its title from manifest.ini.
+-- Moves, opens and resizes one of the app's own windows, found by its title from manifest.ini.
 local layout = require('src/layout')
 
 local M = {}
@@ -19,6 +19,16 @@ function M.show(title)
   local window = M.find(title)
   if not window then return false end
   window:setVisible(true)
+  return true
+end
+
+---@param title string
+---@param size vec2
+---@return boolean @False when the window was not found.
+function M.resize(title, size)
+  local window = M.find(title)
+  if not window then return false end
+  window:resize(size)
   return true
 end
 

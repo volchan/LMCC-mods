@@ -15,6 +15,7 @@ local window = {
   size = function() return vec2(520, 130) end,
   move = function(_, p) moved = p end,
   setVisible = function(_, v) shown = v end,
+  resize = function() end,
 }
 local windows = {}
 local audio = 0
@@ -129,5 +130,29 @@ script.update(0)
 sim.time = 21000
 script.update(0)
 t.check('new flag opens the panel', shown == true)
+
+-- Right click on the panel locks it and saves the state; the padlock animation plays.
+uiStub.reset()
+uiStub.hovered = true
+uiStub.mouseClicks[ui.MouseButton.Right] = true
+script.windowPanel(0)
+t.check('right click locks the panel', storage.panelLocked == true)
+uiStub.reset()
+uiStub.time = 0.5
+script.windowPanel(0)
+t.check('lock animation drawn', #uiStub.named('pathArcTo') == 1)
+t.check('locked panel blocks moving', uiStub.named('invisibleButton')[1].args[1] == '##lmccLocked')
+
+-- Unlocked again, dragging the grip resizes through the window accessor.
+uiStub.reset()
+uiStub.hovered = true
+uiStub.mouseClicks[ui.MouseButton.Right] = true
+script.windowPanel(0)
+local resizedTo
+window.resize = function(_, s) resizedTo = s end
+uiStub.reset()
+uiStub.active, uiStub.delta = true, vec2(10, 0)
+script.windowPanel(0)
+t.check('grip drag resizes the panel', storage.panelLocked == false and resizedTo ~= nil)
 
 t.finish()

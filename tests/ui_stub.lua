@@ -9,6 +9,7 @@ end
 
 function M.install(windowSize)
   M.clicks, M.sliders = {}, {}
+  M.hovered, M.mouseClicks, M.active, M.delta, M.time = false, {}, false, nil, 0
   M.calls = {}
   M.windowSize = windowSize
   local fakeFont = {}
@@ -16,6 +17,18 @@ function M.install(windowSize)
   function fakeFont:stretch() return self end
   ui = {
     Alignment = { Start = -1, Center = 0, End = 1 },
+    MouseButton = { Left = 0, Right = 1 },
+    windowHovered = function() return M.hovered end,
+    mouseClicked = function(button) return M.mouseClicks[button] == true end,
+    itemActive = function() return M.active end,
+    mouseDelta = function() return M.delta or vec2(0, 0) end,
+    time = function() return M.time end,
+    setCursor = record('setCursor'),
+    invisibleButton = record('invisibleButton'),
+    pathClear = record('pathClear'),
+    pathArcTo = record('pathArcTo'),
+    pathStroke = record('pathStroke'),
+    drawLine = record('line'),
     DWriteFont = setmetatable({ Weight = { Bold = 'Bold' }, Stretch = { SemiCondensed = 'SemiCondensed' } },
       { __call = function() return fakeFont end }),
     windowSize = function() return M.windowSize end,
@@ -71,6 +84,7 @@ end
 
 function M.reset()
   M.clicks, M.sliders = {}, {}
+  M.hovered, M.mouseClicks, M.active, M.delta = false, {}, false, nil
   M.calls = {}
 end
 
