@@ -38,11 +38,16 @@ local s = {}
 for k, v in pairs(settings.DEFAULTS) do s[k] = v end
 s.volume = 0.5
 
-local a = app.new({ game = game, sound = sound, settings = s, tracker = tracker.new({ hold = 0 }), preview = preview.new(function() return 2 end) })
+local panelShown = 0
+local panel = { show = function() panelShown = panelShown + 1 end }
+
+local a = app.new({ game = game, sound = sound, settings = s, tracker = tracker.new({ hold = 0 }),
+  preview = preview.new(function() return 2 end), panel = panel })
 
 -- Clear track.
 a:update()
 t.check('no signal on clear track', #a:signals() == 0 and a:displayDetail() == nil and #played == 0)
+t.check('panel not opened on clear track', panelShown == 0)
 
 -- Yellow with a located cause.
 state.now, state.flagType, state.flagCause = 1, F.Caution, 3
@@ -50,6 +55,7 @@ a:update()
 t.check('yellow displayed', a:signals()[1].flag.id == 'yellow')
 t.check('detail describes the incident', a:displayDetail() == 'Incident 200 m ahead, J. Doe')
 t.check('caution cue played at master volume', #played == 1 and played[1].cue == 'caution' and played[1].volume == 0.5)
+t.check('panel opened on new flag', panelShown == 1)
 t.check('history stamped with lap and detail', a.deps.tracker:active().lap == 2
   and a.deps.tracker:active().detail == 'Incident 200 m ahead, J. Doe')
 
@@ -64,6 +70,7 @@ state.now = 1.1 + app.DETAIL_INTERVAL
 a:update()
 t.check('detail refreshed after interval', causeLookups == lookups + 1)
 t.check('no repeated cue', #played == 1)
+t.check('panel not reopened while unchanged', panelShown == 1)
 
 -- Flags without cause have no detail and no lookup.
 lookups = causeLookups
@@ -123,6 +130,9 @@ end
 t.check('blue preview shows sample lapping cars', a:displayDetail() == preview.sampleDetail(flags.forFlag(F.FasterCar), 2))
 a:startPreview(red)
 t.check('preview cue played', played[#played].cue == 'severe')
+local shownBefore = panelShown
+a:startPreview(red)
+t.check('preview opens the panel', panelShown == shownBefore + 1)
 t.check('preview not in history', #a.deps.tracker.history == historySize)
 a:stopPreview()
 t.check('real signal back after stop', a:signals()[1].flag.id == 'blue')

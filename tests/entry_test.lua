@@ -121,4 +121,13 @@ uiStub.clicks[require('src/setup_view').SHOW_PANEL_LABEL] = true
 script.windowSetup(0)
 t.check('show panel opens the window', shown == true)
 
+-- A new flag reopens a closed panel.
+shown = false
+sim.raceFlagType = F.Stop
+sim.time = 20000
+script.update(0)
+sim.time = 21000
+script.update(0)
+t.check('new flag opens the panel', shown == true)
+
 t.finish()

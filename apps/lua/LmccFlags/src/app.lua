@@ -18,6 +18,7 @@ local GREEN_ID = flags.forFlag(flags.FLAG.Start).id
 ---@field settings table @Loaded settings.
 ---@field tracker table @From `tracker.new()`.
 ---@field preview table @From `preview.new()`.
+---@field panel {show: fun()} @Opens the panel window, even after the driver closed it.
 
 ---@param deps AppDeps
 function M.new(deps)
@@ -72,6 +73,13 @@ function M:refreshDetail(snap)
   self.detail = self:describe(snap, self.visible[1])
 end
 
+---Brings a new flag to the driver's attention: opens the panel and plays the cue.
+---@param flag FlagSpec
+function M:announce(flag)
+  self.deps.panel.show()
+  self:playFlag(flag)
+end
+
 ---Plays the cue of a flag at the configured volume.
 ---@param flag FlagSpec
 function M:playFlag(flag)
@@ -93,7 +101,7 @@ function M:update()
   local stamp = self.stamp
   stamp.lap, stamp.sessionTime, stamp.detail = snap.lap, snap.sessionTime, self.detail
   local event = self.deps.tracker:update(self.now, self.visible, stamp)
-  if event and event.signal then self:playFlag(event.signal.flag) end
+  if event and event.signal then self:announce(event.signal.flag) end
 end
 
 ---Signals to display: the preview while one runs, otherwise the real ones.
@@ -113,7 +121,7 @@ end
 function M:startPreview(option)
   self.deps.preview:start(option, self.now)
   local top = self.deps.preview:active(self.now)[1]
-  if top then self:playFlag(top.flag) end
+  if top then self:announce(top.flag) end
 end
 
 function M:stopPreview()

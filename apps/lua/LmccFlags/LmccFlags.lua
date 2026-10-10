@@ -18,6 +18,7 @@ local PANEL_TITLE = 'LMCC Flags'
 local prefs = settings.load()
 local controller = app.new({
   game = game, sound = sound, settings = prefs, tracker = tracker.new(), preview = preview.new(),
+  panel = { show = function() windowMover.show(PANEL_TITLE) end },
 })
 
 local setupState = { previewLabel = nil, previewRemaining = 0, panelMissing = false }
