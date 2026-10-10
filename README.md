@@ -15,7 +15,7 @@ It uses the flags and penalties the game already raises, so it works on any serv
 - **Flag history**: every flag of the session with lap, session time, duration and location.
 - **Setup window**:
   - test any flag or penalty for 6 seconds (panel, strips and sound, with sample location text), never written to the history
-  - snap the panel to a screen position (top, centre, bottom; left, centre, right)
+  - "Show panel" button to reopen the panel window, and snap it to a screen position (top, centre, bottom; left, centre, right)
   - sound on or off, master volume, volume per cue with a test button
   - strips on or off, strip height, pulse on or off, show or hide the green flag
   - blue flag search range (100 to 1000 m behind you)
