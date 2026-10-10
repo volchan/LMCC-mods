@@ -8,6 +8,7 @@ local function record(name)
 end
 
 function M.install(windowSize)
+  M.clicks, M.sliders = {}, {}
   M.calls = {}
   M.windowSize = windowSize
   local fakeFont = {}
@@ -25,6 +26,22 @@ function M.install(windowSize)
     drawRectFilledMultiColor = record('gradient'),
     drawCircleFilled = record('circle'),
     drawTriangleFilled = record('triangle'),
+    button = function(label) M.calls[#M.calls + 1] = { name = 'button', args = { label } }; return M.clicks[label] == true end,
+    checkbox = function(label, value) M.calls[#M.calls + 1] = { name = 'checkbox', args = { label, value } }; return M.clicks[label] == true end,
+    slider = function(label, value, min, max, format)
+      M.calls[#M.calls + 1] = { name = 'slider', args = { label, value, min, max, format } }
+      local v = M.sliders[label]
+      if v ~= nil then return v, true end
+      return value, false
+    end,
+    textColored = function(text, color) M.calls[#M.calls + 1] = { name = 'text', args = { text, nil, nil, nil, nil, nil, nil, color } } end,
+    text = function(text) M.calls[#M.calls + 1] = { name = 'text', args = { text } } end,
+    header = function(text) M.calls[#M.calls + 1] = { name = 'header', args = { text } } end,
+    separator = record('separator'),
+    sameLine = record('sameLine'),
+    newLine = record('newLine'),
+    dummy = record('dummy'),
+    getCursor = function() return vec2(10, 20) end,
     transparentWindow = function(id, pos, size, noPadding, inputs, content)
       M.calls[#M.calls + 1] = { name = 'window', args = { id, pos, size, noPadding, inputs } }
       content()
@@ -49,6 +66,7 @@ function M.texts()
 end
 
 function M.reset()
+  M.clicks, M.sliders = {}, {}
   M.calls = {}
 end
 
