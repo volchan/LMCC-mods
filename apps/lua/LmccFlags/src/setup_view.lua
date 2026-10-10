@@ -85,9 +85,9 @@ end
 
 local function drawDisplay(s)
   ui.header('Display')
-  toggle(s, 'glow', 'Screen-edge glow')
+  toggle(s, 'glow', 'Screen-edge strips')
   toggle(s, 'glowPulse', 'Pulse urgent flags')
-  local value, changed = ui.slider('##glowThickness', s.glowThickness * 100, 1, 15, 'Glow width: %.0f%% of screen')
+  local value, changed = ui.slider('##glowThickness', s.glowThickness * 100, 1, 15, 'Strip height: %.0f%% of screen')
   if changed then s.glowThickness = value / 100 end
   toggle(s, 'showGreen', 'Show green flag')
   local range, rangeChanged = ui.slider('##blueRange', s.blueRange, 100, 1000, 'Blue flag: list cars within %.0f m')

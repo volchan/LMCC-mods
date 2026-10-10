@@ -24,6 +24,10 @@ function M.install(windowSize)
     dwriteDrawTextClipped = record('text'),
     drawRectFilled = record('rect'),
     drawRectFilledMultiColor = record('gradient'),
+    pushClipRect = record('pushClipRect'),
+    popClipRect = record('popClipRect'),
+    -- Half the font size per character is close enough for layout checks.
+    measureDWriteText = function(text, size) return vec2(#text * size * 0.5, size) end,
     drawCircleFilled = record('circle'),
     drawTriangleFilled = record('triangle'),
     button = function(label) M.calls[#M.calls + 1] = { name = 'button', args = { label } }; return M.clicks[label] == true end,

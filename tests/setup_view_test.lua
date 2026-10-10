@@ -68,7 +68,7 @@ t.check('snap failure explained', hasSnap)
 -- Checkboxes toggle settings.
 uiStub.reset()
 uiStub.clicks['Sound cues'] = true
-uiStub.clicks['Screen-edge glow'] = true
+uiStub.clicks['Screen-edge strips'] = true
 setup.draw(s, { previewRemaining = 0, snapFailed = false }, actions)
 t.check('sound toggled off', s.sound == false)
 t.check('glow toggled off', s.glow == false)
@@ -81,7 +81,7 @@ uiStub.sliders['##glowThickness'] = 8
 setup.draw(s, { previewRemaining = 0, snapFailed = false }, actions)
 t.check('master volume written', t.near(s.volume, 0.4))
 t.check('cue volume written', t.near(s.volume_severe, 0.75))
-t.check('glow width written', t.near(s.glowThickness, 0.08))
+t.check('strip height written', t.near(s.glowThickness, 0.08))
 t.check('blue range untouched', s.blueRange == settings.DEFAULTS.blueRange)
 uiStub.reset()
 uiStub.sliders['##blueRange'] = 600

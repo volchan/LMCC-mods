@@ -47,13 +47,17 @@ uiStub.reset()
 script.windowPanel(0)
 t.check('panel shows yellow', uiStub.texts()[1] == 'YELLOW')
 
+-- First frame starts the slide in; strips show once time moves on.
+script.drawGlow(0)
+sim.time = 12000
+script.update(0)
 uiStub.reset()
 script.drawGlow(0)
-t.check('glow drawn when enabled', #uiStub.named('gradient') == 4)
+t.check('strips drawn when enabled', #uiStub.named('window') == 1 and #uiStub.named('rect') == 2)
 storage.glow = false
 uiStub.reset()
 script.drawGlow(0)
-t.check('glow skipped when disabled', #uiStub.calls == 0)
+t.check('strips skipped when disabled', #uiStub.calls == 0)
 
 uiStub.reset()
 script.windowHistory(0)
