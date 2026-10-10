@@ -10,6 +10,7 @@ for i, o in ipairs(options) do
   if i > 1 and options[i - 1].priority < o.priority then sorted = false end
 end
 t.check('options sorted by priority', sorted)
+t.check('options carry their flag spec', options[1].flag == flags.forFlag(flags.FLAG.SessionSuspended))
 t.check('options start with the red flag', options[1].label == 'RED')
 t.check('black flag listed once despite penalty alias', labels['BLACK'] == 1)
 t.check('penalties listed', labels['SLOW DOWN'] == 1 and labels['DRIVE THROUGH'] == 1 and labels['PIT PENALTY'] == 1)

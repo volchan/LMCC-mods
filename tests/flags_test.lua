@@ -86,4 +86,10 @@ t.check('name of a flag', flags.nameOf(flags.FLAG, F.FasterCar) == 'FasterCar')
 t.check('name of a penalty', flags.nameOf(flags.PENALTY, P.MandatoryPits) == 'MandatoryPits')
 t.check('unknown value shown as number', flags.nameOf(flags.FLAG, 42) == '42')
 
+local K = flags.KIND
+t.check('native flags are race flags', flags.forFlag(F.Caution).kind == K.race and flags.forFlag(F.Stop).kind == K.race)
+t.check('gas cut is a penalty', flags.forFlag(F.ReturnToPits).kind == K.penalty)
+t.check('server only flags marked', flags.forFlag(F.SessionSuspended).kind == K.server and flags.forFlag(F.Code60).kind == K.server)
+t.check('penalties marked', flags.forPenalty(P.TeleportToPits).kind == K.penalty and flags.forPenalty(P.BlackFlag).kind == K.race)
+
 t.finish()

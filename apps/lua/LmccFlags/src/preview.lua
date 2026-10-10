@@ -22,6 +22,7 @@ M.SAMPLE_LAPPING = {
 
 ---@class PreviewOption
 ---@field label string
+---@field flag FlagSpec
 ---@field flagType integer
 ---@field penaltyType integer
 ---@field priority integer
@@ -33,7 +34,7 @@ function M.options()
   local function add(spec, flagType, penaltyType)
     if seen[spec] then return end
     seen[spec] = true
-    list[#list + 1] = { label = spec.label, flagType = flagType, penaltyType = penaltyType, priority = spec.priority }
+    list[#list + 1] = { label = spec.label, flag = spec, flagType = flagType, penaltyType = penaltyType, priority = spec.priority }
   end
   for _, flagType in pairs(flags.FLAG) do
     local spec = flags.forFlag(flagType)

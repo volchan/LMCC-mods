@@ -34,6 +34,7 @@ M.PATTERN = { solid = 'solid', checkered = 'checkered', stripes = 'stripes', dis
 ---@field causeAt string? @One of `M.CAUSE` when the game reports which car caused the flag.
 ---@field instructionUnknown string? @Used instead of `instruction` when its parameter is unknown.
 ---@field parameterOffset integer? @Added to the game parameter before display (never below 0).
+---@field kind string @One of `M.KIND`.
 
 local function spec(id, label, instruction, color, text, priority, sound, pulse, pattern, accent)
   return { id = id, label = label, instruction = instruction, color = color, text = text, priority = priority,
@@ -93,6 +94,20 @@ M.BY_PENALTY = {
   [M.PENALTY.BlackFlag] = M.BY_FLAG[M.FLAG.Stop],
 }
 M.BY_PENALTY[M.PENALTY.MandatoryPits].parameterOffset = -1
+
+-- How drivers meet each alert: a flag the game raises, a penalty, or a flag only a server script
+-- can raise (defined by the game but not raised natively).
+M.KIND = { race = 'race', penalty = 'penalty', server = 'server' }
+for _, spec in pairs(M.BY_FLAG) do spec.kind = M.KIND.race end
+for _, flagType in ipairs({ M.FLAG.Slippery, M.FLAG.PitLaneClosed, M.FLAG.SlowVehicle, M.FLAG.Ambulance,
+  M.FLAG.MechanicalFailure, M.FLAG.Unsportsmanlike, M.FLAG.StopCancel, M.FLAG.SessionSuspended, M.FLAG.Code60 }) do
+  M.BY_FLAG[flagType].kind = M.KIND.server
+end
+M.BY_FLAG[M.FLAG.ReturnToPits].kind = M.KIND.penalty -- the gas cut
+for _, spec in pairs(M.BY_PENALTY) do
+  -- The black flag penalty is the black flag itself.
+  if spec ~= M.BY_FLAG[M.FLAG.Stop] then spec.kind = M.KIND.penalty end
+end
 M.BY_PENALTY[M.PENALTY.TeleportToPits].parameterOffset = -1
 
 ---@param flagType integer
