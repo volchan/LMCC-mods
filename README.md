@@ -20,7 +20,7 @@ It uses the flags and penalties the game already raises, so it works on any serv
   - strip height, pulse on or off, show or hide the green flag (shown 5 seconds, since the game keeps it raised all session)
   - blue flag search range (100 to 1000 m behind you)
 
-Flags shown: green, yellow, blue, white, checkered, black, penalty (return to pits, slow down, pit within N laps, wait N seconds in pits). The game also defines red, code 60, slippery, slow vehicle, ambulance, mechanical, warning, pit closed and black flag withdrawn; those only appear if a server script raises them, and the app displays them correctly when it does.
+Flags shown: green, yellow, blue, white, checkered, black, penalties: drive through (jump start or pit lane speeding, laps left to serve it), back to pits (teleported to the pit box, controls locked N seconds), slow down (track cut, lift off N seconds), black flag. The game also defines red, code 60, slippery, slow vehicle, ambulance, mechanical, warning, pit closed and black flag withdrawn; those only appear if a server script raises them, and the app displays them correctly when it does.
 
 ### How the blue flag list works
 
@@ -103,5 +103,5 @@ tests/                   one *_test.lua per module, helper.lua and ui_stub.lua s
 - Flags come from the game only. Championship-specific signals (full course yellow, safety car) need a server script that raises the matching game flag.
 - The blue flag list uses race order, so in practice and qualifying (ordered by best lap) it can list cars that are simply faster.
 - Very long location lines are clipped to the panel width; widen the panel if needed.
-- The game can keep reporting a penalty after it is served, so the app clears it itself: pit penalties (PIT PENALTY, PIT STOP) once the car has been in the pit lane and left it, timed penalties (PIT STOP, SLOW DOWN) when their seconds reach 0. A black flag only clears when the game removes it.
+- The game can keep reporting a penalty after it is served, so the app clears it itself: pit penalties (DRIVE THROUGH, BACK TO PITS) once the car has been in the pit lane and left it, timed penalties (BACK TO PITS, SLOW DOWN) when their seconds reach 0. A black flag only clears when the game removes it.
 - The game also keeps some flags raised long after they matter, so the app hides them: green after 5 seconds, checkered once you cross the line or enter the pit lane (shown at least 5 seconds), the penalty flag once its penalty is served. Yellow, blue, white and black are lowered by the game itself.
