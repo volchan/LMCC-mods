@@ -25,6 +25,10 @@ function M.install(windowSize)
     drawRectFilledMultiColor = record('gradient'),
     drawCircleFilled = record('circle'),
     drawTriangleFilled = record('triangle'),
+    transparentWindow = function(id, pos, size, noPadding, inputs, content)
+      M.calls[#M.calls + 1] = { name = 'window', args = { id, pos, size, noPadding, inputs } }
+      content()
+    end,
   }
 end
 
