@@ -20,12 +20,13 @@ local controller = app.new({
   game = game, sound = sound, settings = prefs, tracker = tracker.new(), preview = preview.new(),
 })
 
-local setupState = { previewLabel = nil, previewRemaining = 0, snapFailed = false }
+local setupState = { previewLabel = nil, previewRemaining = 0, panelMissing = false }
 local actions = {
   preview = function(option) controller:startPreview(option) end,
   stopPreview = function() controller:stopPreview() end,
+  showPanel = function() setupState.panelMissing = not windowMover.show(PANEL_TITLE) end,
   snap = function(preset)
-    setupState.snapFailed = not windowMover.snap(PANEL_TITLE, preset, ac.getUI().windowSize)
+    setupState.panelMissing = not windowMover.snap(PANEL_TITLE, preset, ac.getUI().windowSize)
   end,
   testSound = function(cue) controller:playCue(cue) end,
 }

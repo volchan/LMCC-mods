@@ -20,13 +20,14 @@ local calls = {}
 local actions = {
   preview = function(o) calls.preview = o end,
   stopPreview = function() calls.stop = true end,
+  showPanel = function() calls.show = true end,
   snap = function(p) calls.snap = p end,
   testSound = function(cue) calls.test = cue end,
 }
 
 -- Idle state: every preview option and preset gets a button, no status lines.
 local s = freshSettings()
-setup.draw(s, { previewRemaining = 0, snapFailed = false }, actions)
+setup.draw(s, { previewRemaining = 0, panelMissing = false }, actions)
 local buttons = {}
 for _, c in ipairs(uiStub.named('button')) do buttons[c.args[1]] = true end
 local allPreviews = true
@@ -46,30 +47,32 @@ uiStub.reset()
 uiStub.clicks['RED'] = true
 uiStub.clicks[layout.PRESETS[2].label] = true
 uiStub.clicks['Test##blue'] = true
-setup.draw(s, { previewRemaining = 0, snapFailed = false }, actions)
+uiStub.clicks[setup.SHOW_PANEL_LABEL] = true
+setup.draw(s, { previewRemaining = 0, panelMissing = false }, actions)
 t.check('preview action gets the option', calls.preview and calls.preview.label == 'RED')
 t.check('snap action gets the preset', calls.snap == layout.PRESETS[2])
 t.check('test action gets the cue', calls.test == flags.SOUND.blue)
+t.check('show panel action fired', calls.show == true)
 
 -- Active preview and failed snap show status lines.
 uiStub.reset()
 uiStub.clicks['Stop'] = true
-setup.draw(s, { previewLabel = 'YELLOW', previewRemaining = 3.2, snapFailed = true }, actions)
+setup.draw(s, { previewLabel = 'YELLOW', previewRemaining = 3.2, panelMissing = true }, actions)
 local texts = uiStub.texts()
 local hasPreview, hasSnap = false, false
 for _, tx in ipairs(texts) do
   if tx == 'Previewing YELLOW, 4 s left' then hasPreview = true end
-  if tx == setup.SNAP_FAILED_TEXT then hasSnap = true end
+  if tx == setup.PANEL_MISSING_TEXT then hasSnap = true end
 end
 t.check('preview status shown', hasPreview)
 t.check('stop button works', calls.stop)
-t.check('snap failure explained', hasSnap)
+t.check('missing panel explained', hasSnap)
 
 -- Checkboxes toggle settings.
 uiStub.reset()
 uiStub.clicks['Sound cues'] = true
 uiStub.clicks['Screen-edge strips'] = true
-setup.draw(s, { previewRemaining = 0, snapFailed = false }, actions)
+setup.draw(s, { previewRemaining = 0, panelMissing = false }, actions)
 t.check('sound toggled off', s.sound == false)
 t.check('glow toggled off', s.glow == false)
 
@@ -78,14 +81,14 @@ uiStub.reset()
 uiStub.sliders['##volume'] = 40
 uiStub.sliders['##volume_severe'] = 75
 uiStub.sliders['##glowThickness'] = 8
-setup.draw(s, { previewRemaining = 0, snapFailed = false }, actions)
+setup.draw(s, { previewRemaining = 0, panelMissing = false }, actions)
 t.check('master volume written', t.near(s.volume, 0.4))
 t.check('cue volume written', t.near(s.volume_severe, 0.75))
 t.check('strip height written', t.near(s.glowThickness, 0.08))
 t.check('blue range untouched', s.blueRange == settings.DEFAULTS.blueRange)
 uiStub.reset()
 uiStub.sliders['##blueRange'] = 600
-setup.draw(s, { previewRemaining = 0, snapFailed = false }, actions)
+setup.draw(s, { previewRemaining = 0, panelMissing = false }, actions)
 t.check('blue range written', s.blueRange == 600)
 local unchanged = s.volume_blue == 1
 t.check('untouched sliders keep value', unchanged)

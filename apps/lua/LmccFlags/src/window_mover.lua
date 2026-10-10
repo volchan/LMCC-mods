@@ -12,14 +12,25 @@ function M.find(title)
   return nil
 end
 
----Snaps a window to a layout preset.
+---Opens a window that was closed from the apps bar.
+---@param title string
+---@return boolean @False when the window was not found.
+function M.show(title)
+  local window = M.find(title)
+  if not window then return false end
+  window:setVisible(true)
+  return true
+end
+
+---Snaps a window to a layout preset and opens it, since moving a hidden window shows nothing.
 ---@param title string
 ---@param preset LayoutPreset
 ---@param screen vec2
----@return boolean @False when the window was not found (never opened).
+---@return boolean @False when the window was not found.
 function M.snap(title, preset, screen)
   local window = M.find(title)
   if not window then return false end
+  window:setVisible(true)
   window:move(layout.position(preset, screen, window:size()))
   return true
 end

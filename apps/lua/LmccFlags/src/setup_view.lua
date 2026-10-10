@@ -8,7 +8,8 @@ local settings = require('src/settings')
 local M = {}
 
 M.BUTTONS_PER_ROW = 3
-M.SNAP_FAILED_TEXT = 'Open the LMCC Flags panel first, then pick a position.'
+M.SHOW_PANEL_LABEL = 'Show panel'
+M.PANEL_MISSING_TEXT ='LMCC Flags panel not found: open it once from the apps bar.'
 
 -- Cue names in display order.
 local CUES = { flags.SOUND.caution, flags.SOUND.blue, flags.SOUND.severe, flags.SOUND.info }
@@ -17,11 +18,12 @@ local PREVIEW_OPTIONS = preview.options()
 ---@class SetupState
 ---@field previewLabel string? @Label of the alert being previewed.
 ---@field previewRemaining number @Seconds.
----@field snapFailed boolean
+---@field panelMissing boolean
 
 ---@class SetupActions
 ---@field preview fun(option: PreviewOption)
 ---@field stopPreview fun()
+---@field showPanel fun()
 ---@field snap fun(preset: LayoutPreset)
 ---@field testSound fun(cue: string)
 
@@ -68,8 +70,9 @@ end
 
 local function drawPosition(state, actions)
   ui.header('Panel position')
+  if ui.button(M.SHOW_PANEL_LABEL) then actions.showPanel() end
   buttonGrid(layout.PRESETS, function(p) return p.label end, actions.snap)
-  if state.snapFailed then ui.textColored(M.SNAP_FAILED_TEXT, COLORS.orange) end
+  if state.panelMissing then ui.textColored(M.PANEL_MISSING_TEXT, COLORS.orange) end
 end
 
 local function drawSound(s, actions)

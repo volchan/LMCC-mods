@@ -10,7 +10,12 @@ local sim = { time = 10000, raceFlagType = F.Caution, raceFlagCause = -1, curren
 local car = { index = 0, currentPenaltyType = P.None, currentPenaltyParameter = 0, lapCount = 0, splinePosition = 0.2 }
 local storage
 local moved = nil
-local window = { size = function() return vec2(520, 130) end, move = function(_, p) moved = p end }
+local shown = false
+local window = {
+  size = function() return vec2(520, 130) end,
+  move = function(_, p) moved = p end,
+  setVisible = function(_, v) shown = v end,
+}
 local windows = {}
 local audio = 0
 ac = {
@@ -100,7 +105,7 @@ uiStub.reset()
 script.windowSetup(0)
 local failed = false
 for _, tx in ipairs(uiStub.texts()) do
-  if tx == require('src/setup_view').SNAP_FAILED_TEXT then failed = true end
+  if tx == require('src/setup_view').PANEL_MISSING_TEXT then failed = true end
 end
 t.check('snap fails while panel window is unknown', failed and moved == nil)
 
@@ -109,5 +114,11 @@ uiStub.reset()
 uiStub.clicks[layout.PRESETS[1].label] = true
 script.windowSetup(0)
 t.check('snap moves the panel', moved ~= nil and moved.x == layout.MARGIN)
+
+shown = false
+uiStub.reset()
+uiStub.clicks[require('src/setup_view').SHOW_PANEL_LABEL] = true
+script.windowSetup(0)
+t.check('show panel opens the window', shown == true)
 
 t.finish()
