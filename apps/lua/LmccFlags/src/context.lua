@@ -26,7 +26,8 @@ function M.formatDistance(metres)
   if metres < 1000 then
     return string.format('%d m', math.floor(metres / 10 + 0.5) * 10)
   end
-  return string.format('%.1f km', metres / 1000)
+  -- Round half up before formatting: %.1f alone rounds 1.25 down to even in LuaJIT (CSP).
+  return string.format('%.1f km', math.floor(metres / 100 + 0.5) / 10)
 end
 
 ---@param first string

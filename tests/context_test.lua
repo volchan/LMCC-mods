@@ -14,6 +14,7 @@ t.check('same position is zero', t.near(context.forwardDistance(0.5, 0.5, 4000),
 t.check('metres rounded to 10', context.formatDistance(347) == '350 m')
 t.check('small distance', context.formatDistance(4) == '0 m')
 t.check('kilometres above 1000 m', context.formatDistance(1250) == '1.3 km')
+t.check('kilometres rounded half up', context.formatDistance(3750) == '3.8 km' and context.formatDistance(1240) == '1.2 km')
 
 local cause = { mySpline = 0.10, causeSpline = 0.15, trackLength = 4000, causeName = 'J. Doe', causeSector = 'Turn 4' }
 
