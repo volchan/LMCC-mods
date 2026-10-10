@@ -30,23 +30,6 @@ function M.resolve(flagType, penaltyType, penaltyParameter)
   return result
 end
 
----Signals without the one with id `hiddenId`. Returns the same list when nothing is removed.
----@param signals Signal[]
----@param hiddenId string
----@return Signal[]
-function M.without(signals, hiddenId)
-  local found = false
-  for _, s in ipairs(signals) do
-    if s.flag.id == hiddenId then found = true end
-  end
-  if not found then return signals end
-  local out = {}
-  for _, s in ipairs(signals) do
-    if s.flag.id ~= hiddenId then out[#out + 1] = s end
-  end
-  return out
-end
-
 ---Identifier of the most urgent signal, or `M.NONE` when the track is clear.
 ---@param signals Signal[]
 ---@return string

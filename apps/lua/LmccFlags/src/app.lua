@@ -5,15 +5,13 @@ local signal = require('src/signal')
 local context = require('src/context')
 local blue = require('src/blue')
 local penalty = require('src/penalty')
+local flagFilter = require('src/flag_filter')
 local settingsLib = require('src/settings')
 
 local M = {}
 M.__index = M
 
 M.DETAIL_INTERVAL = 0.25 -- seconds between distance updates
--- The game keeps the green flag raised for the whole session, so it is only shown briefly.
-M.GREEN_DURATION = 5 -- seconds
-local GREEN_ID = flags.forFlag(flags.FLAG.Start).id
 
 ---@class AppDeps
 ---@field game {read: fun(out: table): table?, cause: fun(index: integer, out: table): table?, cars: fun(out: table): table}
@@ -31,29 +29,26 @@ function M.new(deps)
     snapshot = {}, cause = {}, stamp = {}, cars = {},
     visible = {}, -- real signals after hiding, most urgent first
     penalty = penalty.new(), -- clears penalties the game keeps reporting once served
+    flagFilter = flagFilter.new(), -- hides flags the game keeps raised for too long
     detail = nil, ---@type string?
     detailAt = -math.huge,
     detailKey = nil,
     -- Inputs of the last resolve, so signals are only rebuilt when something changed.
-    lastFlag = nil, lastPenalty = nil, lastParameter = nil, lastGreenShown = nil,
-    greenSince = -math.huge, -- when the game last raised the green flag
+    lastFlag = nil, lastPenalty = nil, lastParameter = nil,
   }, M)
 end
 
 ---@private
 function M:refreshVisible(snap)
   local penaltyType = self.penalty:effective(snap.penaltyType, snap.penaltyParameter, snap.inPitlane)
-  local isGreen = snap.flagType == flags.FLAG.Start
-  if isGreen and self.lastFlag ~= flags.FLAG.Start then self.greenSince = snap.now end
-  local greenShown = isGreen and self.deps.settings.showGreen and snap.now - self.greenSince < M.GREEN_DURATION
-  if snap.flagType == self.lastFlag and penaltyType == self.lastPenalty
-    and snap.penaltyParameter == self.lastParameter and greenShown == self.lastGreenShown then
+  local penaltyServed = snap.penaltyType ~= flags.PENALTY.None and penaltyType == flags.PENALTY.None
+  local flagType = self.flagFilter:effective(snap.flagType, snap.now, snap.lap, snap.inPitlane,
+    self.deps.settings.showGreen, penaltyServed)
+  if flagType == self.lastFlag and penaltyType == self.lastPenalty and snap.penaltyParameter == self.lastParameter then
     return
   end
-  self.lastFlag, self.lastPenalty, self.lastParameter, self.lastGreenShown =
-    snap.flagType, penaltyType, snap.penaltyParameter, greenShown
-  local real = signal.resolve(snap.flagType, penaltyType, snap.penaltyParameter)
-  self.visible = greenShown and real or signal.without(real, GREEN_ID)
+  self.lastFlag, self.lastPenalty, self.lastParameter = flagType, penaltyType, snap.penaltyParameter
+  self.visible = signal.resolve(flagType, penaltyType, snap.penaltyParameter)
 end
 
 ---Location line for a signal: lapping cars under blue, otherwise the car that caused the flag.

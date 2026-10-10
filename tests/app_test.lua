@@ -87,10 +87,10 @@ s.showGreen = true
 state.now = 3.1
 a:update()
 t.check('green shown again when enabled', a:signals()[1].flag.id == 'green')
-state.now = 3 + app.GREEN_DURATION - 0.1
+state.now = 3 + require('src/flag_filter').BRIEF - 0.1
 a:update()
 t.check('green still shown just before it expires', a:signals()[1].flag.id == 'green')
-state.now = 3 + app.GREEN_DURATION
+state.now = 3 + require('src/flag_filter').BRIEF
 a:update()
 t.check('green hidden after its duration while the game keeps it', #a:signals() == 0)
 
@@ -148,17 +148,18 @@ s.volume_info = 0.5
 a:playCue('info')
 t.check('test cue volume is master times cue', t.near(played[#played].volume, 0.25))
 
--- A pit penalty the game keeps reporting disappears once served through the pit lane.
-state.flagType, state.penaltyType, state.penaltyParameter, state.inPitlane = F.None, P.MandatoryPits, 1, false
+-- A pit penalty the game keeps reporting disappears once served through the pit lane,
+-- together with the penalty flag raised for it.
+state.flagType, state.penaltyType, state.penaltyParameter, state.inPitlane = F.ReturnToPits, P.MandatoryPits, 1, false
 state.now = 50
 a:update()
-t.check('pit penalty displayed', a:signals()[1].flag.id == 'pitPenalty')
+t.check('pit penalty displayed with its flag', #a:signals() == 2)
 state.now, state.inPitlane = 51, true
 a:update()
 state.now, state.inPitlane = 52, false
 a:update()
-t.check('pit penalty gone after the pit lane', #a:signals() == 0)
-state.penaltyType, state.penaltyParameter = P.None, 0
+t.check('pit penalty and its flag gone after the pit lane', #a:signals() == 0)
+state.flagType, state.penaltyType, state.penaltyParameter = F.None, P.None, 0
 
 -- No game state: nothing changes.
 readsNil = true
