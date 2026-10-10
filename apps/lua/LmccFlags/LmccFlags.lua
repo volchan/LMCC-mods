@@ -36,6 +36,7 @@ local actions = {
   preview = function(option) controller:startPreview(option) end,
   stopPreview = function() controller:stopPreview() end,
   showPanel = function() setupState.panelMissing = not windowMover.show(PANEL_TITLE) end,
+  toggleLock = panelActions.toggleLock,
   snap = function(preset)
     setupState.panelMissing = not windowMover.snap(PANEL_TITLE, preset, ac.getUI().windowSize)
   end,
@@ -65,6 +66,7 @@ function script.windowSetup(dt)
   local previewing = p:active(controller.now)
   setupState.previewLabel = previewing and previewing[1] and previewing[1].flag.label or nil
   setupState.previewRemaining = p:remaining(controller.now)
+  setupState.locked = panelLock.locked
   setupView.draw(prefs, setupState, actions)
 end
 

@@ -83,7 +83,7 @@ uiStub.reset()
 script.windowSetup(0)
 local previewing = false
 for _, tx in ipairs(uiStub.texts()) do
-  if tx:find('Previewing RED') then previewing = true end
+  if tx:find('Showing RED') then previewing = true end
 end
 t.check('preview status shown in setup', previewing and audio == 2)
 uiStub.reset()
