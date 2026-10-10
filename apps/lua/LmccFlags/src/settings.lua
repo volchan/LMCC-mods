@@ -5,7 +5,6 @@ local blue = require('src/blue')
 local M = {}
 
 M.DEFAULTS = {
-  glow = true,
   glowThickness = 0.05, -- fraction of the shorter screen side
   glowPulse = true,
   sound = true,

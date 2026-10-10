@@ -58,11 +58,11 @@ sim.time = 12000
 script.update(0)
 uiStub.reset()
 script.drawGlow(0)
-t.check('strips drawn when enabled', #uiStub.named('window') == 1 and #uiStub.named('rect') == 2)
+t.check('strips drawn', #uiStub.named('window') == 1 and #uiStub.named('rect') == 2)
 storage.glow = false
 uiStub.reset()
 script.drawGlow(0)
-t.check('strips skipped when disabled', #uiStub.calls == 0)
+t.check('strips ignore a stored off value', #uiStub.named('rect') == 2)
 
 uiStub.reset()
 script.windowHistory(0)

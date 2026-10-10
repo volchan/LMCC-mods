@@ -1,4 +1,4 @@
--- Attention pulse shared by the panel and the screen glow, so both blink in sync.
+-- Attention pulse shared by the panel and the screen strips, so both blink in sync.
 local M = {}
 
 M.PERIOD = 0.8 -- seconds per blink

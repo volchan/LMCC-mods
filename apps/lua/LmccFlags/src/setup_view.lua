@@ -1,4 +1,4 @@
--- Setup window: test alerts, place the panel, sound and glow preferences.
+-- Setup window: test alerts, place the panel, sound and screen strip preferences.
 local COLORS = require('src/theme').COLORS
 local flags = require('src/flags')
 local layout = require('src/layout')
@@ -88,7 +88,6 @@ end
 
 local function drawDisplay(s)
   ui.header('Display')
-  toggle(s, 'glow', 'Screen-edge strips')
   toggle(s, 'glowPulse', 'Pulse urgent flags')
   local value, changed = ui.slider('##glowThickness', s.glowThickness * 100, 1, 15, 'Strip height: %.0f%% of screen')
   if changed then s.glowThickness = value / 100 end

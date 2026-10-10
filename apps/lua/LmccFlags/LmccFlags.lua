@@ -56,8 +56,7 @@ function script.windowSetup(dt)
   setupView.draw(prefs, setupState, actions)
 end
 
+-- Always on: drivers cannot turn the strips off, so no flag goes unseen.
 function script.drawGlow(dt)
-  if prefs.glow then
-    glowView.draw(controller:signals(), controller.now, ac.getUI().windowSize, prefs)
-  end
+  glowView.draw(controller:signals(), controller.now, ac.getUI().windowSize, prefs)
 end

@@ -8,7 +8,8 @@ ac = { storage = function(layout) storedLayout = layout; return { stored = true 
 
 local s = settings.load()
 t.check('settings come from ac.storage', s.stored and storedLayout == settings.DEFAULTS)
-t.check('defaults enable glow and sound', settings.DEFAULTS.glow and settings.DEFAULTS.sound)
+t.check('defaults enable sound', settings.DEFAULTS.sound)
+t.check('strips cannot be turned off', settings.DEFAULTS.glow == nil)
 t.check('default blue range', settings.DEFAULTS.blueRange == require('src/blue').DEFAULT_RANGE)
 
 t.check('cue volume key', settings.cueVolumeKey('blue') == 'volume_blue')

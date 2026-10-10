@@ -71,10 +71,9 @@ t.check('missing panel explained', hasSnap)
 -- Checkboxes toggle settings.
 uiStub.reset()
 uiStub.clicks['Sound cues'] = true
-uiStub.clicks['Screen-edge strips'] = true
 setup.draw(s, { previewRemaining = 0, panelMissing = false }, actions)
 t.check('sound toggled off', s.sound == false)
-t.check('glow toggled off', s.glow == false)
+t.check('no strips toggle', s.glow == nil)
 
 -- Sliders write back 0..1 values.
 uiStub.reset()
