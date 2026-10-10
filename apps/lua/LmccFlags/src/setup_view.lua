@@ -109,7 +109,7 @@ local function drawGameData(raw)
   ui.text(string.format('Flag: %s (%d), cause car %d', flags.nameOf(flags.FLAG, raw.flagType), raw.flagType, raw.flagCause))
   ui.text(string.format('Penalty: %s (%d), parameter %d', flags.nameOf(flags.PENALTY, raw.penaltyType),
     raw.penaltyType, raw.penaltyParameter))
-  ui.text('In pit lane: ' .. (raw.inPitlane and 'yes' or 'no'))
+  ui.text(string.format('Lap: %d, in pit lane: %s', raw.lap or 0, raw.inPitlane and 'yes' or 'no'))
   ui.text(string.format('Penalty time: %.1f s', raw.penaltyTime or 0))
 end
 
