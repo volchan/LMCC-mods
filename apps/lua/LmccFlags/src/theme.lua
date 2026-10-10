@@ -15,7 +15,6 @@ M.COLORS = {
   textLight = rgbm(0.97, 0.97, 0.97, 1),
   dim = rgbm(0.62, 0.62, 0.66, 1),
   panel = rgbm(0, 0, 0, 0.65),
-  panelLight = rgbm(0, 0, 0, 0.45),
 }
 
 return M

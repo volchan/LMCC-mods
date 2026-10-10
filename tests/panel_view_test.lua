@@ -21,6 +21,7 @@ t.check('second signal shown as extra line', m.label == 'SLOW DOWN' and m.extra 
 panel.draw({}, nil, 0)
 local texts = uiStub.texts()
 t.check('idle shows placeholder', #texts == 1 and texts[1] == panel.IDLE_TEXT)
+t.check('idle has no background', #uiStub.named('rect') == 0)
 t.check('font pushed and popped', #uiStub.named('pushDWriteFont') == 1 and #uiStub.named('popDWriteFont') == 1)
 
 -- draw yellow with detail: pulsing flag dims the chip
