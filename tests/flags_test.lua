@@ -73,6 +73,9 @@ t.check('every cue is used by a flag', everyCueUsed)
 
 -- Instruction formatting.
 t.check('instruction fills parameter', flags.instruction(flags.forPenalty(P.SlowDown), 5) == 'Lift off for 5s or drop below 35 km/h')
+local gasCut = flags.forFlag(F.ReturnToPits)
+t.check('gas cut uses the seconds when known', flags.instruction(gasCut, 5) == 'Lift off for 5s or drop below 35 km/h')
+t.check('gas cut without seconds gives the speed rule', flags.instruction(gasCut) == 'Lift off or drop below 35 km/h')
 t.check('instruction defaults missing parameter to 0', flags.instruction(flags.forPenalty(P.MandatoryPits)) == 'Go through the pits, laps left: 0')
 t.check('instruction without placeholder unchanged', flags.instruction(flags.forFlag(F.FasterCar), 3) == 'Faster car behind: let it pass')
 

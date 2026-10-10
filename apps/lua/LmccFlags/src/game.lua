@@ -2,6 +2,29 @@
 -- per-frame path does not allocate.
 local M = {}
 
+-- Start of the original AC SPageFileGraphic struct ("acpmf_graphics"), up to penaltyTime: the
+-- lift time left on a gas cut, which CSP does not expose.
+M.GRAPHICS_FILE = 'acpmf_graphics'
+M.GRAPHICS_LAYOUT = [[
+  int packetId; int status; int session;
+  uint16_t currentTime[15]; uint16_t lastTime[15]; uint16_t bestTime[15]; uint16_t split[15];
+  int completedLaps; int position; int iCurrentTime; int iLastTime; int iBestTime;
+  float sessionTimeLeft; float distanceTraveled;
+  int isInPit; int currentSectorIndex; int lastSectorTime; int numberOfLaps;
+  uint16_t tyreCompound[33];
+  float replayTimeMultiplier; float normalizedCarPosition; float carCoordinates[3];
+  float penaltyTime;
+]]
+
+local graphics = nil -- opened on first read; false when unavailable
+local function readGraphics()
+  if graphics == nil then
+    local ok, file = pcall(ac.readMemoryMappedFile, M.GRAPHICS_FILE, M.GRAPHICS_LAYOUT)
+    graphics = ok and file or false
+  end
+  return graphics or nil
+end
+
 ---@class Snapshot
 ---@field now number @Seconds since AC start.
 ---@field flagType integer
@@ -9,6 +32,7 @@ local M = {}
 ---@field penaltyType integer
 ---@field penaltyParameter integer
 ---@field inPitlane boolean
+---@field penaltyTime number @Seconds left on a gas cut, 0 when none or unknown.
 ---@field lap integer @Lap in progress, 1-based.
 ---@field sessionTime number? @Seconds since session start, nil when unknown.
 ---@field trackLength number @Metres, from the AI spline.
@@ -24,6 +48,8 @@ function M.read(out)
   out.penaltyType = car.currentPenaltyType
   out.penaltyParameter = car.currentPenaltyParameter
   out.inPitlane = car.isInPitlane
+  local g = readGraphics()
+  out.penaltyTime = g and g.penaltyTime or 0
   out.lap = car.lapCount + 1
   out.trackLength = sim.trackLengthM
   local session = ac.getSession(sim.currentSessionIndex)

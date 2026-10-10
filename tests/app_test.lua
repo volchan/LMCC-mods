@@ -8,7 +8,7 @@ local app = require('src/app')
 local F, P = flags.FLAG, flags.PENALTY
 
 -- Fake game driven by `state`; counts cause lookups.
-local state = { now = 0, flagType = F.None, flagCause = -1, penaltyType = P.None, penaltyParameter = 0, lap = 2, sessionTime = 60,
+local state = { now = 0, flagType = F.None, flagCause = -1, penaltyType = P.None, penaltyParameter = 0, penaltyTime = 0, lap = 2, sessionTime = 60,
   trackLength = 4000 }
 local carList = {}
 local causeLookups = 0
@@ -168,8 +168,15 @@ a:update()
 state.now, state.flagType = 60, F.ReturnToPits
 a:update()
 local cut = a:signals()
-t.check('gas cut shown with the clear speed', #cut == 1 and cut[1].flag.id == 'gasCut'
-  and cut[1].instruction == 'Lift off for 3s or drop below 35 km/h')
+t.check('gas cut without a known time gives the speed rule', #cut == 1 and cut[1].flag.id == 'gasCut'
+  and cut[1].instruction == 'Lift off or drop below 35 km/h')
+state.now, state.penaltyTime = 60.5, 4.2
+a:update()
+t.check('gas cut gives the seconds left', a:signals()[1].instruction == 'Lift off for 5s or drop below 35 km/h')
+state.now, state.penaltyTime = 61.5, 3.2
+a:update()
+t.check('gas cut seconds count down', a:signals()[1].instruction == 'Lift off for 4s or drop below 35 km/h')
+state.penaltyTime = 0
 state.flagType, state.penaltyType, state.penaltyParameter = F.None, P.None, 0
 
 -- No game state: nothing changes.

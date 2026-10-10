@@ -14,6 +14,7 @@ ac = {
   getSession = function(i) return sessions[i] end,
   getDriverName = function(i) return 'Driver ' .. i end,
   getTrackSectorName = function(p) return p == 0.15 and 'Turn 4' or '' end,
+  readMemoryMappedFile = function(name) return name == game.GRAPHICS_FILE and { penaltyTime = 4.2 } or nil end,
 }
 
 local snap = {}
@@ -53,5 +54,13 @@ t.check('unknown driver name', list[1].name == '?')
 
 ac.getSim = function() return nil end
 t.check('read nil without sim', game.read({}) == nil)
+
+-- Gas cut time from the AC shared memory, 0 when it cannot be opened.
+ac.getSim = function() return sim end
+t.check('penalty time from shared memory', t.near(game.read({}).penaltyTime, 4.2))
+package.loaded['src/game'] = nil
+local fresh = require('src/game')
+ac.readMemoryMappedFile = function() error('no shared memory') end
+t.check('penalty time 0 without shared memory', fresh.read({}).penaltyTime == 0)
 
 t.finish()

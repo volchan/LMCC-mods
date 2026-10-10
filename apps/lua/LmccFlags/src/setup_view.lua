@@ -110,6 +110,7 @@ local function drawGameData(raw)
   ui.text(string.format('Penalty: %s (%d), parameter %d', flags.nameOf(flags.PENALTY, raw.penaltyType),
     raw.penaltyType, raw.penaltyParameter))
   ui.text('In pit lane: ' .. (raw.inPitlane and 'yes' or 'no'))
+  ui.text(string.format('Penalty time: %.1f s', raw.penaltyTime or 0))
 end
 
 ---@param s table @Loaded settings, edited in place.

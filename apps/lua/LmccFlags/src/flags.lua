@@ -32,6 +32,7 @@ M.PATTERN = { solid = 'solid', checkered = 'checkered', stripes = 'stripes', dis
 ---@field sound string? @One of `M.SOUND`, nil for silent.
 ---@field pulse boolean @Whether views should pulse it to draw attention.
 ---@field causeAt string? @One of `M.CAUSE` when the game reports which car caused the flag.
+---@field instructionUnknown string? @Used instead of `instruction` when its parameter is unknown.
 
 local function spec(id, label, instruction, color, text, priority, sound, pulse, pattern, accent)
   return { id = id, label = label, instruction = instruction, color = color, text = text, priority = priority,
@@ -40,8 +41,8 @@ end
 
 local S, P = M.SOUND, M.PATTERN
 
--- A gas cut lasts GAS_CUT_SECONDS of lifting off, or clears at once below GAS_CUT_CLEAR_KMH.
-M.GAS_CUT_SECONDS = 3
+-- A gas cut clears after lifting off for the time the game sets (depends on the track), or at
+-- once below GAS_CUT_CLEAR_KMH.
 M.GAS_CUT_CLEAR_KMH = 35
 
 ---@type table<integer, FlagSpec>
@@ -54,7 +55,7 @@ M.BY_FLAG = {
   [M.FLAG.SlowVehicle] = spec('slowVehicle', 'SLOW VEHICLE', 'Slow vehicle on track', C.white, C.textDark, 55, S.caution, true),
   [M.FLAG.Ambulance] = spec('ambulance', 'AMBULANCE', 'Emergency vehicle on track', C.white, C.textDark, 65, S.caution, true),
   -- Checked in game: raised alone for a gas cut after cutting the track, and alongside every real penalty.
-  [M.FLAG.ReturnToPits] = spec('gasCut', 'GAS CUT', string.format('Lift off for %ds or drop below %d km/h', M.GAS_CUT_SECONDS, M.GAS_CUT_CLEAR_KMH), C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
+  [M.FLAG.ReturnToPits] = spec('gasCut', 'GAS CUT', string.format('Lift off for %%ds or drop below %d km/h', M.GAS_CUT_CLEAR_KMH), C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
   [M.FLAG.MechanicalFailure] = spec('mechanical', 'MECHANICAL', 'Car damaged: pit now', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
   [M.FLAG.Unsportsmanlike] = spec('warning', 'WARNING', 'Unsportsmanlike behaviour', C.black, C.textLight, 70, S.severe, true, P.diagonal, C.white),
   [M.FLAG.StopCancel] = spec('blackCancelled', 'BLACK CANCELLED', 'Black flag withdrawn', C.grey, C.textLight, 30, S.info, false),
@@ -64,6 +65,9 @@ M.BY_FLAG = {
   [M.FLAG.SessionSuspended] = spec('red', 'RED', 'Session stopped: slow down, return to pits', C.red, C.textLight, 100, S.severe, true),
   [M.FLAG.Code60] = spec('code60', 'CODE 60', 'Slow to 60 km/h, no overtaking', C.purple, C.textLight, 75, S.caution, true),
 }
+
+-- Lift time unknown (shared memory unavailable): give the speed rule alone.
+M.BY_FLAG[M.FLAG.ReturnToPits].instructionUnknown = string.format('Lift off or drop below %d km/h', M.GAS_CUT_CLEAR_KMH)
 
 -- Where the car that caused a flag (`ac.getSim().raceFlagCause`) is relative to the player.
 M.CAUSE = { ahead = 'ahead', behind = 'behind' }
@@ -134,6 +138,7 @@ end
 ---@return string
 function M.instruction(flag, parameter)
   if flag.instruction:find('%%d') then
+    if parameter == nil and flag.instructionUnknown then return flag.instructionUnknown end
     return string.format(flag.instruction, parameter or 0)
   end
   return flag.instruction

@@ -34,7 +34,7 @@ function M.new(deps)
     detailAt = -math.huge,
     detailKey = nil,
     -- Inputs of the last resolve, so signals are only rebuilt when something changed.
-    lastFlag = nil, lastPenalty = nil, lastParameter = nil,
+    lastFlag = nil, lastPenalty = nil, lastParameter = nil, lastFlagParameter = nil,
   }, M)
 end
 
@@ -44,11 +44,15 @@ function M:refreshVisible(snap)
   local penaltyActive = flags.forPenalty(penaltyType) ~= nil
   local flagType = self.flagFilter:effective(snap.flagType, snap.now, snap.lap, snap.inPitlane,
     self.deps.settings.showGreen, penaltyActive)
-  if flagType == self.lastFlag and penaltyType == self.lastPenalty and snap.penaltyParameter == self.lastParameter then
+  -- Whole seconds so signals are rebuilt once per second while the gas cut counts down.
+  local flagParameter = snap.penaltyTime > 0 and math.ceil(snap.penaltyTime) or nil
+  if flagType == self.lastFlag and penaltyType == self.lastPenalty and snap.penaltyParameter == self.lastParameter
+    and flagParameter == self.lastFlagParameter then
     return
   end
-  self.lastFlag, self.lastPenalty, self.lastParameter = flagType, penaltyType, snap.penaltyParameter
-  self.visible = signal.resolve(flagType, penaltyType, snap.penaltyParameter)
+  self.lastFlag, self.lastPenalty, self.lastParameter, self.lastFlagParameter =
+    flagType, penaltyType, snap.penaltyParameter, flagParameter
+  self.visible = signal.resolve(flagType, penaltyType, snap.penaltyParameter, flagParameter)
 end
 
 ---Location line for a signal: lapping cars under blue, otherwise the car that caused the flag.

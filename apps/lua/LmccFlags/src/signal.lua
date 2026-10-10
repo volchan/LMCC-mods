@@ -14,12 +14,13 @@ M.NONE = 'none'
 ---@param flagType integer @`ac.FlagType` value.
 ---@param penaltyType integer @`ac.PenaltyType` value.
 ---@param penaltyParameter integer?
+---@param flagParameter integer? @Fills the flag instruction, e.g. gas cut seconds; nil when unknown.
 ---@return Signal[]
-function M.resolve(flagType, penaltyType, penaltyParameter)
+function M.resolve(flagType, penaltyType, penaltyParameter, flagParameter)
   local result = {}
   local flag = flags.forFlag(flagType)
   if flag then
-    result[1] = { flag = flag, instruction = flags.instruction(flag) }
+    result[1] = { flag = flag, instruction = flags.instruction(flag, flagParameter) }
   end
   local penalty = flags.forPenalty(penaltyType)
   -- A black flag penalty and a black race flag are the same signal: show it once.

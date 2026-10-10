@@ -15,6 +15,8 @@ t.check('yellow key', signal.key(yellow) == 'yellow')
 
 local penaltyOnly = signal.resolve(F.None, P.SlowDown, 3)
 t.check('penalty alone', #penaltyOnly == 1 and penaltyOnly[1].flag.id == 'slowDown')
+local cut = signal.resolve(F.ReturnToPits, P.None, nil, 6)
+t.check('flag parameter fills the flag instruction', cut[1].instruction == 'Lift off for 6s or drop below 35 km/h')
 t.check('penalty instruction has parameter', penaltyOnly[1].instruction == 'Lift off for 3s or drop below 35 km/h')
 
 local both = signal.resolve(F.FasterCar, P.SlowDown, 5)

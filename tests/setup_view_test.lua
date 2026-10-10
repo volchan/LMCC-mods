@@ -104,10 +104,11 @@ setup.draw(s, { previewRemaining = 0, panelMissing = false, raw = {} }, actions)
 t.check('game data waits for the game', hasText(setup.NO_GAME_DATA_TEXT))
 uiStub.reset()
 setup.draw(s, { previewRemaining = 0, panelMissing = false,
-  raw = { flagType = 8, flagCause = -1, penaltyType = 1, penaltyParameter = 3, inPitlane = true } }, actions)
+  raw = { flagType = 8, flagCause = -1, penaltyType = 1, penaltyParameter = 3, inPitlane = true, penaltyTime = 4.2 } }, actions)
 t.check('game data shows the flag', hasText('Flag: ReturnToPits (8), cause car -1'))
 t.check('game data shows the penalty', hasText('Penalty: MandatoryPits (1), parameter 3'))
 t.check('game data shows the pit lane', hasText('In pit lane: yes'))
+t.check('game data shows the penalty time', hasText('Penalty time: 4.2 s'))
 uiStub.reset()
 setup.draw(s, { previewRemaining = 0, panelMissing = false,
   raw = { flagType = 0, flagCause = -1, penaltyType = 0, penaltyParameter = 0, inPitlane = false } }, actions)
