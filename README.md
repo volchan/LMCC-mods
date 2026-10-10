@@ -31,10 +31,18 @@ Requires Custom Shaders Patch.
 
 For drivers: drag `LmccFlags-<version>.zip` into Content Manager, or extract it into the Assetto Corsa folder (it holds `apps/lua/LmccFlags`).
 
-To build that zip from the committed tree (refuses uncommitted app changes, version read from `manifest.ini`):
+To build that zip from the committed tree (refuses uncommitted app changes; prints the server checksum):
 
-```powershell
-./scripts/build.ps1                   # -> dist/LmccFlags-<version>.zip
+```bash
+scripts/build.sh                      # version from manifest.ini -> dist/LmccFlags-<version>.zip
+scripts/build.sh 1.2.3                # sets VERSION in the zipped manifest only
+```
+
+Releases: push a version tag and GitHub Actions (Linux) runs the tests on LuaJIT, builds the zip with the tag as version, and publishes a GitHub release with the zip, the server checksum and the changelog (feat, fix and perf commits since the previous tag):
+
+```bash
+git tag v1.2.3
+git push origin v1.2.3
 ```
 
 For development, link the folder instead of copying it:
@@ -86,7 +94,9 @@ apps/lua/LmccFlags/
   src/history_view.lua   history window
   src/setup_view.lua     setup window
 scripts/gen_sounds.js    regenerates the wav files
-scripts/build.ps1        builds the release zip
+scripts/build.sh         builds the release zip and prints the server checksum
+scripts/changelog.sh     release changelog from commits since the previous tag
+.github/workflows/       release on version tags
 tests/                   one *_test.lua per module, helper.lua and ui_stub.lua shared
 ```
 
