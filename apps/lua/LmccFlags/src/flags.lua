@@ -69,18 +69,17 @@ for flagType, causeAt in pairs({
   M.BY_FLAG[flagType].causeAt = causeAt
 end
 
--- What raises each penalty on a stock server with CSP:
--- - MandatoryPits: drive-through, parameter = laps left to serve it (jump start with START_RULE=2,
---   pit lane speeding with SPEEDING_PENALTY=DRIVE_THROUGH); unserved means disqualification.
--- - TeleportToPits: car sent back to its pit box with controls locked for parameter seconds (jump start
---   with START_RULE=1, repeated pit lane speeding, back to pits from the pause menu).
+-- What the game really reports (checked in game, the SDK names do not match):
+-- - TeleportToPits: a drive-through, parameter = laps left to serve it (seen on a jump start).
+--   Unserved means disqualification.
+-- - MandatoryPits: a pit penalty with laps left as parameter (not yet seen in game).
 -- - SlowDown: lift off for parameter seconds after cutting the track (RACE_GAS_PENALTY_DISABLED=0),
 --   or drop below SLOW_DOWN_CLEAR_KMH to clear it at once.
 M.SLOW_DOWN_CLEAR_KMH = 35
 ---@type table<integer, FlagSpec>
 M.BY_PENALTY = {
-  [M.PENALTY.MandatoryPits] = spec('driveThrough', 'DRIVE THROUGH', 'Drive through the pit lane, laps left: %d', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
-  [M.PENALTY.TeleportToPits] = spec('teleported', 'BACK TO PITS', 'Controls locked for %d s', C.black, C.textLight, 80, S.severe, false, P.disc, C.orange),
+  [M.PENALTY.MandatoryPits] = spec('pitPenalty', 'PIT PENALTY', 'Go through the pits, laps left: %d', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
+  [M.PENALTY.TeleportToPits] = spec('driveThrough', 'DRIVE THROUGH', 'Drive through the pit lane, laps left: %d', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
   [M.PENALTY.SlowDown] = spec('slowDown', 'SLOW DOWN', string.format('Lift off for %%d s or drop below %d km/h', M.SLOW_DOWN_CLEAR_KMH), C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
   [M.PENALTY.BlackFlag] = M.BY_FLAG[M.FLAG.Stop],
 }

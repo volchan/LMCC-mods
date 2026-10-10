@@ -20,7 +20,7 @@ t.check('penalty instruction has parameter', penaltyOnly[1].instruction == 'Lift
 local both = signal.resolve(F.FasterCar, P.SlowDown, 5)
 t.check('penalty sorted before blue', #both == 2 and both[1].flag.id == 'slowDown' and both[2].flag.id == 'blue')
 
-local yellowAndPit = signal.resolve(F.Caution, P.MandatoryPits, 2)
+local yellowAndPit = signal.resolve(F.Caution, P.TeleportToPits, 2)
 t.check('drive through sorted before yellow', yellowAndPit[1].flag.id == 'driveThrough' and yellowAndPit[2].flag.id == 'yellow')
 
 local black = signal.resolve(F.Stop, P.BlackFlag)

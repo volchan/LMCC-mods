@@ -148,12 +148,14 @@ s.volume_info = 0.5
 a:playCue('info')
 t.check('test cue volume is master times cue', t.near(played[#played].volume, 0.25))
 
--- A pit penalty the game keeps reporting disappears once served through the pit lane,
--- together with the penalty flag raised for it.
-state.flagType, state.penaltyType, state.penaltyParameter, state.inPitlane = F.ReturnToPits, P.MandatoryPits, 1, false
+-- Jump start as the game reports it: penalty flag plus TeleportToPits with 3 laps. The panel
+-- shows the drive-through alone, and both disappear once served through the pit lane.
+state.flagType, state.penaltyType, state.penaltyParameter, state.inPitlane = F.ReturnToPits, P.TeleportToPits, 3, false
 state.now = 50
 a:update()
-t.check('pit penalty displayed with its flag', #a:signals() == 2)
+local jump = a:signals()
+t.check('jump start shows a drive through alone', #jump == 1 and jump[1].flag.id == 'driveThrough'
+  and jump[1].instruction == 'Drive through the pit lane, laps left: 3')
 state.now, state.inPitlane = 51, true
 a:update()
 state.now, state.inPitlane = 52, false

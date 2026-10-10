@@ -18,14 +18,12 @@ t.check('stays cleared while the game keeps it', p:effective(P.MandatoryPits, 0,
 -- A new penalty of the same type with more laps is shown again.
 t.check('new pit penalty shown again', p:effective(P.MandatoryPits, 3, false) == P.MandatoryPits)
 
--- Teleport to pits: the car starts in the pit lane and serves it by driving out.
+-- Drive-through (reported as TeleportToPits): laps based, served through the pit lane.
 p = penalty.new()
-t.check('pit stop shown in the pits', p:effective(P.TeleportToPits, 30, true) == P.TeleportToPits)
-t.check('pit stop shown while seconds count down', p:effective(P.TeleportToPits, 10, true) == P.TeleportToPits)
-t.check('pit stop cleared at 0 seconds', p:effective(P.TeleportToPits, 0, true) == P.None)
-p = penalty.new()
-p:effective(P.TeleportToPits, 30, true)
-t.check('pit stop cleared when leaving the pits', p:effective(P.TeleportToPits, 30, false) == P.None)
+t.check('drive through shown', p:effective(P.TeleportToPits, 3, false) == P.TeleportToPits)
+t.check('drive through kept on its last lap', p:effective(P.TeleportToPits, 0, false) == P.TeleportToPits)
+t.check('drive through kept in the pit lane', p:effective(P.TeleportToPits, 0, true) == P.TeleportToPits)
+t.check('drive through cleared after the pit lane', p:effective(P.TeleportToPits, 0, false) == P.None)
 
 -- Slow down: timed, not served in the pits.
 p = penalty.new()

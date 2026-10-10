@@ -35,9 +35,9 @@ f = filter.new()
 f:effective(F.Finished, 300, 7, false, true, false)
 t.check('checkered hidden in the pit lane', f:effective(F.Finished, 300 + B, 7, true, true, false) == F.None)
 
--- Penalty flag: hidden once the penalty is served, kept when raised alone.
+-- Penalty flag: hidden while a penalty is reported, kept when raised alone.
 f = filter.new()
-t.check('penalty flag shown with its penalty', f:effective(F.ReturnToPits, 0, 1, false, true, false) == F.ReturnToPits)
-t.check('penalty flag hidden once served', f:effective(F.ReturnToPits, 1, 1, false, true, true) == F.None)
+t.check('penalty flag shown alone', f:effective(F.ReturnToPits, 0, 1, false, true, false) == F.ReturnToPits)
+t.check('penalty flag hidden behind a reported penalty', f:effective(F.ReturnToPits, 1, 1, false, true, true) == F.None)
 
 t.finish()

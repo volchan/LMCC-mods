@@ -41,9 +41,9 @@ end
 ---@private
 function M:refreshVisible(snap)
   local penaltyType = self.penalty:effective(snap.penaltyType, snap.penaltyParameter, snap.inPitlane)
-  local penaltyServed = snap.penaltyType ~= flags.PENALTY.None and penaltyType == flags.PENALTY.None
+  local penaltyReported = flags.forPenalty(snap.penaltyType) ~= nil
   local flagType = self.flagFilter:effective(snap.flagType, snap.now, snap.lap, snap.inPitlane,
-    self.deps.settings.showGreen, penaltyServed)
+    self.deps.settings.showGreen, penaltyReported)
   if flagType == self.lastFlag and penaltyType == self.lastPenalty and snap.penaltyParameter == self.lastParameter then
     return
   end

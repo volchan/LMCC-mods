@@ -2,7 +2,8 @@
 -- - green: kept all session, shown for BRIEF seconds;
 -- - checkered: kept to session end, hidden once the player crosses the line or enters the
 --   pit lane, after at least BRIEF seconds;
--- - penalty flag (return to pits): hidden once the penalty behind it is served.
+-- - penalty flag (return to pits): hidden while the game reports a penalty, which the panel
+--   shows with its exact instruction, and after it is served.
 -- Every other flag is lowered by the game itself.
 local FLAG = require('src/flags').FLAG
 
@@ -21,9 +22,9 @@ end
 ---@param lap integer @Lap in progress.
 ---@param inPitlane boolean
 ---@param showGreen boolean @Setting.
----@param penaltyServed boolean @The game still reports a penalty the app considers served.
+---@param penaltyReported boolean @The game reports a penalty, served or not.
 ---@return integer
-function M:effective(flagType, now, lap, inPitlane, showGreen, penaltyServed)
+function M:effective(flagType, now, lap, inPitlane, showGreen, penaltyReported)
   if flagType ~= self.flag then
     self.flag, self.since, self.raisedLap = flagType, now, lap
   end
@@ -33,7 +34,7 @@ function M:effective(flagType, now, lap, inPitlane, showGreen, penaltyServed)
   elseif flagType == FLAG.Finished then
     if not brief and (lap ~= self.raisedLap or inPitlane) then return FLAG.None end
   elseif flagType == FLAG.ReturnToPits then
-    if penaltyServed then return FLAG.None end
+    if penaltyReported then return FLAG.None end
   end
   return flagType
 end

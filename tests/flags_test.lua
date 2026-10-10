@@ -73,7 +73,7 @@ t.check('every cue is used by a flag', everyCueUsed)
 
 -- Instruction formatting.
 t.check('instruction fills parameter', flags.instruction(flags.forPenalty(P.SlowDown), 5) == 'Lift off for 5 s or drop below 35 km/h')
-t.check('instruction defaults missing parameter to 0', flags.instruction(flags.forPenalty(P.MandatoryPits)) == 'Drive through the pit lane, laps left: 0')
+t.check('instruction defaults missing parameter to 0', flags.instruction(flags.forPenalty(P.MandatoryPits)) == 'Go through the pits, laps left: 0')
 t.check('instruction without placeholder unchanged', flags.instruction(flags.forFlag(F.FasterCar), 3) == 'Faster car behind: let it pass')
 
 t.check('name of a flag', flags.nameOf(flags.FLAG, F.FasterCar) == 'FasterCar')
