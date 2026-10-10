@@ -29,4 +29,9 @@ t.check('black flag and black penalty shown once', #black == 1 and black[1].flag
 local released = signal.resolve(F.None, P.ReleaseBlackFlag)
 t.check('released black flag shows nothing', #released == 0)
 
+local green = signal.resolve(F.Start, P.SlowDown, 2)
+local hidden = signal.without(green, 'green')
+t.check('without removes the hidden signal', #hidden == 1 and hidden[1].flag.id == 'slowDown')
+t.check('without keeps the list when nothing hidden', signal.without(yellow, 'green') == yellow)
+
 t.finish()
