@@ -48,7 +48,7 @@ For development, link the folder instead of copying it:
 
 In game, open from the app bar:
 
-- **LMCC Flags**: the panel. Drag it to move it; drag the grip in its bottom-right corner (shown while the mouse is over it) to resize it, which scales everything. Right click locks it in place (a padlock shows the change); right click again to unlock. The settings icon opens the setup.
+- **LMCC Flags**: the panel. Drag it to move it; drag the grip in its bottom-right corner (shown while the mouse is over it) to resize it, which scales everything. Right click locks it in place (a padlock animation, the same as the CMRT HUD, shows the change); right click again to unlock. The settings icon opens the setup.
 - **LMCC Flags Setup**: tests and preferences.
 - **LMCC Flags History**: the flag log.
 
@@ -75,13 +75,13 @@ apps/lua/LmccFlags/
   src/settings.lua       preferences (ac.storage)
   src/layout.lua         screen position presets
   src/window_mover.lua   moves, opens and resizes the panel window
-  src/lock.lua           panel lock state and padlock animation timing
+  src/lock.lua           panel lock state and padlock animation timeline
   src/panel_input.lua    right click lock, hover resize grip, move blocking
   src/pulse.lua          shared blink
   src/draw.lua           font, text, flag patterns
   src/theme.lua          colours
   src/panel_view.lua     panel
-  src/lock_view.lua      padlock over the panel
+  src/lock_view.lua      padlock animation over the panel (ported from CMRT)
   src/strip.lua          slide and scroll motion of the strips
   src/glow_view.lua      screen-edge strips
   src/history_view.lua   history window
