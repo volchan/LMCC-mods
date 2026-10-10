@@ -5,3 +5,6 @@ node_modules/
 # Local Claude Code context and tools
 CLAUDE.local.md
 .claude/
+
+# Release builds
+dist/
