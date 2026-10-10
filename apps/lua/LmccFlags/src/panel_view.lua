@@ -5,8 +5,10 @@ local pulse = require('src/pulse')
 
 local M = {}
 
--- Layout in px at BASE_WIDTH; everything scales with the window width.
+-- Layout in px at BASE_WIDTH x BASE_HEIGHT; everything scales by the tighter side so
+-- all lines stay inside the window whatever its aspect.
 M.BASE_WIDTH = 520
+M.BASE_HEIGHT = 130
 local PAD = 12
 local ROUNDING = 8
 local LABEL_SIZE = 40
@@ -47,7 +49,7 @@ end
 function M.draw(signals, detail, now)
   local size = ui.windowSize()
   local width, height = size.x, size.y
-  local s = width / M.BASE_WIDTH
+  local s = math.min(width / M.BASE_WIDTH, height / M.BASE_HEIGHT)
   ui.pushDWriteFont(draw.font())
 
   local model = M.model(signals, detail)

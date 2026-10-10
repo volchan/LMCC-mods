@@ -46,6 +46,13 @@ t.check('non-pulsing flag has no overlay', #uiStub.named('rect') == 2)
 uiStub.install(vec2(1040, 260))
 panel.draw(yellow, nil, 0)
 local labelCall = uiStub.named('text')[1]
-t.check('text scales with width', labelCall.args[2] == 80)
+t.check('text scales with window size', labelCall.args[2] == 80)
+
+-- a wide, short window scales by height so the detail line stays visible
+uiStub.install(vec2(1040, 130))
+panel.draw(yellow, 'Incident 200 m ahead', 0)
+local calls = uiStub.named('text')
+t.check('wide window scales by height', calls[1].args[2] == 40)
+t.check('detail line inside window', calls[3].args[1] == 'Incident 200 m ahead' and calls[3].args[4].y <= 130)
 
 t.finish()
