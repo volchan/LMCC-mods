@@ -3,6 +3,7 @@
 local flags = require('src/flags')
 local signal = require('src/signal')
 local context = require('src/context')
+local blue = require('src/blue')
 local settingsLib = require('src/settings')
 
 local M = {}
@@ -12,7 +13,7 @@ M.DETAIL_INTERVAL = 0.25 -- seconds between distance updates
 local GREEN_ID = flags.forFlag(flags.FLAG.Start).id
 
 ---@class AppDeps
----@field game {read: fun(out: table): table?, cause: fun(index: integer, out: table): table?}
+---@field game {read: fun(out: table): table?, cause: fun(index: integer, out: table): table?, cars: fun(out: table): table}
 ---@field sound {play: fun(cue: string, volume: number)}
 ---@field settings table @Loaded settings.
 ---@field tracker table @From `tracker.new()`.
@@ -23,7 +24,7 @@ function M.new(deps)
   return setmetatable({
     deps = deps,
     now = 0,
-    snapshot = {}, cause = {}, stamp = {},
+    snapshot = {}, cause = {}, stamp = {}, cars = {},
     visible = {}, -- real signals after hiding, most urgent first
     detail = nil, ---@type string?
     detailAt = -math.huge,
@@ -46,14 +47,29 @@ function M:refreshVisible(snap)
   self.visible = s.showGreen and real or signal.without(real, GREEN_ID)
 end
 
+---Location line for a signal: lapping cars under blue, otherwise the car that caused the flag.
+---@private
+---@param snap Snapshot
+---@param top Signal?
+---@return string?
+function M:describe(snap, top)
+  if not top then return nil end
+  local deps = self.deps
+  if top.flag.causeAt == flags.CAUSE.behind then
+    local cars = deps.game.cars(self.cars)
+    local lapping = blue.describe(blue.approaching(cars[1], cars, snap.trackLength, deps.settings.blueRange))
+    if lapping then return lapping end
+  end
+  local cause = top.flag.causeAt and deps.game.cause(snap.flagCause, self.cause)
+  return context.describe(top.flag, cause or nil)
+end
+
 ---@private
 function M:refreshDetail(snap)
   local key = signal.key(self.visible)
   if key == self.detailKey and self.now - self.detailAt < M.DETAIL_INTERVAL then return end
   self.detailKey, self.detailAt = key, self.now
-  local top = self.visible[1]
-  local cause = top and top.flag.causeAt and self.deps.game.cause(snap.flagCause, self.cause)
-  self.detail = top and context.describe(top.flag, cause or nil) or nil
+  self.detail = self:describe(snap, self.visible[1])
 end
 
 ---Plays the cue of a flag at the configured volume.

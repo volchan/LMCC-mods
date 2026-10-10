@@ -8,7 +8,9 @@ local app = require('src/app')
 local F, P = flags.FLAG, flags.PENALTY
 
 -- Fake game driven by `state`; counts cause lookups.
-local state = { now = 0, flagType = F.None, flagCause = -1, penaltyType = P.None, penaltyParameter = 0, lap = 2, sessionTime = 60 }
+local state = { now = 0, flagType = F.None, flagCause = -1, penaltyType = P.None, penaltyParameter = 0, lap = 2, sessionTime = 60,
+  trackLength = 4000 }
+local carList = {}
 local causeLookups = 0
 local readsNil = false
 local game = {
@@ -21,6 +23,11 @@ local game = {
     causeLookups = causeLookups + 1
     if index < 0 then return nil end
     out.mySpline, out.causeSpline, out.trackLength, out.causeName, out.causeSector = 0.1, 0.15, 4000, 'J. Doe', nil
+    return out
+  end,
+  cars = function(out)
+    for i = #out, 1, -1 do out[i] = nil end
+    for i, c in ipairs(carList) do out[i] = c end
     return out
   end,
 }
@@ -81,6 +88,23 @@ state.now, state.flagType = 4, F.FasterCar
 a:update()
 t.check('no cue when sound off', #played == count)
 s.sound = true
+
+-- Blue flag without lapping cars falls back to the car reported by the game.
+t.check('blue falls back to flag cause', a:displayDetail() == 'Faster car 3.8 km behind, J. Doe')
+
+-- Blue flag lists the cars about to lap the player.
+carList = {
+  { index = 0, name = 'Me', spline = 0.50, racePosition = 6, running = true },
+  { index = 1, name = 'A. Fast', spline = 0.48, racePosition = 1, running = true },
+}
+state.now = 4 + app.DETAIL_INTERVAL
+a:update()
+t.check('blue lists lapping cars', a:displayDetail() == 'Let 1 car pass: P1 A. Fast 80 m')
+s.blueRange = 50
+state.now = 4 + 2 * app.DETAIL_INTERVAL
+a:update()
+t.check('blue range setting respected', a:displayDetail() == 'Faster car 3.8 km behind, J. Doe')
+s.blueRange = settings.DEFAULTS.blueRange
 
 -- Silent flags play nothing.
 count = #played
