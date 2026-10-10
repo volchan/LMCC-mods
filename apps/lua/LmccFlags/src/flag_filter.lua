@@ -2,8 +2,8 @@
 -- - green: kept all session, shown for BRIEF seconds;
 -- - checkered: kept to session end, hidden once the player crosses the line or enters the
 --   pit lane, after at least BRIEF seconds;
--- - penalty flag (return to pits): hidden while the game reports a penalty, which the panel
---   shows with its exact instruction, and after it is served.
+-- - gas cut flag (return to pits): the game also raises it alongside every real penalty, so it is
+--   hidden while a penalty is reported; the panel shows that penalty's exact instruction instead.
 -- Every other flag is lowered by the game itself.
 local FLAG = require('src/flags').FLAG
 

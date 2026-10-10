@@ -163,6 +163,15 @@ a:update()
 t.check('pit penalty and its flag gone after the pit lane', #a:signals() == 0)
 state.flagType, state.penaltyType, state.penaltyParameter = F.None, P.None, 0
 
+-- Gas cut as the game reports it: the penalty flag alone, no penalty.
+state.flagType = F.ReturnToPits
+state.now = 60
+a:update()
+local cut = a:signals()
+t.check('gas cut shown with the clear speed', #cut == 1 and cut[1].flag.id == 'gasCut'
+  and cut[1].instruction == 'Lift off or drop below 35 km/h')
+state.flagType = F.None
+
 -- No game state: nothing changes.
 readsNil = true
 state.now = 99

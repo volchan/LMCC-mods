@@ -40,6 +40,9 @@ end
 
 local S, P = M.SOUND, M.PATTERN
 
+-- Speed under which a gas cut clears at once.
+M.GAS_CUT_CLEAR_KMH = 35
+
 ---@type table<integer, FlagSpec>
 M.BY_FLAG = {
   [M.FLAG.Start] = spec('green', 'GREEN', 'Track clear, race on', C.green, C.textLight, 20, S.info, false),
@@ -49,7 +52,8 @@ M.BY_FLAG = {
   [M.FLAG.Stop] = spec('black', 'BLACK', 'Disqualified: return to pits', C.black, C.textLight, 90, S.severe, true),
   [M.FLAG.SlowVehicle] = spec('slowVehicle', 'SLOW VEHICLE', 'Slow vehicle on track', C.white, C.textDark, 55, S.caution, true),
   [M.FLAG.Ambulance] = spec('ambulance', 'AMBULANCE', 'Emergency vehicle on track', C.white, C.textDark, 65, S.caution, true),
-  [M.FLAG.ReturnToPits] = spec('returnToPits', 'PENALTY', 'Serve your penalty', C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
+  -- Checked in game: raised alone for a gas cut after cutting the track, and alongside every real penalty.
+  [M.FLAG.ReturnToPits] = spec('gasCut', 'GAS CUT', string.format('Lift off or drop below %d km/h', M.GAS_CUT_CLEAR_KMH), C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
   [M.FLAG.MechanicalFailure] = spec('mechanical', 'MECHANICAL', 'Car damaged: pit now', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
   [M.FLAG.Unsportsmanlike] = spec('warning', 'WARNING', 'Unsportsmanlike behaviour', C.black, C.textLight, 70, S.severe, true, P.diagonal, C.white),
   [M.FLAG.StopCancel] = spec('blackCancelled', 'BLACK CANCELLED', 'Black flag withdrawn', C.grey, C.textLight, 30, S.info, false),
@@ -74,13 +78,12 @@ end
 --   Unserved means disqualification.
 -- - MandatoryPits: a pit penalty with laps left as parameter (not yet seen in game).
 -- - SlowDown: lift off for parameter seconds after cutting the track (RACE_GAS_PENALTY_DISABLED=0),
---   or drop below SLOW_DOWN_CLEAR_KMH to clear it at once.
-M.SLOW_DOWN_CLEAR_KMH = 35
+--   or drop below GAS_CUT_CLEAR_KMH to clear it at once (not yet seen in game).
 ---@type table<integer, FlagSpec>
 M.BY_PENALTY = {
   [M.PENALTY.MandatoryPits] = spec('pitPenalty', 'PIT PENALTY', 'Go through the pits, laps left: %d', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
   [M.PENALTY.TeleportToPits] = spec('driveThrough', 'DRIVE THROUGH', 'Drive through the pit lane, laps left: %d', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
-  [M.PENALTY.SlowDown] = spec('slowDown', 'SLOW DOWN', string.format('Lift off for %%d s or drop below %d km/h', M.SLOW_DOWN_CLEAR_KMH), C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
+  [M.PENALTY.SlowDown] = spec('slowDown', 'SLOW DOWN', string.format('Lift off for %%d s or drop below %d km/h', M.GAS_CUT_CLEAR_KMH), C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
   [M.PENALTY.BlackFlag] = M.BY_FLAG[M.FLAG.Stop],
 }
 
