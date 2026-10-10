@@ -18,6 +18,8 @@ function M.install(windowSize)
   ui = {
     Alignment = { Start = -1, Center = 0, End = 1 },
     MouseButton = { Left = 0, Right = 1 },
+    CornerFlags = { Bottom = 12 },
+    pathLineTo = record('pathLineTo'),
     windowHovered = function() return M.hovered end,
     mouseClicked = function(button) return M.mouseClicks[button] == true end,
     itemActive = function() return M.active end,
@@ -26,9 +28,7 @@ function M.install(windowSize)
     setCursor = record('setCursor'),
     invisibleButton = record('invisibleButton'),
     pathClear = record('pathClear'),
-    pathArcTo = record('pathArcTo'),
     pathStroke = record('pathStroke'),
-    drawLine = record('line'),
     DWriteFont = setmetatable({ Weight = { Bold = 'Bold' }, Stretch = { SemiCondensed = 'SemiCondensed' } },
       { __call = function() return fakeFont end }),
     windowSize = function() return M.windowSize end,

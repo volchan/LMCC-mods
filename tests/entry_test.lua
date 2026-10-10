@@ -140,7 +140,7 @@ t.check('right click locks the panel', storage.panelLocked == true)
 uiStub.reset()
 uiStub.time = 0.5
 script.windowPanel(0)
-t.check('lock animation drawn', #uiStub.named('pathArcTo') == 1)
+t.check('lock animation drawn', #uiStub.named('pathStroke') == 1)
 t.check('locked panel blocks moving', uiStub.named('invisibleButton')[1].args[1] == '##lmccLocked')
 
 -- Unlocked again, dragging the grip resizes through the window accessor.

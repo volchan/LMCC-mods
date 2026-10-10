@@ -5,38 +5,49 @@ uiStub.install(vec2(520, 130))
 local lock = require('src/lock')
 local view = require('src/lock_view')
 
--- Padlock primitive: body, arch and two legs; the right leg lifts when open.
-view.padlock(vec2(100, 100), 40, 1, 0.5)
-local rects, lines = uiStub.named('rect'), uiStub.named('line')
-t.check('padlock body and shackle drawn', #rects == 1 and #uiStub.named('pathArcTo') == 1
-  and #uiStub.named('pathStroke') == 1 and #lines == 2)
-t.check('padlock uses the given alpha', rects[1].args[3].mult == 0.5)
-t.check('closed shackle legs reach the body', lines[1].args[1].y == lines[2].args[1].y)
-uiStub.reset()
-view.padlock(vec2(100, 100), 40, 0, 1)
-lines = uiStub.named('line')
-t.check('open shackle right leg lifted', lines[2].args[1].y < lines[1].args[1].y)
-
--- Nothing without animation or hover.
+-- Nothing without a recent toggle.
 local l = lock.new()
-uiStub.reset()
-view.draw(l, 0, false)
+view.draw(l, 0, 1)
 t.check('hidden when idle', #uiStub.calls == 0)
 
--- Hover shows a small padlock in the top-right corner, matching the state.
-view.draw(l, 0, true)
-local body = uiStub.named('rect')[1]
-local h = 130 * view.HINT_SIZE
-t.check('hover padlock in the corner', body.args[2].x > 520 - 2 * h and body.args[1].y < 2 * h)
-t.check('hover padlock dimmed', body.args[3].mult == view.HINT_ALPHA)
-
--- Toggle animation: big padlock centred on the panel.
+-- Closed padlock: body, shackle path, rounded end, all clipped.
 l:toggle(5)
 uiStub.reset()
-view.draw(l, 5 + lock.CLOSE_TIME, false)
+view.draw(l, 5 + lock.SHACKLE_TIME, 1)
+local body = uiStub.named('rect')[1]
+t.check('body drawn with rounded bottom', body and body.args[5] == ui.CornerFlags.Bottom)
+t.check('body centred below the middle', t.near((body.args[1].x + body.args[2].x) / 2, 260)
+  and (body.args[1].y + body.args[2].y) / 2 > 65)
+local points = uiStub.named('pathLineTo')
+t.check('shackle is one stroked path', #points == 18 and #uiStub.named('pathStroke') == 1)
+t.check('shackle end rounded', #uiStub.named('circle') == 1)
+t.check('clipped for the wipe', #uiStub.named('pushClipRect') == 1 and #uiStub.named('popClipRect') == 1)
+local closedEnd = points[1].args[1].x
+
+-- Open padlock: the loose leg end swings out to the other side.
+uiStub.reset()
+local unlocked = lock.new(true)
+unlocked:toggle(30)
+view.draw(unlocked, 30 + lock.SHACKLE_TIME, 1)
+local openEnd = uiStub.named('pathLineTo')[1].args[1].x
+t.check('open shackle end on the right of the closed one', openEnd > closedEnd)
+
+-- Wipe slides the clip rect to the right.
+uiStub.reset()
+view.draw(unlocked, 30 + lock.WIPE_END, 1)
+local clip = uiStub.named('pushClipRect')[1]
+t.check('wipe moves the clip by twice the width', t.near(clip.args[1].x, 260 - 520 + 1040))
+
+-- Small panels shrink the padlock, the panel scale grows it.
+uiStub.install(vec2(30, 20))
+local small = lock.new()
+small:toggle(0)
+view.draw(small, lock.SHACKLE_TIME, 1)
 body = uiStub.named('rect')[1]
-local height = 130 * view.SIZE
-t.check('animated padlock centred and full size', t.near(body.args[1].x, 260 - height * 0.4)
-  and t.near(body.args[2].y, 65 + height / 2))
+t.check('padlock fits a small panel', body.args[2].x - body.args[1].x < 30)
+uiStub.install(vec2(520, 130))
+view.draw(small, lock.SHACKLE_TIME, 2)
+body = uiStub.named('rect')[1]
+t.check('padlock follows the panel scale', t.near(body.args[2].x - body.args[1].x, 50 * 0.85 * 2))
 
 t.finish()

@@ -39,6 +39,13 @@ function M.model(signals, detail)
 end
 
 -- No background without a flag: only a faint label so the panel can still be found and moved.
+---Panel scale for a window size: 1 at the base size, by the tighter side.
+---@param size vec2
+---@return number
+function M.scale(size)
+  return math.min(size.x / M.BASE_WIDTH, size.y / M.BASE_HEIGHT)
+end
+
 local function drawIdle(width, height, s)
   draw.text(M.IDLE_TEXT, SMALL_SIZE * s, vec2(0, 0), vec2(width, height), COLORS.dim, ui.Alignment.Center)
 end
@@ -49,7 +56,7 @@ end
 function M.draw(signals, detail, now)
   local size = ui.windowSize()
   local width, height = size.x, size.y
-  local s = math.min(width / M.BASE_WIDTH, height / M.BASE_HEIGHT)
+  local s = M.scale(size)
   ui.pushDWriteFont(draw.font())
 
   local model = M.model(signals, detail)

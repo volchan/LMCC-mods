@@ -1,12 +1,12 @@
--- Panel lock: a locked panel cannot be moved or resized. Remembers when it was toggled so the
--- view can animate the change. Pure, no drawing.
+-- Panel lock: a locked panel cannot be moved or resized. Remembers when it was toggled and gives
+-- the padlock animation timeline (same motion as the CMRT HUD lock). Pure, no drawing.
 local M = {}
 M.__index = M
 
-M.ANIMATION = 1.2 -- seconds the padlock stays on screen after a toggle
-M.CLOSE_TIME = 0.3 -- seconds for the shackle to close or open
-M.FADE_TIME = 0.4 -- seconds of fade out at the end of the animation
-M.POP_SCALE = 1.3 -- padlock size at the start of the animation, shrinking to 1
+M.ANIMATION = 1 -- seconds the padlock stays on screen after a toggle
+M.SHACKLE_TIME = 0.2 -- seconds for the shackle to swing closed (or open, played backwards)
+M.BOUNCE = 10 -- px the padlock dips while the shackle swings
+M.WIPE_START, M.WIPE_END = 0.3, 0.8 -- seconds: the padlock is wiped away to the right
 
 ---@param locked boolean?
 function M.new(locked)
@@ -20,10 +20,14 @@ function M:toggle(now)
   return self.locked
 end
 
+local function clamp01(x)
+  return math.min(1, math.max(0, x))
+end
+
 ---@class LockFrame
----@field closed number @Shackle position, 0 open .. 1 closed.
----@field scale number
----@field alpha number
+---@field angle number @Shackle swing around its vertical axis, pi open .. 0 closed.
+---@field bounce number @Px down.
+---@field wipe number @0 fully visible .. 1 wiped away.
 
 ---Padlock animation at `now`, nil once it is over.
 ---@param now number @Seconds.
@@ -31,12 +35,12 @@ end
 ---@return LockFrame?
 function M:frame(now, out)
   local t = now - self.changedAt
-  if t >= M.ANIMATION then return nil end
-  local k = math.min(1, t / M.CLOSE_TIME)
-  local eased = 1 - (1 - k) * (1 - k)
-  out.closed = self.locked and eased or 1 - eased
-  out.scale = M.POP_SCALE + (1 - M.POP_SCALE) * eased
-  out.alpha = math.min(1, (M.ANIMATION - t) / M.FADE_TIME)
+  if t > M.ANIMATION then return nil end
+  local swing = self.locked and t or M.SHACKLE_TIME - t
+  local k = clamp01(swing / M.SHACKLE_TIME)
+  out.angle = math.pi * (1 - k)
+  out.bounce = M.BOUNCE * (clamp01(k / 0.5) - clamp01((k - 0.5) / 0.5))
+  out.wipe = clamp01((t - M.WIPE_START) / (M.WIPE_END - M.WIPE_START))
   return out
 end
 

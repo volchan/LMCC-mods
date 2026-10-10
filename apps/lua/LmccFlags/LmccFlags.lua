@@ -52,8 +52,8 @@ end
 
 function script.windowPanel(dt)
   panelView.draw(controller:signals(), controller:displayDetail(), controller.now)
-  local hovered = panelInput.update(panelLock.locked, panelActions)
-  lockView.draw(panelLock, ui.time(), hovered)
+  panelInput.update(panelLock.locked, panelActions)
+  lockView.draw(panelLock, ui.time(), panelView.scale(ui.windowSize()))
 end
 
 function script.windowHistory(dt)

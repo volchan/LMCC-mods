@@ -10,7 +10,6 @@ local gripColor = rgbm(1, 1, 1, 0.5)
 
 ---@param locked boolean
 ---@param actions {toggleLock: fun(), resize: fun(size: vec2)}
----@return boolean @Whether the mouse is over the panel.
 function M.update(locked, actions)
   local size = ui.windowSize()
   local hovered = ui.windowHovered()
@@ -18,7 +17,7 @@ function M.update(locked, actions)
   if locked then
     ui.setCursor(vec2(0, 0))
     ui.invisibleButton('##lmccLocked', size)
-    return hovered
+    return
   end
   local corner = vec2(size.x - M.GRIP, size.y - M.GRIP)
   ui.setCursor(corner)
@@ -31,7 +30,6 @@ function M.update(locked, actions)
     local d = ui.mouseDelta()
     actions.resize(vec2(math.max(M.MIN_SIZE.x, size.x + d.x), math.max(M.MIN_SIZE.y, size.y + d.y)))
   end
-  return hovered
 end
 
 return M

@@ -56,4 +56,6 @@ local calls = uiStub.named('text')
 t.check('wide window scales by height', calls[1].args[2] == 40)
 t.check('detail line inside window', calls[3].args[1] == 'Incident 200 m ahead' and calls[3].args[4].y <= 130)
 
+t.check('scale by the tighter side', panel.scale(vec2(1040, 130)) == 1 and panel.scale(vec2(1040, 260)) == 2)
+
 t.finish()

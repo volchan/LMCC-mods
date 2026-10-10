@@ -1,52 +1,54 @@
--- Padlock over the panel: big and animated right after a lock toggle, small in the corner while
--- the mouse is over the panel, hidden otherwise.
+-- Padlock drawn over the panel after a lock toggle, ported from the CMRT HUD: a white body, a
+-- shackle swinging closed in 3D, a small bounce, then a wipe to the right.
 local COLORS = require('src/theme').COLORS
 
 local M = {}
 
-M.SIZE = 0.5 -- animated padlock height, fraction of the panel height
-M.HINT_SIZE = 0.18 -- corner padlock height, fraction of the panel height
-M.HINT_ALPHA = 0.8
+-- Padlock geometry in px at scale 1.
+local BODY = vec2(50, 40) * 0.85
+local HEIGHT_OFFSET = 10 -- body below the centre
+local WIDTH = 8 -- shackle thickness
+local RADIUS = BODY.x / 2 - WIDTH / 2
+local CENTER_OFFSET = 25 -- shackle arc centre above the body centre
+local LEG_DEPTH = 10 -- right leg end below the body top
+local FULL = BODY + vec2(0, HEIGHT_OFFSET + RADIUS)
+local POINTS = 16
 
 -- Reused every frame to avoid allocations.
 local frame = {}
-local color = rgbm(0, 0, 0, 0)
-
----Padlock centred on `center`.
----@param center vec2
----@param height number @Px.
----@param closed number @Shackle position, 0 open .. 1 closed.
----@param alpha number
-function M.padlock(center, height, closed, alpha)
-  local c = COLORS.textLight
-  color.r, color.g, color.b, color.mult = c.r, c.g, c.b, alpha
-  local half = height / 2
-  local bodyTop = center.y + half - height * 0.55
-  local width = height * 0.8
-  ui.drawRectFilled(vec2(center.x - width / 2, bodyTop), vec2(center.x + width / 2, center.y + half), color, height * 0.08)
-  -- Shackle: an arch whose right leg leaves the body as it lifts open.
-  local radius, thickness = width * 0.3, height * 0.1
-  local lift = (1 - closed) * height * 0.2
-  local arcY = bodyTop - height * 0.2 - lift
-  ui.pathClear()
-  ui.pathArcTo(vec2(center.x, arcY), radius, math.pi, 2 * math.pi, 16)
-  ui.pathStroke(color, false, thickness)
-  ui.drawLine(vec2(center.x - radius, bodyTop), vec2(center.x - radius, arcY), color, thickness)
-  ui.drawLine(vec2(center.x + radius, bodyTop - lift), vec2(center.x + radius, arcY), color, thickness)
-end
 
 ---@param lock table @From `lock.new()`.
 ---@param now number @Seconds, same clock as the toggle.
----@param hovered boolean
-function M.draw(lock, now, hovered)
-  local size = ui.windowSize()
+---@param scale number @Panel scale, 1 at its base size.
+function M.draw(lock, now, scale)
   local f = lock:frame(now, frame)
-  if f then
-    M.padlock(size / 2, size.y * M.SIZE * f.scale, f.closed, f.alpha)
-  elseif hovered then
-    local h = size.y * M.HINT_SIZE
-    M.padlock(vec2(size.x - h, h), h, lock.locked and 1 or 0, M.HINT_ALPHA)
+  if not f then return end
+  local size = ui.windowSize()
+  -- Shrink to fit a small panel, never grow.
+  local fit = math.min(1, math.min(FULL.x, size.x) / FULL.x, math.min(FULL.y, size.y) / FULL.y) * scale
+  local body, offset, radius, width = BODY * fit, HEIGHT_OFFSET * fit, RADIUS * fit, WIDTH * fit
+  local white = COLORS.white
+  local center = size / 2 + vec2(0, f.bounce)
+
+  local clip = vec2(f.wipe * size.x * 2, 0)
+  ui.pushClipRect(center - size + clip, center + size + clip)
+  local bodyCenter = center + vec2(0, offset)
+  ui.drawRectFilled(bodyCenter - body / 2, bodyCenter + body / 2, white, 10 * fit, ui.CornerFlags.Bottom)
+
+  -- Rotating the arch around its vertical axis only narrows it: x scales by cos(angle).
+  local c = math.cos(f.angle)
+  local arcCenter = center + vec2(radius - radius * c, offset - CENTER_OFFSET * fit)
+  local loose = center + vec2(radius - 2 * radius * c, 0)
+  ui.pathClear()
+  ui.pathLineTo(loose)
+  for i = 0, POINTS - 1 do
+    local a = -math.pi + math.pi * i / (POINTS - 1)
+    ui.pathLineTo(arcCenter + vec2(radius * math.cos(a) * c, radius * math.sin(a)))
   end
+  ui.pathLineTo(center + vec2(body.x / 2 - width / 2, offset - body.y / 2 + LEG_DEPTH * fit))
+  ui.pathStroke(white, false, width)
+  ui.drawCircleFilled(loose, width / 2, white)
+  ui.popClipRect()
 end
 
 return M

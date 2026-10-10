@@ -8,7 +8,7 @@ local toggles, resized = 0, nil
 local actions = { toggleLock = function() toggles = toggles + 1 end, resize = function(s) resized = s end }
 
 -- Unlocked, mouse away: grip area reserved but not drawn.
-t.check('reports no hover', input.update(false, actions) == false)
+input.update(false, actions)
 t.check('grip hidden without hover', #uiStub.named('triangle') == 0 and #uiStub.named('invisibleButton') == 1)
 local cursor = uiStub.named('setCursor')[1].args[1]
 t.check('grip in the bottom-right corner', cursor.x == 520 - input.GRIP and cursor.y == 130 - input.GRIP)
@@ -17,7 +17,7 @@ t.check('grip in the bottom-right corner', cursor.x == 520 - input.GRIP and curs
 uiStub.reset()
 uiStub.hovered = true
 uiStub.mouseClicks[ui.MouseButton.Right] = true
-t.check('reports hover', input.update(false, actions) == true)
+input.update(false, actions)
 t.check('grip drawn on hover', #uiStub.named('triangle') == 1)
 t.check('right click toggles the lock', toggles == 1)
 t.check('no resize without drag', resized == nil)
