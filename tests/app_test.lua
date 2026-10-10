@@ -116,6 +116,12 @@ local historySize = #a.deps.tracker.history
 local red = preview.options()[1]
 a:startPreview(red)
 t.check('preview displayed', a:signals()[1].flag.id == 'red' and a:displayDetail() == nil)
+a:stopPreview()
+for _, o in ipairs(preview.options()) do
+  if o.label == 'BLUE' then a:startPreview(o) end
+end
+t.check('blue preview shows sample lapping cars', a:displayDetail() == preview.sampleDetail(flags.forFlag(F.FasterCar)))
+a:startPreview(red)
 t.check('preview cue played', played[#played].cue == 'severe')
 t.check('preview not in history', #a.deps.tracker.history == historySize)
 a:stopPreview()

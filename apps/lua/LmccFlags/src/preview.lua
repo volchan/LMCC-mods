@@ -2,12 +2,18 @@
 -- look and sound before a race. Preview signals are never written to the history.
 local flags = require('src/flags')
 local signal = require('src/signal')
+local context = require('src/context')
+local blue = require('src/blue')
 
 local M = {}
 M.__index = M
 
 M.DURATION = 6 -- seconds
 M.PENALTY_PARAMETER = 3 -- shown in penalty instructions, e.g. "Pit within 3 laps"
+
+-- Fake surroundings so previews show a realistic location line.
+M.SAMPLE_CAUSE = { mySpline = 0.10, causeSpline = 0.1625, trackLength = 4000, causeName = 'Sample Driver', causeSector = 'Turn 1' }
+M.SAMPLE_LAPPING = { { name = 'Leader', racePosition = 1, gap = 80 }, { name = 'Second', racePosition = 2, gap = 240 } }
 
 ---@class PreviewOption
 ---@field label string
@@ -39,14 +45,23 @@ function M.options()
   return list
 end
 
+---Location line a real flag of this kind would show, built from sample data.
+---@param flag FlagSpec
+---@return string?
+function M.sampleDetail(flag)
+  if flag.causeAt == flags.CAUSE.behind then return blue.describe(M.SAMPLE_LAPPING) end
+  return context.describe(flag, M.SAMPLE_CAUSE)
+end
+
 function M.new()
-  return setmetatable({ signals = nil, startedAt = 0 }, M)
+  return setmetatable({ signals = nil, detail = nil, startedAt = 0 }, M)
 end
 
 ---@param option PreviewOption
 ---@param now number @Seconds.
 function M:start(option, now)
   self.signals = signal.resolve(option.flagType, option.penaltyType, M.PENALTY_PARAMETER)
+  self.detail = M.sampleDetail(self.signals[1].flag)
   self.startedAt = now
 end
 

@@ -47,6 +47,12 @@ t.check('preview resolves the option', sig and sig[1].flag.id == 'slowDown')
 t.check('penalty preview uses sample parameter', sig[1].instruction == 'Lift off throttle for ' .. preview.PENALTY_PARAMETER .. ' s')
 t.check('remaining time counts down', t.near(p:remaining(12), preview.DURATION - 2))
 t.check('expires after duration', p:active(10 + preview.DURATION) == nil and p:remaining(30) == 0)
+t.check('penalty preview has no location', p.detail == nil)
+
+local F = flags.FLAG
+t.check('yellow sample describes an incident', preview.sampleDetail(flags.forFlag(F.Caution)) == 'Incident 250 m ahead, Turn 1, Sample Driver')
+t.check('blue sample lists lapping cars', preview.sampleDetail(flags.forFlag(F.FasterCar)) == 'Let 2 cars pass: P1 Leader 80 m, P2 Second 240 m')
+t.check('white sample has no location', preview.sampleDetail(flags.forFlag(F.OneLapLeft)) == nil)
 
 p:start(options[1], 0)
 p:stop()

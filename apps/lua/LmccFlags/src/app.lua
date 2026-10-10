@@ -102,10 +102,10 @@ function M:signals()
   return self.deps.preview:active(self.now) or self.visible
 end
 
----Location line for the displayed signal; previews have none.
+---Location line for the displayed signal; previews show sample data.
 ---@return string?
 function M:displayDetail()
-  if self.deps.preview:active(self.now) then return nil end
+  if self.deps.preview:active(self.now) then return self.deps.preview.detail end
   return self.detail
 end
 
