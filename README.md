@@ -6,7 +6,7 @@ It uses the flags and penalties the game already raises, so it works on any serv
 
 ## What drivers get
 
-- **Flag panel**: big HUD panel with the flag drawn in its colours and pattern, its name, what to do, and where the cause is:
+- **Flag panel**: big HUD panel with the flag drawn in its colours and pattern, its name, what to do, and where the cause is. It opens by itself on every new flag, even if it was closed:
   - yellow family: `Incident 250 m ahead, Turn 1, J. Doe`
   - blue: every car about to lap you, closest first, with race position and gap: `Let 2 cars pass: P1 A. Fast 80 m, P3 B. Quick 240 m`
   - a second active signal (for example a penalty during a blue flag) is shown on an extra line.
