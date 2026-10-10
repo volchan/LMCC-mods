@@ -1,4 +1,5 @@
-# Builds and publishes a release when a version tag is pushed, e.g. `git tag v1.0.1 && git push origin v1.0.1`.
+# Builds and publishes a release when a version tag is created: pushed from git
+# (`git tag v1.0.1 && git push origin v1.0.1`) or created with a new release on GitHub.
 # The tag sets VERSION in the zipped manifest; the release notes give the server checksum and the changelog.
 name: Release
 
@@ -60,4 +61,11 @@ jobs:
           TAG: ${{ github.ref_name }}
           ZIP: ${{ steps.build.outputs.zip }}
           VERSION: ${{ steps.build.outputs.version }}
-        run: gh release create "$TAG" "$ZIP" --title "LMCC Flags $VERSION" --notes-file notes.md
+        # A release created on GitHub already exists: fill it instead of failing.
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" "$ZIP" --clobber
+            gh release edit "$TAG" --title "LMCC Flags $VERSION" --notes-file notes.md
+          else
+            gh release create "$TAG" "$ZIP" --title "LMCC Flags $VERSION" --notes-file notes.md
+          fi
