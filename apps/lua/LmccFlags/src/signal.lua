@@ -37,5 +37,4 @@ function M.key(signals)
   return signals[1] and signals[1].flag.id or M.NONE
 end
 
-
 return M
