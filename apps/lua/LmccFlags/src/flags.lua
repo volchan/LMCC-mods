@@ -31,6 +31,7 @@ M.PATTERN = { solid = 'solid', checkered = 'checkered', stripes = 'stripes', dis
 ---@field priority integer @Higher wins when several signals are active.
 ---@field sound string? @One of `M.SOUND`, nil for silent.
 ---@field pulse boolean @Whether views should pulse it to draw attention.
+---@field causeAt string? @One of `M.CAUSE` when the game reports which car caused the flag.
 
 local function spec(id, label, instruction, color, text, priority, sound, pulse, pattern, accent)
   return { id = id, label = label, instruction = instruction, color = color, text = text, priority = priority,
@@ -58,6 +59,15 @@ M.BY_FLAG = {
   [M.FLAG.SessionSuspended] = spec('red', 'RED', 'Session stopped: slow down, return to pits', C.red, C.textLight, 100, S.severe, true),
   [M.FLAG.Code60] = spec('code60', 'CODE 60', 'Slow to 60 km/h, no overtaking', C.purple, C.textLight, 75, S.caution, true),
 }
+
+-- Where the car that caused a flag (`ac.getSim().raceFlagCause`) is relative to the player.
+M.CAUSE = { ahead = 'ahead', behind = 'behind' }
+for flagType, causeAt in pairs({
+  [M.FLAG.Caution] = M.CAUSE.ahead, [M.FLAG.Slippery] = M.CAUSE.ahead, [M.FLAG.SlowVehicle] = M.CAUSE.ahead,
+  [M.FLAG.Ambulance] = M.CAUSE.ahead, [M.FLAG.Code60] = M.CAUSE.ahead, [M.FLAG.FasterCar] = M.CAUSE.behind,
+}) do
+  M.BY_FLAG[flagType].causeAt = causeAt
+end
 
 ---@type table<integer, FlagSpec>
 M.BY_PENALTY = {

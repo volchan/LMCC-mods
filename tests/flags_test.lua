@@ -37,6 +37,12 @@ t.check('black beats yellow', flags.forFlag(F.Stop).priority > flags.forFlag(F.C
 t.check('yellow beats blue', flags.forFlag(F.Caution).priority > flags.forFlag(F.FasterCar).priority)
 t.check('blue beats white', flags.forFlag(F.FasterCar).priority > flags.forFlag(F.OneLapLeft).priority)
 
+-- Cause direction.
+t.check('yellow cause is ahead', flags.forFlag(F.Caution).causeAt == flags.CAUSE.ahead)
+t.check('code 60 cause is ahead', flags.forFlag(F.Code60).causeAt == flags.CAUSE.ahead)
+t.check('blue cause is behind', flags.forFlag(F.FasterCar).causeAt == flags.CAUSE.behind)
+t.check('checkered has no cause', flags.forFlag(F.Finished).causeAt == nil)
+
 -- Penalties.
 local P = flags.PENALTY
 t.check('no spec for no penalty', flags.forPenalty(P.None) == nil)
