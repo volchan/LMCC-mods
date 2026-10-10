@@ -64,6 +64,7 @@ apps/lua/LmccFlags/
   src/flags.lua          catalog: every flag and penalty, look, instruction, priority, sound
   src/signal.lua         flag + penalty -> signals, most urgent first
   src/penalty.lua        decides when a penalty is served
+  src/flag_filter.lua    hides flags the game keeps raised (green, checkered, served penalty flag)
   src/context.lua        distance, sector and driver of the flag cause
   src/blue.lua           cars about to lap the player
   src/tracker.lua        debounce, change events, history
@@ -103,3 +104,4 @@ tests/                   one *_test.lua per module, helper.lua and ui_stub.lua s
 - The blue flag list uses race order, so in practice and qualifying (ordered by best lap) it can list cars that are simply faster.
 - Very long location lines are clipped to the panel width; widen the panel if needed.
 - The game can keep reporting a penalty after it is served, so the app clears it itself: pit penalties (PIT PENALTY, PIT STOP) once the car has been in the pit lane and left it, timed penalties (PIT STOP, SLOW DOWN) when their seconds reach 0. A black flag only clears when the game removes it.
+- The game also keeps some flags raised long after they matter, so the app hides them: green after 5 seconds, checkered once you cross the line or enter the pit lane (shown at least 5 seconds), the penalty flag once its penalty is served. Yellow, blue, white and black are lowered by the game itself.
