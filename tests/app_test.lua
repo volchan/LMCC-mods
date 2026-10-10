@@ -142,6 +142,18 @@ s.volume_info = 0.5
 a:playCue('info')
 t.check('test cue volume is master times cue', t.near(played[#played].volume, 0.25))
 
+-- A pit penalty the game keeps reporting disappears once served through the pit lane.
+state.flagType, state.penaltyType, state.penaltyParameter, state.inPitlane = F.None, P.MandatoryPits, 1, false
+state.now = 50
+a:update()
+t.check('pit penalty displayed', a:signals()[1].flag.id == 'pitPenalty')
+state.now, state.inPitlane = 51, true
+a:update()
+state.now, state.inPitlane = 52, false
+a:update()
+t.check('pit penalty gone after the pit lane', #a:signals() == 0)
+state.penaltyType, state.penaltyParameter = P.None, 0
+
 -- No game state: nothing changes.
 readsNil = true
 state.now = 99

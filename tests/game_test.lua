@@ -20,7 +20,7 @@ local snap = {}
 t.check('read returns the table it filled', game.read(snap) == snap)
 t.check('time in seconds', snap.now == 125)
 t.check('flag fields', snap.flagType == 2 and snap.flagCause == 3)
-t.check('penalty fields', snap.penaltyType == 3 and snap.penaltyParameter == 5)
+t.check('penalty fields', snap.penaltyType == 3 and snap.penaltyParameter == 5 and snap.inPitlane == false)
 t.check('lap in progress is 1-based', snap.lap == 5)
 t.check('session time from session start', snap.sessionTime == 120)
 t.check('track length', snap.trackLength == 4000)

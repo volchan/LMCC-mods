@@ -4,6 +4,7 @@ local flags = require('src/flags')
 local signal = require('src/signal')
 local context = require('src/context')
 local blue = require('src/blue')
+local penalty = require('src/penalty')
 local settingsLib = require('src/settings')
 
 local M = {}
@@ -27,6 +28,7 @@ function M.new(deps)
     now = 0,
     snapshot = {}, cause = {}, stamp = {}, cars = {},
     visible = {}, -- real signals after hiding, most urgent first
+    penalty = penalty.new(), -- clears penalties the game keeps reporting once served
     detail = nil, ---@type string?
     detailAt = -math.huge,
     detailKey = nil,
@@ -38,13 +40,14 @@ end
 ---@private
 function M:refreshVisible(snap)
   local s = self.deps.settings
-  if snap.flagType == self.lastFlag and snap.penaltyType == self.lastPenalty
+  local penaltyType = self.penalty:effective(snap.penaltyType, snap.penaltyParameter, snap.inPitlane)
+  if snap.flagType == self.lastFlag and penaltyType == self.lastPenalty
     and snap.penaltyParameter == self.lastParameter and s.showGreen == self.lastShowGreen then
     return
   end
   self.lastFlag, self.lastPenalty, self.lastParameter, self.lastShowGreen =
-    snap.flagType, snap.penaltyType, snap.penaltyParameter, s.showGreen
-  local real = signal.resolve(snap.flagType, snap.penaltyType, snap.penaltyParameter)
+    snap.flagType, penaltyType, snap.penaltyParameter, s.showGreen
+  local real = signal.resolve(snap.flagType, penaltyType, snap.penaltyParameter)
   self.visible = s.showGreen and real or signal.without(real, GREEN_ID)
 end
 

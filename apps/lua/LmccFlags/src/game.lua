@@ -8,6 +8,7 @@ local M = {}
 ---@field flagCause integer @0-based car index, or -1.
 ---@field penaltyType integer
 ---@field penaltyParameter integer
+---@field inPitlane boolean
 ---@field lap integer @Lap in progress, 1-based.
 ---@field sessionTime number? @Seconds since session start, nil when unknown.
 ---@field trackLength number @Metres, from the AI spline.
@@ -22,6 +23,7 @@ function M.read(out)
   out.flagCause = sim.raceFlagCause
   out.penaltyType = car.currentPenaltyType
   out.penaltyParameter = car.currentPenaltyParameter
+  out.inPitlane = car.isInPitlane
   out.lap = car.lapCount + 1
   out.trackLength = sim.trackLengthM
   local session = ac.getSession(sim.currentSessionIndex)
