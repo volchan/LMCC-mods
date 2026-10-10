@@ -24,6 +24,7 @@ t.check('gap in metres', t.near(list[1].gap, 80) and list[1].racePosition == 1)
 t.check('wraps over the line', #blue.approaching({ index = 0, spline = 0.01, racePosition = 5 },
   { car(1, 'X', 0.99, 1) }, 4000, 100) == 1)
 t.check('no list without track length', #blue.approaching(me, cars, 0, 400) == 0)
+t.check('no list without player car', #blue.approaching(nil, cars, 4000, 400) == 0)
 
 t.check('describe nothing', blue.describe({}) == nil)
 t.check('describe one car', blue.describe({ { name = 'A. Fast', racePosition = 1, gap = 80 } })

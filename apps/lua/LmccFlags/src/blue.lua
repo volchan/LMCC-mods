@@ -20,14 +20,14 @@ M.MAX_LISTED = 3 -- names shown in the summary line
 ---@field gap number @Metres behind the player.
 
 ---Cars to let pass, closest first.
----@param me CarInfo
+---@param me CarInfo? @Nil when the session has no car yet.
 ---@param cars CarInfo[]
 ---@param trackLength number @Metres.
 ---@param range number @Metres.
 ---@return LappingCar[]
 function M.approaching(me, cars, trackLength, range)
   local list = {}
-  if trackLength <= 0 then return list end
+  if not me or trackLength <= 0 then return list end
   for _, c in ipairs(cars) do
     if c.index ~= me.index and c.running and c.racePosition < me.racePosition then
       local gap = context.forwardDistance(c.spline, me.spline, trackLength)
