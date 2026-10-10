@@ -38,7 +38,7 @@ t.check('a button per preview option', allPreviews)
 t.check('a button per position preset', buttons[layout.PRESETS[1].label] and buttons[layout.PRESETS[#layout.PRESETS].label])
 t.check('a test button per cue', buttons['Test##caution'] and buttons['Test##info'])
 t.check('no stop button when idle', not buttons['Stop'])
-t.check('four sections', #uiStub.named('header') == 4)
+t.check('five sections', #uiStub.named('header') == 5)
 local rowBreaks = #uiStub.named('sameLine')
 t.check('buttons wrapped in rows', rowBreaks > 0)
 
@@ -91,5 +91,26 @@ setup.draw(s, { previewRemaining = 0, panelMissing = false }, actions)
 t.check('blue range written', s.blueRange == 600)
 local unchanged = s.volume_blue == 1
 t.check('untouched sliders keep value', unchanged)
+
+-- Game data: raw values with enum names, or a waiting line before the first read.
+local function hasText(text)
+  for _, tx in ipairs(uiStub.texts()) do
+    if tx == text then return true end
+  end
+  return false
+end
+uiStub.reset()
+setup.draw(s, { previewRemaining = 0, panelMissing = false, raw = {} }, actions)
+t.check('game data waits for the game', hasText(setup.NO_GAME_DATA_TEXT))
+uiStub.reset()
+setup.draw(s, { previewRemaining = 0, panelMissing = false,
+  raw = { flagType = 8, flagCause = -1, penaltyType = 1, penaltyParameter = 3, inPitlane = true } }, actions)
+t.check('game data shows the flag', hasText('Flag: ReturnToPits (8), cause car -1'))
+t.check('game data shows the penalty', hasText('Penalty: MandatoryPits (1), parameter 3'))
+t.check('game data shows the pit lane', hasText('In pit lane: yes'))
+uiStub.reset()
+setup.draw(s, { previewRemaining = 0, panelMissing = false,
+  raw = { flagType = 0, flagCause = -1, penaltyType = 0, penaltyParameter = 0, inPitlane = false } }, actions)
+t.check('game data outside the pit lane', hasText('In pit lane: no'))
 
 t.finish()

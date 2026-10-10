@@ -97,6 +97,17 @@ function M.forPenalty(penaltyType)
   return M.BY_PENALTY[penaltyType]
 end
 
+---Name of an enum value, e.g. `FasterCar`, or the number as text when unknown.
+---@param enum table<string, integer> @`M.FLAG` or `M.PENALTY`.
+---@param value integer?
+---@return string
+function M.nameOf(enum, value)
+  for name, v in pairs(enum) do
+    if v == value then return name end
+  end
+  return tostring(value)
+end
+
 ---Labels of every flag and penalty using a sound cue, sorted, without duplicates.
 ---@param cue string @One of `M.SOUND`.
 ---@return string[]

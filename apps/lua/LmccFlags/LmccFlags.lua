@@ -21,7 +21,7 @@ local controller = app.new({
   panel = { show = function() windowMover.show(PANEL_TITLE) end },
 })
 
-local setupState = { previewLabel = nil, previewRemaining = 0, panelMissing = false }
+local setupState = { previewLabel = nil, previewRemaining = 0, panelMissing = false, raw = controller.snapshot }
 local actions = {
   preview = function(option) controller:startPreview(option) end,
   stopPreview = function() controller:stopPreview() end,

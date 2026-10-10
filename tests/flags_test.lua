@@ -76,4 +76,8 @@ t.check('instruction fills parameter', flags.instruction(flags.forPenalty(P.Slow
 t.check('instruction defaults missing parameter to 0', flags.instruction(flags.forPenalty(P.MandatoryPits)) == 'Drive through the pit lane, laps left: 0')
 t.check('instruction without placeholder unchanged', flags.instruction(flags.forFlag(F.FasterCar), 3) == 'Faster car behind: let it pass')
 
+t.check('name of a flag', flags.nameOf(flags.FLAG, F.FasterCar) == 'FasterCar')
+t.check('name of a penalty', flags.nameOf(flags.PENALTY, P.MandatoryPits) == 'MandatoryPits')
+t.check('unknown value shown as number', flags.nameOf(flags.FLAG, 42) == '42')
+
 t.finish()

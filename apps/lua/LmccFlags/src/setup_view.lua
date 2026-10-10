@@ -1,4 +1,4 @@
--- Setup window: test alerts, place the panel, sound and screen strip preferences.
+-- Setup window: test alerts, place the panel, sound and screen strip preferences, raw game data.
 local COLORS = require('src/theme').COLORS
 local flags = require('src/flags')
 local layout = require('src/layout')
@@ -9,6 +9,7 @@ local M = {}
 
 M.BUTTONS_PER_ROW = 3
 M.SHOW_PANEL_LABEL = 'Show panel'
+M.NO_GAME_DATA_TEXT = 'Waiting for the game...'
 M.PANEL_MISSING_TEXT ='LMCC Flags panel not found: open it once from the apps bar.'
 
 -- Cue names in display order.
@@ -19,6 +20,7 @@ local PREVIEW_OPTIONS = preview.options()
 ---@field previewLabel string? @Label of the alert being previewed.
 ---@field previewRemaining number @Seconds.
 ---@field panelMissing boolean
+---@field raw Snapshot? @Last raw game values, to check what the game really reports.
 
 ---@class SetupActions
 ---@field preview fun(option: PreviewOption)
@@ -96,6 +98,20 @@ local function drawDisplay(s)
   if rangeChanged then s.blueRange = range end
 end
 
+-- Raw values as the game reports them, so a wrong alert can be traced to its source.
+---@param raw Snapshot?
+local function drawGameData(raw)
+  ui.header('Game data')
+  if not raw or raw.flagType == nil then
+    ui.text(M.NO_GAME_DATA_TEXT)
+    return
+  end
+  ui.text(string.format('Flag: %s (%d), cause car %d', flags.nameOf(flags.FLAG, raw.flagType), raw.flagType, raw.flagCause))
+  ui.text(string.format('Penalty: %s (%d), parameter %d', flags.nameOf(flags.PENALTY, raw.penaltyType),
+    raw.penaltyType, raw.penaltyParameter))
+  ui.text('In pit lane: ' .. (raw.inPitlane and 'yes' or 'no'))
+end
+
 ---@param s table @Loaded settings, edited in place.
 ---@param state SetupState
 ---@param actions SetupActions
@@ -104,6 +120,7 @@ function M.draw(s, state, actions)
   drawPosition(state, actions)
   drawSound(s, actions)
   drawDisplay(s)
+  drawGameData(state.raw)
 end
 
 return M
