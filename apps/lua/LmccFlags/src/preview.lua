@@ -9,7 +9,7 @@ local M = {}
 M.__index = M
 
 M.DURATION = 6 -- seconds
-M.PENALTY_PARAMETER = 3 -- shown in penalty instructions, e.g. "laps left: 3"
+M.PENALTY_PARAMETER = 3 -- game parameter for penalty previews (laps or seconds)
 
 -- Fake surroundings so previews show a realistic location line.
 M.SAMPLE_CAUSE = { mySpline = 0.10, causeSpline = 0.1625, trackLength = 4000, causeName = 'Sample Driver', causeSector = 'Turn 1' }

@@ -33,6 +33,7 @@ M.PATTERN = { solid = 'solid', checkered = 'checkered', stripes = 'stripes', dis
 ---@field pulse boolean @Whether views should pulse it to draw attention.
 ---@field causeAt string? @One of `M.CAUSE` when the game reports which car caused the flag.
 ---@field instructionUnknown string? @Used instead of `instruction` when its parameter is unknown.
+---@field parameterOffset integer? @Added to the game parameter before display (never below 0).
 
 local function spec(id, label, instruction, color, text, priority, sound, pulse, pattern, accent)
   return { id = id, label = label, instruction = instruction, color = color, text = text, priority = priority,
@@ -79,9 +80,9 @@ for flagType, causeAt in pairs({
 end
 
 -- What the game really reports (checked in game, the SDK names do not match):
--- - TeleportToPits: a drive-through, parameter = laps left to serve it (seen on a jump start).
---   Unserved means disqualification.
--- - MandatoryPits: a pit penalty with laps left as parameter (not yet seen in game).
+-- - TeleportToPits: a drive-through. The parameter is one more than the laps left: on a jump start
+--   the game reports 3 while its own message says "2 laps remaining". Unserved means disqualification.
+-- - MandatoryPits: a pit penalty with the same laps parameter (not yet seen in game).
 -- - SlowDown: lift off for parameter seconds after cutting the track (RACE_GAS_PENALTY_DISABLED=0),
 --   or drop below GAS_CUT_CLEAR_KMH to clear it at once (not yet seen in game).
 ---@type table<integer, FlagSpec>
@@ -91,6 +92,8 @@ M.BY_PENALTY = {
   [M.PENALTY.SlowDown] = spec('slowDown', 'SLOW DOWN', string.format('Lift off for %%ds or drop below %d km/h', M.GAS_CUT_CLEAR_KMH), C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
   [M.PENALTY.BlackFlag] = M.BY_FLAG[M.FLAG.Stop],
 }
+M.BY_PENALTY[M.PENALTY.MandatoryPits].parameterOffset = -1
+M.BY_PENALTY[M.PENALTY.TeleportToPits].parameterOffset = -1
 
 ---@param flagType integer
 ---@return FlagSpec?
@@ -139,7 +142,7 @@ end
 function M.instruction(flag, parameter)
   if flag.instruction:find('%%d') then
     if parameter == nil and flag.instructionUnknown then return flag.instructionUnknown end
-    return string.format(flag.instruction, parameter or 0)
+    return string.format(flag.instruction, math.max(0, (parameter or 0) + (flag.parameterOffset or 0)))
   end
   return flag.instruction
 end

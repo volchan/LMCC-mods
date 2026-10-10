@@ -155,7 +155,7 @@ state.now = 50
 a:update()
 local jump = a:signals()
 t.check('jump start shows a drive through alone', #jump == 1 and jump[1].flag.id == 'driveThrough'
-  and jump[1].instruction == 'Drive through the pit lane, laps left: 3')
+  and jump[1].instruction == 'Drive through the pit lane, laps left: 2')
 state.now, state.inPitlane = 51, true
 a:update()
 state.now, state.inPitlane = 52, false
