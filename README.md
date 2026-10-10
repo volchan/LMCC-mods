@@ -10,14 +10,14 @@ It uses the flags and penalties the game already raises, so it works on any serv
   - yellow family: `Incident 250 m ahead, Turn 1, J. Doe`
   - blue: every car about to lap you, closest first, with race position and gap: `Let 2 cars pass: P1 A. Fast 80 m, P3 B. Quick 240 m`
   - a second active signal (for example a penalty during a blue flag) is shown on an extra line.
-- **Screen-edge glow**: coloured band around the screen in the flag colour, pulsing for urgent flags, visible without looking at the panel.
+- **Screen-edge strips**: solid strips in the flag colour along the top and bottom of the screen with the flag name scrolling across, in the style of the CMRT HUD flag banner. They slide in when a flag appears or changes, slide out when it clears and pulse for urgent flags, so the flag is seen without looking at the panel.
 - **Sound cues**: a short sound when the flag changes. Four cues: caution (yellow, code 60, slippery, slow vehicle, ambulance), blue, severe (black, red, penalties), info (green, white, checkered, pit closed).
 - **Flag history**: every flag of the session with lap, session time, duration and location.
 - **Setup window**:
-  - test any flag or penalty for 6 seconds (panel, glow and sound, with sample location text), never written to the history
+  - test any flag or penalty for 6 seconds (panel, strips and sound, with sample location text), never written to the history
   - snap the panel to a screen position (top, centre, bottom; left, centre, right)
   - sound on or off, master volume, volume per cue with a test button
-  - glow on or off, glow width, pulse on or off, show or hide the green flag
+  - strips on or off, strip height, pulse on or off, show or hide the green flag
   - blue flag search range (100 to 1000 m behind you)
 
 Flags shown: green, yellow, blue, white, checkered, black, penalty (return to pits, slow down, pit within N laps, wait N seconds in pits). The game also defines red, code 60, slippery, slow vehicle, ambulance, mechanical, warning, pit closed and black flag withdrawn; those only appear if a server script raises them, and the app displays them correctly when it does.
@@ -46,7 +46,7 @@ In game, open from the app bar:
 - **LMCC Flags Setup**: tests and preferences.
 - **LMCC Flags History**: the flag log.
 
-The glow and sound work even when no window is open.
+The strips and sound work even when no window is open.
 
 ## Layout
 
@@ -71,7 +71,8 @@ apps/lua/LmccFlags/
   src/draw.lua           font, text, flag patterns
   src/theme.lua          colours
   src/panel_view.lua     panel
-  src/glow_view.lua      screen-edge glow
+  src/strip.lua          slide and scroll motion of the strips
+  src/glow_view.lua      screen-edge strips
   src/history_view.lua   history window
   src/setup_view.lua     setup window
 scripts/gen_sounds.js    regenerates the wav files
