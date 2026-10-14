@@ -34,4 +34,7 @@ t.check('no description without cause', context.describe(yellow, nil) == nil)
 t.check('no description without track length', context.describe(yellow, { mySpline = 0, causeSpline = 0.1, trackLength = 0 }) == nil)
 t.check('no description for flags without a located cause', context.describe(flags.forFlag(F.Finished), cause) == nil)
 
+t.check('join capped', context.joinCapped({ 1, 2, 3 }, 2, '-', tostring) == '1-2 +1 more'
+  and context.joinCapped({ 1 }, 2, '-', tostring) == '1')
+
 t.finish()

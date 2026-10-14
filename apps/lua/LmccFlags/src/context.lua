@@ -20,6 +20,20 @@ function M.forwardDistance(from, to, trackLength)
   return ((to - from) % 1) * trackLength
 end
 
+---The first `max` items formatted and joined, then " +N more" for the rest.
+---@generic T
+---@param items T[]
+---@param max integer
+---@param separator string
+---@param format fun(item: T): string
+---@return string
+function M.joinCapped(items, max, separator, format)
+  local parts = {}
+  for i = 1, math.min(#items, max) do parts[i] = format(items[i]) end
+  local more = #items > max and string.format(' +%d more', #items - max) or ''
+  return table.concat(parts, separator) .. more
+end
+
 ---@param metres number
 ---@return string
 function M.formatDistance(metres)

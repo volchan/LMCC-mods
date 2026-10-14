@@ -45,13 +45,10 @@ end
 ---@return string?
 function M.describe(list)
   if #list == 0 then return nil end
-  local names = {}
-  for i = 1, math.min(#list, M.MAX_LISTED) do
-    local c = list[i]
-    names[i] = string.format('P%d %s %s', c.racePosition, c.name, context.formatDistance(c.gap))
-  end
-  local more = #list > M.MAX_LISTED and string.format(' +%d more', #list - M.MAX_LISTED) or ''
-  return string.format('Let %d car%s pass: %s%s', #list, #list == 1 and '' or 's', table.concat(names, ', '), more)
+  local names = context.joinCapped(list, M.MAX_LISTED, ', ', function(c)
+    return string.format('P%d %s %s', c.racePosition, c.name, context.formatDistance(c.gap))
+  end)
+  return string.format('Let %d car%s pass: %s', #list, #list == 1 and '' or 's', names)
 end
 
 return M
