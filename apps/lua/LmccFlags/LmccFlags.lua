@@ -14,6 +14,7 @@ local lockView = require('src/lock_view')
 local glowView = require('src/glow_view')
 local historyView = require('src/history_view')
 local setupView = require('src/setup_view')
+local net = require('src/net')
 
 -- Must match NAME of the panel window in manifest.ini.
 local PANEL_TITLE = 'LMCC Flags'
@@ -31,6 +32,9 @@ local panelActions = {
   resize = function(size) windowMover.resize(PANEL_TITLE, size) end,
 }
 
+-- Online messaging test, real time so it works while paused.
+local netTest = net.new(os.preciseClock)
+
 local setupState = { previewLabel = nil, previewRemaining = 0, panelMissing = false, raw = controller.snapshot }
 local actions = {
   preview = function(option) controller:startPreview(option) end,
@@ -41,6 +45,7 @@ local actions = {
     setupState.panelMissing = not windowMover.snap(PANEL_TITLE, preset, ac.getUI().windowSize)
   end,
   testSound = function(cue) controller:playCue(cue) end,
+  netPing = function() netTest:ping() end,
 }
 
 local function clearHistory()
@@ -67,6 +72,7 @@ function script.windowSetup(dt)
   setupState.previewLabel = previewing and previewing[1] and previewing[1].flag.label or nil
   setupState.previewRemaining = p:remaining(controller.now)
   setupState.locked = panelLock.locked
+  setupState.net = netTest:status()
   setupView.draw(prefs, setupState, actions)
 end
 

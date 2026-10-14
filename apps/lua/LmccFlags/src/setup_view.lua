@@ -1,4 +1,5 @@
--- Setup window, in tabs: test alerts, place and lock the panel, display and sound preferences.
+-- Setup window, in tabs: test alerts, place and lock the panel, display and sound preferences,
+-- online messaging test.
 local COLORS = require('src/theme').COLORS
 local flags = require('src/flags')
 local layout = require('src/layout')
@@ -17,6 +18,13 @@ M.TEST_HINT = string.format('Click an alert to show it for %d s with its sound. 
   preview.DURATION)
 M.NO_GAME_DATA_TEXT = 'Waiting for the game...'
 M.PANEL_MISSING_TEXT = 'LMCC Flags panel not found: open it once from the apps bar.'
+M.NET_PING_LABEL = 'Send test ping'
+M.NET_HELP = 'Checks that LMCC Flags clients can message each other on this server. Every other driver '
+  .. 'running this version answers the ping; their replies prove alerts could be shared between drivers.'
+M.NET_OFFLINE_TEXT = 'Offline session: join a server to test with other drivers.'
+M.NET_DIRECT_TEXT = 'Server: custom, direct messaging between clients.'
+M.NET_CHAT_TEXT = 'Server: original AC, messages travel as hidden chat (max one per 200 ms).'
+M.NET_NONE_TEXT = 'None yet'
 
 -- Cue names in display order.
 local CUES = { flags.SOUND.caution, flags.SOUND.blue, flags.SOUND.severe, flags.SOUND.info }
@@ -46,6 +54,7 @@ end
 ---@field panelMissing boolean
 ---@field locked boolean
 ---@field raw Snapshot? @Last raw game values, to check what the game really reports.
+---@field net NetStatus? @Online messaging test results.
 
 ---@class SetupActions
 ---@field preview fun(option: PreviewOption)
@@ -54,6 +63,7 @@ end
 ---@field toggleLock fun()
 ---@field snap fun(preset: LayoutPreset)
 ---@field testSound fun(cue: string)
+---@field netPing fun()
 
 ---Width of one cell when `columns` cells share the line.
 local function cellWidth(columns)
@@ -201,6 +211,28 @@ local function drawSound(s, actions)
   end
 end
 
+---Lines of a result list, or a placeholder when empty.
+local function drawList(items, format)
+  if #items == 0 then ui.textDisabled(M.NET_NONE_TEXT) end
+  for _, item in ipairs(items) do ui.text(format(item)) end
+end
+
+---@param net NetStatus
+local function drawNetwork(net, actions)
+  ui.textWrapped(M.NET_HELP)
+  if not net.online then ui.textColored(M.NET_OFFLINE_TEXT, COLORS.orange) end
+  ui.text(net.direct and M.NET_DIRECT_TEXT or M.NET_CHAT_TEXT)
+  if ui.button(M.NET_PING_LABEL) then actions.netPing() end
+  if net.pinged then
+    ui.sameLine()
+    ui.text('Own ping came back: ' .. (net.echo and 'yes' or 'not yet'))
+    ui.header(string.format('Replies (%d)', #net.replies))
+    drawList(net.replies, function(r) return string.format('%s: %d ms', r.name, r.ms) end)
+  end
+  ui.header('Pings received from other drivers')
+  drawList(net.pingsFrom, function(p) return string.format('%s, %d s ago', p.name, p.ago) end)
+end
+
 ---@param s table @Loaded settings, edited in place.
 ---@param state SetupState
 ---@param actions SetupActions
@@ -210,6 +242,7 @@ function M.draw(s, state, actions)
     ui.tabItem('Panel', function() drawPanel(state, actions) end)
     ui.tabItem('Display', function() drawDisplay(s) end)
     ui.tabItem('Sound', function() drawSound(s, actions) end)
+    if state.net then ui.tabItem('Network', function() drawNetwork(state.net, actions) end) end
   end)
 end
 

@@ -44,6 +44,7 @@ function M.install(windowSize)
     alignTextToFramePadding = record('alignText'),
     frameHeight = function() return 20 end,
     textWrapped = function(text) M.calls[#M.calls + 1] = { name = 'text', args = { text } } end,
+    textDisabled = function(text) M.calls[#M.calls + 1] = { name = 'text', args = { text } } end,
     pathLineTo = record('pathLineTo'),
     windowHovered = function() return M.hovered end,
     mouseClicked = function(button) return M.mouseClicks[button] == true end,

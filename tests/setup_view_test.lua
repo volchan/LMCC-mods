@@ -38,6 +38,7 @@ local actions = {
   toggleLock = function() calls.lock = (calls.lock or 0) + 1 end,
   snap = function(p) calls.snap = p end,
   testSound = function(cue) calls.test = cue end,
+  netPing = function() calls.ping = true end,
 }
 
 -- Layout: four tabs, every alert and preset gets a button, no status lines when idle.
@@ -152,5 +153,36 @@ t.check('game data shows the penalty time', hasText('Penalty time: 4.2 s'))
 uiStub.reset()
 setup.draw(s, idle({ raw = { flagType = 0, flagCause = -1, penaltyType = 0, penaltyParameter = 0, inPitlane = false } }), actions)
 t.check('game data outside the pit lane', hasText('Lap: 0, in pit lane: no'))
+
+-- Network tab: only with a status, explains the server type and lists results.
+local function hasHeader(text)
+  for _, c in ipairs(uiStub.named('header')) do
+    if c.args[1] == text then return true end
+  end
+  return false
+end
+uiStub.reset()
+setup.draw(s, idle(), actions)
+t.check('no network tab without status', #uiStub.named('tab') == 4)
+local net = { online = false, direct = false, pinged = false, echo = false, replies = {}, pingsFrom = {} }
+uiStub.reset()
+uiStub.clicks[setup.NET_PING_LABEL] = true
+setup.draw(s, idle({ net = net }), actions)
+t.check('network tab shown', #uiStub.named('tab') == 5)
+t.check('ping button fires', calls.ping == true)
+t.check('offline and chat server explained', hasText(setup.NET_OFFLINE_TEXT) and hasText(setup.NET_CHAT_TEXT))
+t.check('empty lists say so', hasText(setup.NET_NONE_TEXT) and not hasText('Own ping came back: not yet'))
+net = { online = true, direct = true, pinged = true, echo = true,
+  replies = { { name = 'Alice', ms = 50 } }, pingsFrom = { { name = 'Bob', ago = 3 } } }
+uiStub.reset()
+setup.draw(s, idle({ net = net }), actions)
+t.check('direct server explained', hasText(setup.NET_DIRECT_TEXT) and not hasText(setup.NET_OFFLINE_TEXT))
+t.check('echo shown', hasText('Own ping came back: yes'))
+t.check('replies listed', hasHeader('Replies (1)') and hasText('Alice: 50 ms'))
+t.check('received pings listed', hasText('Bob, 3 s ago'))
+net.echo, net.replies = false, {}
+uiStub.reset()
+setup.draw(s, idle({ net = net }), actions)
+t.check('echo pending shown', hasText('Own ping came back: not yet') and hasHeader('Replies (0)'))
 
 t.finish()

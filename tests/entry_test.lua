@@ -19,6 +19,8 @@ local window = {
 }
 local windows = {}
 local audio = 0
+netSent = {}
+os.preciseClock = function() return 100 end
 ac = {
   storage = function(layout)
     storage = {}
@@ -32,6 +34,9 @@ ac = {
   getAppWindows = function() return windows end,
   accessAppWindow = function() return window end,
   dirname = function() return 'app' end,
+  StructItem = { key = function() end, byte = function() end, uint16 = function() end, int32 = function() end },
+  OnlineEvent = function() return function(message) netSent[#netSent + 1] = message end end,
+  getDriverName = function() return 'Me' end,
   AudioEvent = { fromFile = function()
     audio = audio + 1
     return { start = function() end, dispose = function() end }
@@ -154,5 +159,12 @@ uiStub.reset()
 uiStub.active, uiStub.delta = true, vec2(10, 0)
 script.windowPanel(0)
 t.check('grip drag resizes the panel', storage.panelLocked == false and resizedTo ~= nil)
+
+
+-- Network tab: the ping button sends through the online event.
+uiStub.reset()
+uiStub.clicks[require('src/setup_view').NET_PING_LABEL] = true
+script.windowSetup(0)
+t.check('network ping sent', #netSent == 1)
 
 t.finish()
