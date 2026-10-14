@@ -226,6 +226,15 @@ state.now = 71 + 4 * app.DETAIL_INTERVAL
 a:update()
 t.check('alert cleared when the gas cut ends', #a:signals() == 0)
 
+-- The gas cut time never leaks into other flags.
+state.flagType, state.penaltyTime = F.Stop, 4.2
+state.now = 90
+a:update()
+t.check('black flag carries no gas cut seconds', a:signals()[1].flag.id == 'black' and a:signals()[1].parameter == nil)
+state.flagType, state.penaltyTime = F.None, 0
+state.now = 91
+a:update()
+
 -- No game state: nothing changes.
 readsNil = true
 state.now = 99
