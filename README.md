@@ -13,11 +13,12 @@ It uses the flags and penalties the game already raises, so it works on any serv
 - **Screen-edge strips**: solid strips in the flag colour along the top and bottom of the screen with the flag name scrolling across, in the style of the CMRT HUD flag banner. They slide in when a flag appears or changes, slide out when it clears and pulse for urgent flags, so the flag is seen without looking at the panel. Always on: drivers cannot turn them off.
 - **Sound cues**: a short sound when the flag changes. Four cues: caution (yellow, code 60, slippery, slow vehicle, ambulance), blue, severe (black, red, penalties), info (green, white, checkered, pit closed).
 - **Flag history**: every flag of the session with lap, session time, duration and location.
-- **Setup window**, in four tabs:
+- **Setup window**, in tabs:
   - Alerts: test any alert for 6 seconds (panel, strips and sound, with sample location text), never written to the history. Buttons in the flag colours, grouped as race flags, penalties and server script flags. "Game data" shows the raw values the game reports.
   - Panel: reopen the panel window, lock it, and snap it to a screen position on a 3x3 grid.
   - Display: pulse urgent flags, show or hide the green flag (shown 5 seconds, since the game keeps it raised all session), strip height, blue flag search range (100 to 1000 m behind you).
   - Sound: sound on or off, master volume, volume per cue with a test button (hover a cue name to see its alerts).
+  - Network: checks that LMCC Flags clients can message each other on the server (needed to share alerts between drivers). "Send test ping" reaches every driver running the same version; each one answers and is listed with its round trip time. Also shows whether the server relays messages directly (custom server) or as hidden chat (original AC server).
 
 Flags shown: green, yellow, blue, white, checkered, black, penalties: drive through (jump start, laps left to serve it), pit penalty (laps left to go through the pits), gas cut (track cut: lift off for the seconds left, read from the AC shared memory since it depends on the track, or drop below 35 km/h; reported by the game as its penalty flag), black flag. The game also defines red, code 60, slippery, slow vehicle, ambulance, mechanical, warning, pit closed and black flag withdrawn; those only appear if a server script raises them, and the app displays them correctly when it does.
 
@@ -89,6 +90,8 @@ apps/lua/LmccFlags/
   src/theme.lua          colours
   src/panel_view.lua     panel
   src/lock_view.lua      padlock animation over the panel (ported from CMRT)
+  src/net_probe.lua      ping and pong logic of the network test
+  src/net.lua            network test over ac.OnlineEvent
   src/strip.lua          slide and scroll motion of the strips
   src/glow_view.lua      screen-edge strips
   src/history_view.lua   history window
