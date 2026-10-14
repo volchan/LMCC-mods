@@ -34,8 +34,13 @@ ac = {
   getAppWindows = function() return windows end,
   accessAppWindow = function() return window end,
   dirname = function() return 'app' end,
-  StructItem = { key = function() end, byte = function() end, uint16 = function() end, int32 = function() end },
-  OnlineEvent = function() return function(message) netSent[#netSent + 1] = message end end,
+  StructItem = { key = function(k) return k end, byte = function() end, uint16 = function() end, int32 = function() end },
+  -- Only the network test event is recorded; penalty sharing has its own key.
+  OnlineEvent = function(layout)
+    return function(message)
+      if layout[1] == require('src/net').KEY then netSent[#netSent + 1] = message end
+    end
+  end,
   getDriverName = function() return 'Me' end,
   AudioEvent = { fromFile = function()
     audio = audio + 1

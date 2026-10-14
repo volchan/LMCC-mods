@@ -15,6 +15,7 @@ local glowView = require('src/glow_view')
 local historyView = require('src/history_view')
 local setupView = require('src/setup_view')
 local net = require('src/net')
+local share = require('src/share')
 
 -- Must match NAME of the panel window in manifest.ini.
 local PANEL_TITLE = 'LMCC Flags'
@@ -23,6 +24,7 @@ local prefs = settings.load()
 local controller = app.new({
   game = game, sound = sound, settings = prefs, tracker = tracker.new(), preview = preview.new(),
   panel = { show = function() windowMover.show(PANEL_TITLE) end },
+  share = share.new(os.preciseClock),
 })
 
 -- Real time for the lock animation, so it plays even while the game is paused.

@@ -4,6 +4,7 @@ local flags = require('src/flags')
 local signal = require('src/signal')
 local context = require('src/context')
 local blue = require('src/blue')
+local gasCutAhead = require('src/gas_cut_ahead')
 local penalty = require('src/penalty')
 local flagFilter = require('src/flag_filter')
 local settingsLib = require('src/settings')
@@ -20,6 +21,7 @@ M.DETAIL_INTERVAL = 0.25 -- seconds between distance updates
 ---@field tracker table @From `tracker.new()`.
 ---@field preview table @From `preview.new()`.
 ---@field panel {show: fun()} @Opens the panel window, even after the driver closed it.
+---@field share {announce: fun(self, signals: Signal[]), flush: fun(self), gasCuts: fun(self): SharedGasCut[]} @Penalties shared between drivers.
 
 ---@param deps AppDeps
 function M.new(deps)
@@ -27,7 +29,11 @@ function M.new(deps)
     deps = deps,
     now = 0,
     snapshot = {}, cause = {}, stamp = {}, cars = {},
-    visible = {}, -- real signals after hiding, most urgent first
+    own = {}, -- this driver's signals after hiding, most urgent first
+    visible = {}, -- own signals plus alerts about other drivers
+    aheadDetail = nil, ---@type string? @Gas cuts close ahead, nil when none.
+    aheadAt = -math.huge,
+    aheadSignal = signal.of(flags.GAS_CUT_AHEAD),
     penalty = penalty.new(), -- clears penalties the game keeps reporting once served
     flagFilter = flagFilter.new(), -- hides flags the game keeps raised for too long
     detail = nil, ---@type string?
@@ -52,7 +58,38 @@ function M:refreshVisible(snap)
   end
   self.lastFlag, self.lastPenalty, self.lastParameter, self.lastFlagParameter =
     flagType, penaltyType, snap.penaltyParameter, flagParameter
-  self.visible = signal.resolve(flagType, penaltyType, snap.penaltyParameter, flagParameter)
+  self.own = signal.resolve(flagType, penaltyType, snap.penaltyParameter, flagParameter)
+  self.deps.share:announce(self.own)
+  self:compose()
+end
+
+---Visible signals: own ones, plus the gas cut ahead alert while a car ahead serves one.
+---@private
+function M:compose()
+  if not self.aheadDetail then
+    self.visible = self.own
+    return
+  end
+  local list = { self.aheadSignal }
+  for _, s in ipairs(self.own) do list[#list + 1] = s end
+  signal.sort(list)
+  self.visible = list
+end
+
+---Gas cuts other drivers share, kept only for cars close ahead. 4 Hz like the location line.
+---@private
+function M:refreshAhead(snap)
+  if self.now - self.aheadAt < M.DETAIL_INTERVAL then return end
+  self.aheadAt = self.now
+  local cuts, detail = self.deps.share:gasCuts(), nil
+  if #cuts > 0 then
+    local cars = self.deps.game.cars(self.cars)
+    detail = gasCutAhead.describe(gasCutAhead.nearby(cars[1], cars, cuts, snap.trackLength,
+      self.deps.settings.gasCutRange))
+  end
+  local changed = (detail == nil) ~= (self.aheadDetail == nil)
+  self.aheadDetail = detail
+  if changed then self:compose() end
 end
 
 ---Location line for a signal: lapping cars under blue, otherwise the car that caused the flag.
@@ -62,6 +99,7 @@ end
 ---@return string?
 function M:describe(snap, top)
   if not top then return nil end
+  if top.flag == flags.GAS_CUT_AHEAD then return self.aheadDetail end
   local deps = self.deps
   if top.flag.causeAt == flags.CAUSE.behind then
     local cars = deps.game.cars(self.cars)
@@ -104,7 +142,9 @@ function M:update()
   if not snap then return end
   self.now = snap.now
   self:refreshVisible(snap)
+  self:refreshAhead(snap)
   self:refreshDetail(snap)
+  self.deps.share:flush()
   local stamp = self.stamp
   stamp.lap, stamp.sessionTime, stamp.detail = snap.lap, snap.sessionTime, self.detail
   local event = self.deps.tracker:update(self.now, self.visible, stamp)

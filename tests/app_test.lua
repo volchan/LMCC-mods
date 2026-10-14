@@ -38,11 +38,19 @@ local s = {}
 for k, v in pairs(settings.DEFAULTS) do s[k] = v end
 s.volume = 0.5
 
+-- Fake penalty sharing: records announced signals, serves canned gas cuts.
+local sharedCuts, announced, flushes = {}, {}, 0
+local share = {
+  announce = function(_, signals) announced[#announced + 1] = signals end,
+  flush = function() flushes = flushes + 1 end,
+  gasCuts = function() return sharedCuts end,
+}
+
 local panelShown = 0
 local panel = { show = function() panelShown = panelShown + 1 end }
 
 local a = app.new({ game = game, sound = sound, settings = s, tracker = tracker.new({ hold = 0 }),
-  preview = preview.new(function() return 2 end), panel = panel })
+  preview = preview.new(function() return 2 end), panel = panel, share = share })
 
 -- Clear track.
 a:update()
@@ -178,6 +186,45 @@ a:update()
 t.check('gas cut seconds count down', a:signals()[1].instruction == 'Lift off for 4s or drop below 35 km/h')
 state.penaltyTime = 0
 state.flagType, state.penaltyType, state.penaltyParameter = F.None, P.None, 0
+
+-- Own signals are announced to other drivers when they change, and queued messages flushed each frame.
+t.check('own signals announced on change', #announced > 0 and announced[#announced] == a.own)
+t.check('share flushed every update', flushes > 0)
+state.now = 69
+a:update()
+local announcedBefore = #announced
+state.now = 70
+a:update()
+t.check('nothing announced while unchanged', #announced == announcedBefore)
+
+-- Another driver close ahead serves a gas cut: alert shown with the car list, then removed.
+carList = {
+  { index = 0, name = 'Me', spline = 0.50, racePosition = 6, running = true },
+  { index = 4, name = 'Seygow', spline = 0.53, racePosition = 5, running = true },
+}
+sharedCuts = { { carIndex = 4, secondsLeft = 4 } }
+state.now = 71
+a:update()
+local top = a:signals()[1]
+t.check('gas cut ahead alert shown', top.flag == flags.GAS_CUT_AHEAD and a:displayDetail() == 'P5 Seygow 120 m, lift 4s')
+t.check('alert is not announced as an own penalty', #announced == announcedBefore)
+s.gasCutRange = 50
+state.now = 71 + app.DETAIL_INTERVAL
+a:update()
+t.check('out of range: alert removed', #a:signals() == 0)
+s.gasCutRange = settings.DEFAULTS.gasCutRange
+state.now = 71 + 2 * app.DETAIL_INTERVAL
+a:update()
+state.flagType = F.Caution
+state.now = 71 + 3 * app.DETAIL_INTERVAL
+a:update()
+local both = a:signals()
+t.check('own flag ranks above the gas cut ahead', #both == 2 and both[1].flag.id == 'yellow' and both[2].flag == flags.GAS_CUT_AHEAD)
+sharedCuts = {}
+state.flagType = F.None
+state.now = 71 + 4 * app.DETAIL_INTERVAL
+a:update()
+t.check('alert cleared when the gas cut ends', #a:signals() == 0)
 
 -- No game state: nothing changes.
 readsNil = true

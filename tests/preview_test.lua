@@ -19,7 +19,15 @@ local flagCount = 0
 for _, v in pairs(flags.FLAG) do
   if flags.forFlag(v) then flagCount = flagCount + 1 end
 end
-t.check('every flag plus three penalties', #options == flagCount + 3)
+t.check('every flag, three penalties and the gas cut ahead', #options == flagCount + 4)
+local aheadOption
+for _, o in ipairs(options) do
+  if o.flag == flags.GAS_CUT_AHEAD then aheadOption = o end
+end
+local ap = preview.new()
+ap:start(aheadOption, 0)
+t.check('gas cut ahead preview shows a sample car', ap:active(1)[1].flag == flags.GAS_CUT_AHEAD
+  and ap.detail == 'P4 Sample Driver 150 m, lift 4s')
 
 -- tie-break on label keeps order stable
 local samePriority = {}

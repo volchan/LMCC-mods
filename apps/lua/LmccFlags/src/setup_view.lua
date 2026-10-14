@@ -38,6 +38,7 @@ local CUES = { flags.SOUND.caution, flags.SOUND.blue, flags.SOUND.severe, flags.
 M.GROUPS = {
   { kind = flags.KIND.race, title = 'Race flags' },
   { kind = flags.KIND.penalty, title = 'Penalties' },
+  { kind = flags.KIND.others, title = 'Other drivers (shared by their LMCC Flags)' },
   { kind = flags.KIND.server, title = 'Server script flags', collapsed = true },
 }
 for _, group in ipairs(M.GROUPS) do
@@ -187,6 +188,10 @@ local function drawDisplay(s)
   ui.setNextItemWidth(ui.availableSpaceX())
   local range, rangeChanged = ui.slider('##blueRange', s.blueRange, 100, 1000, 'List cars within %.0f m behind')
   if rangeChanged then s.blueRange = range end
+  ui.header('Gas cut ahead')
+  ui.setNextItemWidth(ui.availableSpaceX())
+  local cutRange, cutChanged = ui.slider('##gasCutRange', s.gasCutRange, 100, 1000, 'Warn about cars within %.0f m ahead')
+  if cutChanged then s.gasCutRange = cutRange end
 end
 
 ---@param cue string

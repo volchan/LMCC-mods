@@ -73,6 +73,7 @@ local race, penalties, server = groupLabels(flags.KIND.race), groupLabels(flags.
 t.check('race flags group', race['GREEN'] and race['YELLOW'] and race['BLUE'] and race['BLACK'] and not race['RED'])
 t.check('penalties group holds the gas cut', penalties['GAS CUT'] and penalties['DRIVE THROUGH'] and penalties['PIT PENALTY'])
 t.check('server flags group', server['RED'] and server['CODE 60'] and not server['GREEN'])
+t.check('other drivers group', groupLabels(flags.KIND.others)['GAS CUT AHEAD'])
 t.check('server flags in a collapsible node', #uiStub.named('tree') == 2)
 local w = (400 - setup.GAP * (setup.ALERT_COLUMNS - 1)) / setup.ALERT_COLUMNS
 t.check('alert buttons share the width', t.near(buttons['GREEN'].x, w) and t.near(buttons['RED'].x, w))
@@ -137,6 +138,10 @@ uiStub.reset()
 uiStub.sliders['##blueRange'] = 600
 setup.draw(s, idle(), actions)
 t.check('blue range written', s.blueRange == 600)
+uiStub.reset()
+uiStub.sliders['##gasCutRange'] = 450
+setup.draw(s, idle(), actions)
+t.check('gas cut ahead range written', s.gasCutRange == 450)
 t.check('untouched sliders keep value', s.volume_blue == 1)
 
 -- Game data: raw values with enum names, or a waiting line before the first read.

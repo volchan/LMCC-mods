@@ -4,6 +4,7 @@ local flags = require('src/flags')
 local signal = require('src/signal')
 local context = require('src/context')
 local blue = require('src/blue')
+local gasCutAhead = require('src/gas_cut_ahead')
 
 local M = {}
 M.__index = M
@@ -19,6 +20,8 @@ M.SAMPLE_LAPPING = {
   { name = 'Second', racePosition = 2, gap = 240 },
   { name = 'Third', racePosition = 3, gap = 390 },
 }
+-- Gas cut ahead previews list this car.
+M.SAMPLE_GAS_CUT = { { name = 'Sample Driver', racePosition = 4, gap = 150, secondsLeft = 4 } }
 
 ---@class PreviewOption
 ---@field label string
@@ -44,6 +47,8 @@ function M.options()
     local spec = flags.forPenalty(penaltyType)
     if spec then add(spec, flags.FLAG.None, penaltyType) end
   end
+  -- Alerts about other drivers have no game flag or penalty behind them.
+  add(flags.GAS_CUT_AHEAD, flags.FLAG.None, flags.PENALTY.None)
   table.sort(list, function(a, b)
     if a.priority ~= b.priority then return a.priority > b.priority end
     return a.label < b.label
@@ -56,6 +61,7 @@ end
 ---@param lapping integer @Sample cars to let pass, 1..#SAMPLE_LAPPING.
 ---@return string?
 function M.sampleDetail(flag, lapping)
+  if flag == flags.GAS_CUT_AHEAD then return gasCutAhead.describe(M.SAMPLE_GAS_CUT) end
   if flag.causeAt == flags.CAUSE.behind then
     local list = {}
     for i = 1, lapping do list[i] = M.SAMPLE_LAPPING[i] end
@@ -73,6 +79,7 @@ end
 ---@param now number @Seconds.
 function M:start(option, now)
   self.signals = signal.resolve(option.flagType, option.penaltyType, M.PENALTY_PARAMETER)
+  if #self.signals == 0 then self.signals = { signal.of(option.flag) } end
   self.detail = M.sampleDetail(self.signals[1].flag, self.random(1, #M.SAMPLE_LAPPING))
   self.startedAt = now
 end

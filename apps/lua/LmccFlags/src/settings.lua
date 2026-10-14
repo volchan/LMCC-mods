@@ -1,6 +1,7 @@
 -- User preferences, persisted by CSP between sessions.
 local SOUND = require('src/flags').SOUND
 local blue = require('src/blue')
+local gasCutAhead = require('src/gas_cut_ahead')
 
 local M = {}
 
@@ -11,6 +12,7 @@ M.DEFAULTS = {
   volume = 0.8, -- master volume, multiplied by the volume of each cue
   showGreen = true, -- show the green flag for a few seconds at race start and when the track clears
   blueRange = blue.DEFAULT_RANGE, -- metres behind the player to look for lapping cars
+  gasCutRange = gasCutAhead.DEFAULT_RANGE, -- metres ahead to warn about cars serving a gas cut
   panelLocked = false, -- right click on the panel toggles it
 }
 
