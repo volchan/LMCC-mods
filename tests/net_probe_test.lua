@@ -10,7 +10,9 @@ t.check('pings throttled', p:ping(10 + probe.MIN_INTERVAL / 2) == nil)
 
 -- Own ping comes back: echo, no reply.
 t.check('own ping not answered', p:receive(ping, 0, 7, 7, 10.1) == nil)
-t.check('own ping echoed', p.echo)
+t.check('own ping echo timed', t.near(p.echo, 0.1))
+p:receive(ping, 0, 7, 7, 10.5)
+t.check('later copies keep the first echo time', t.near(p.echo, 0.1))
 
 -- Another client pings: remembered and answered to its session only.
 local pong = p:receive({ kind = K.ping, id = 42, replyTo = probe.NO_TARGET }, 3, 12, 7, 11)
@@ -30,8 +32,15 @@ t.check('own pong copy ignored', p:receive({ kind = K.pong, id = 1, replyTo = 7 
 
 -- A new round clears the previous results.
 local second = p:ping(12)
-t.check('new round', second.id == 2 and not p.echo and next(p.replies) == nil)
+t.check('new round', second.id == 2 and p.echo == nil and next(p.replies) == nil)
 p.pingId = 65535
 t.check('ping id wraps within uint16', p:ping(20).id == 1)
+
+-- Echo route: compared with the ping to the server.
+t.check('echo near the ping went through the server', probe.echoRoute(40, 60) == probe.ECHO.server)
+t.check('instant echo is a local copy', probe.echoRoute(2, 60) == probe.ECHO['local'])
+t.check('instant echo without ping is local', probe.echoRoute(0, -1) == probe.ECHO['local'])
+t.check('slowish echo without ping is unsure', probe.echoRoute(20, -1) == probe.ECHO.unsure)
+t.check('echo well under the ping is unsure', probe.echoRoute(10, 60) == probe.ECHO.unsure)
 
 t.finish()

@@ -25,6 +25,11 @@ M.NET_OFFLINE_TEXT = 'Offline session: join a server to test with other drivers.
 M.NET_DIRECT_TEXT = 'Server: custom, direct messaging between clients.'
 M.NET_CHAT_TEXT = 'Server: original AC, messages travel as hidden chat (max one per 200 ms).'
 M.NET_NONE_TEXT = 'None yet'
+M.NET_ECHO_TEXT = {
+  server = 'It made the trip to the server and back: the server relays messages.',
+  ['local'] = 'It came back instantly, as a local copy: the server is not proven.',
+  unsure = 'Not sure it reached the server: test with a second driver.',
+}
 
 -- Cue names in display order.
 local CUES = { flags.SOUND.caution, flags.SOUND.blue, flags.SOUND.severe, flags.SOUND.info }
@@ -224,8 +229,13 @@ local function drawNetwork(net, actions)
   ui.text(net.direct and M.NET_DIRECT_TEXT or M.NET_CHAT_TEXT)
   if ui.button(M.NET_PING_LABEL) then actions.netPing() end
   if net.pinged then
-    ui.sameLine()
-    ui.text('Own ping came back: ' .. (net.echo and 'yes' or 'not yet'))
+    if net.echoMs then
+      ui.text(string.format('Own ping came back after %d ms (your ping to the server: %s)', net.echoMs,
+        net.pingMs >= 0 and net.pingMs .. ' ms' or 'unknown'))
+      ui.textWrapped(M.NET_ECHO_TEXT[net.echoRoute])
+    else
+      ui.text('Own ping came back: not yet')
+    end
     ui.header(string.format('Replies (%d)', #net.replies))
     drawList(net.replies, function(r) return string.format('%s: %d ms', r.name, r.ms) end)
   end

@@ -6,6 +6,8 @@ M.__index = M
 M.KIND = { ping = 1, pong = 2 }
 M.MIN_INTERVAL = 1 -- seconds between pings; the original AC server allows one message per 200 ms
 M.NO_TARGET = -1 -- replyTo of a ping
+M.LOCAL_MS = 5 -- an echo this fast never left this machine
+M.ECHO = { server = 'server', ['local'] = 'local', unsure = 'unsure' }
 
 ---@class NetMessage
 ---@field kind integer @One of `M.KIND`.
@@ -16,7 +18,7 @@ function M.new()
   return setmetatable({
     pingId = 0,
     sentAt = -math.huge,
-    echo = false, -- own ping came back to this client
+    echo = nil, ---@type number? @Seconds for the own ping to come back, nil until it does.
     replies = {}, ---@type table<integer, number> @Car index -> round trip in seconds.
     pingsFrom = {}, ---@type table<integer, number> @Car index -> time their last ping arrived.
   }, M)
@@ -28,7 +30,7 @@ end
 function M:ping(now)
   if now - self.sentAt < M.MIN_INTERVAL then return nil end
   self.pingId = self.pingId % 65535 + 1 -- fits the uint16 field
-  self.sentAt, self.echo, self.replies = now, false, {}
+  self.sentAt, self.echo, self.replies = now, nil, {}
   return { kind = M.KIND.ping, id = self.pingId, replyTo = M.NO_TARGET }
 end
 
@@ -42,7 +44,7 @@ end
 function M:receive(message, senderIndex, senderSession, mySession, now)
   if senderIndex == nil then return nil end
   if senderIndex == 0 then
-    if message.kind == M.KIND.ping and message.id == self.pingId then self.echo = true end
+    if message.kind == M.KIND.ping and message.id == self.pingId and not self.echo then self.echo = now - self.sentAt end
     return nil
   end
   if message.kind == M.KIND.ping then
@@ -53,6 +55,17 @@ function M:receive(message, senderIndex, senderSession, mySession, now)
     self.replies[senderIndex] = now - self.sentAt
   end
   return nil
+end
+
+---Where the own ping went, judged from its echo time against the ping to the server: an
+---echo of at least half the ping made the trip to the server and back.
+---@param echoMs integer
+---@param pingMs integer @-1 when unknown.
+---@return string @One of `M.ECHO`.
+function M.echoRoute(echoMs, pingMs)
+  if pingMs > 0 and echoMs >= pingMs / 2 then return M.ECHO.server end
+  if echoMs < M.LOCAL_MS then return M.ECHO['local'] end
+  return M.ECHO.unsure
 end
 
 return M

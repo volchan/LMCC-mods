@@ -11,7 +11,9 @@ M.KEY = 'volchan.lmccFlags.netTest'
 ---@field online boolean
 ---@field direct boolean @Custom server with direct messaging; otherwise messages travel as chat.
 ---@field pinged boolean @A ping was sent.
----@field echo boolean
+---@field echoMs integer? @Own ping round trip, nil until it comes back.
+---@field pingMs integer @Ping to the server, -1 when unknown.
+---@field echoRoute string? @One of `net_probe.ECHO`.
 ---@field replies {name: string, ms: integer}[] @Closest first.
 ---@field pingsFrom {name: string, ago: integer}[] @Seconds since their last ping.
 
@@ -51,14 +53,18 @@ end
 
 ---@return NetStatus
 function M:status()
-  local sim, now, p = ac.getSim(), self.clock(), self.probe
+  local sim, now, p, me = ac.getSim(), self.clock(), self.probe, ac.getCar(0)
+  local echoMs = p.echo and math.floor(p.echo * 1000 + 0.5)
+  local pingMs = me and me.ping or -1
   local ages = {}
   for index, at in pairs(p.pingsFrom) do ages[index] = now - at end
   return {
     online = sim.isOnlineRace == true,
     direct = sim.directMessagingAvailable == true,
     pinged = p.pingId > 0,
-    echo = p.echo,
+    echoMs = echoMs,
+    pingMs = pingMs,
+    echoRoute = echoMs and probe.echoRoute(echoMs, pingMs),
     replies = byValue(p.replies, 'ms', 1000),
     pingsFrom = byValue(ages, 'ago', 1),
   }

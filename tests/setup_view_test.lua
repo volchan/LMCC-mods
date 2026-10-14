@@ -164,7 +164,7 @@ end
 uiStub.reset()
 setup.draw(s, idle(), actions)
 t.check('no network tab without status', #uiStub.named('tab') == 4)
-local net = { online = false, direct = false, pinged = false, echo = false, replies = {}, pingsFrom = {} }
+local net = { online = false, direct = false, pinged = false, pingMs = -1, replies = {}, pingsFrom = {} }
 uiStub.reset()
 uiStub.clicks[setup.NET_PING_LABEL] = true
 setup.draw(s, idle({ net = net }), actions)
@@ -172,17 +172,23 @@ t.check('network tab shown', #uiStub.named('tab') == 5)
 t.check('ping button fires', calls.ping == true)
 t.check('offline and chat server explained', hasText(setup.NET_OFFLINE_TEXT) and hasText(setup.NET_CHAT_TEXT))
 t.check('empty lists say so', hasText(setup.NET_NONE_TEXT) and not hasText('Own ping came back: not yet'))
-net = { online = true, direct = true, pinged = true, echo = true,
+net = { online = true, direct = true, pinged = true, echoMs = 30, pingMs = 40, echoRoute = 'server',
   replies = { { name = 'Alice', ms = 50 } }, pingsFrom = { { name = 'Bob', ago = 3 } } }
 uiStub.reset()
 setup.draw(s, idle({ net = net }), actions)
 t.check('direct server explained', hasText(setup.NET_DIRECT_TEXT) and not hasText(setup.NET_OFFLINE_TEXT))
-t.check('echo shown', hasText('Own ping came back: yes'))
+t.check('echo time and verdict shown', hasText('Own ping came back after 30 ms (your ping to the server: 40 ms)')
+  and hasText(setup.NET_ECHO_TEXT.server))
 t.check('replies listed', hasHeader('Replies (1)') and hasText('Alice: 50 ms'))
 t.check('received pings listed', hasText('Bob, 3 s ago'))
-net.echo, net.replies = false, {}
+net.echoMs, net.echoRoute, net.replies = nil, nil, {}
 uiStub.reset()
 setup.draw(s, idle({ net = net }), actions)
 t.check('echo pending shown', hasText('Own ping came back: not yet') and hasHeader('Replies (0)'))
+net.echoMs, net.pingMs, net.echoRoute = 1, -1, 'local'
+uiStub.reset()
+setup.draw(s, idle({ net = net }), actions)
+t.check('local echo explained, ping unknown', hasText('Own ping came back after 1 ms (your ping to the server: unknown)')
+  and hasText(setup.NET_ECHO_TEXT['local']))
 
 t.finish()
