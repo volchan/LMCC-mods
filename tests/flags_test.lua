@@ -92,4 +92,8 @@ t.check('gas cut is a penalty', flags.forFlag(F.ReturnToPits).kind == K.penalty)
 t.check('server only flags marked', flags.forFlag(F.SessionSuspended).kind == K.server and flags.forFlag(F.Code60).kind == K.server)
 t.check('penalties marked', flags.forPenalty(P.TeleportToPits).kind == K.penalty and flags.forPenalty(P.BlackFlag).kind == K.race)
 
+t.check('gas cut ahead is about other drivers', flags.GAS_CUT_AHEAD.kind == K.others
+  and flags.GAS_CUT_AHEAD.priority < flags.forFlag(F.Caution).priority)
+t.check('shared list starts with the gas cut', flags.SHARED[1] == flags.GAS_CUT)
+
 t.finish()

@@ -31,4 +31,11 @@ t.check('black flag and black penalty shown once', #black == 1 and black[1].flag
 local released = signal.resolve(F.None, P.ReleaseBlackFlag)
 t.check('released black flag shows nothing', #released == 0)
 
+local made = signal.of(flags.forPenalty(P.TeleportToPits), 3)
+t.check('signal of a spec keeps its parameter', made.parameter == 3 and made.instruction == 'Drive through the pit lane, laps left: 2')
+t.check('resolved signals carry their parameter', signal.resolve(F.ReturnToPits, P.None, nil, 4)[1].parameter == 4)
+local list = { signal.of(flags.GAS_CUT_AHEAD), signal.of(flags.forFlag(F.Caution)) }
+signal.sort(list)
+t.check('sort puts the most urgent first', list[1].flag.id == 'yellow')
+
 t.finish()

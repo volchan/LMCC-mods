@@ -10,6 +10,21 @@ M.NONE = 'none'
 ---@class Signal
 ---@field flag FlagSpec
 ---@field instruction string
+---@field parameter integer? @Raw game parameter (laps or seconds), nil when none or unknown.
+
+---Signal for a spec, its instruction filled with the parameter.
+---@param flag FlagSpec
+---@param parameter integer?
+---@return Signal
+function M.of(flag, parameter)
+  return { flag = flag, instruction = flags.instruction(flag, parameter), parameter = parameter }
+end
+
+---Most urgent first.
+---@param signals Signal[]
+function M.sort(signals)
+  table.sort(signals, function(a, b) return a.flag.priority > b.flag.priority end)
+end
 
 ---@param flagType integer @`ac.FlagType` value.
 ---@param penaltyType integer @`ac.PenaltyType` value.
@@ -20,14 +35,14 @@ function M.resolve(flagType, penaltyType, penaltyParameter, flagParameter)
   local result = {}
   local flag = flags.forFlag(flagType)
   if flag then
-    result[1] = { flag = flag, instruction = flags.instruction(flag, flagParameter) }
+    result[1] = M.of(flag, flagParameter)
   end
   local penalty = flags.forPenalty(penaltyType)
   -- A black flag penalty and a black race flag are the same signal: show it once.
   if penalty and penalty ~= flag then
-    result[#result + 1] = { flag = penalty, instruction = flags.instruction(penalty, penaltyParameter) }
+    result[#result + 1] = M.of(penalty, penaltyParameter)
   end
-  table.sort(result, function(a, b) return a.flag.priority > b.flag.priority end)
+  M.sort(result)
   return result
 end
 

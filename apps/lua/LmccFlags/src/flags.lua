@@ -97,7 +97,7 @@ M.BY_PENALTY[M.PENALTY.MandatoryPits].parameterOffset = -1
 
 -- How drivers meet each alert: a flag the game raises, a penalty, or a flag only a server script
 -- can raise (defined by the game but not raised natively).
-M.KIND = { race = 'race', penalty = 'penalty', server = 'server' }
+M.KIND = { race = 'race', penalty = 'penalty', server = 'server', others = 'others' }
 for _, spec in pairs(M.BY_FLAG) do spec.kind = M.KIND.race end
 for _, flagType in ipairs({ M.FLAG.Slippery, M.FLAG.PitLaneClosed, M.FLAG.SlowVehicle, M.FLAG.Ambulance,
   M.FLAG.MechanicalFailure, M.FLAG.Unsportsmanlike, M.FLAG.StopCancel, M.FLAG.SessionSuspended, M.FLAG.Code60 }) do
@@ -109,6 +109,23 @@ for _, spec in pairs(M.BY_PENALTY) do
   if spec ~= M.BY_FLAG[M.FLAG.Stop] then spec.kind = M.KIND.penalty end
 end
 M.BY_PENALTY[M.PENALTY.TeleportToPits].parameterOffset = -1
+
+-- Penalties every client announces to the others when they start and when they are served.
+-- The position in this list is the code sent over the network: append only, never reorder.
+M.SHARED = {
+  M.BY_FLAG[M.FLAG.ReturnToPits], -- gas cut
+  M.BY_PENALTY[M.PENALTY.TeleportToPits], -- drive-through
+  M.BY_PENALTY[M.PENALTY.MandatoryPits],
+  M.BY_PENALTY[M.PENALTY.SlowDown],
+  M.BY_FLAG[M.FLAG.Stop], -- black flag, raised as a flag or a penalty
+}
+M.GAS_CUT = M.BY_FLAG[M.FLAG.ReturnToPits]
+
+-- Raised by this app, not the game: another driver close ahead is serving a gas cut and will
+-- slow down. Below every game flag that asks for action, above the informative ones.
+M.GAS_CUT_AHEAD = spec('gasCutAhead', 'GAS CUT AHEAD', 'Car ahead must lift off: expect it to slow down',
+  C.orange, C.textDark, 40, S.caution, true)
+M.GAS_CUT_AHEAD.kind = M.KIND.others
 
 ---@param flagType integer
 ---@return FlagSpec?
