@@ -42,5 +42,7 @@ t.check('instant echo is a local copy', probe.echoRoute(2, 60) == probe.ECHO['lo
 t.check('instant echo without ping is local', probe.echoRoute(0, -1) == probe.ECHO['local'])
 t.check('slowish echo without ping is unsure', probe.echoRoute(20, -1) == probe.ECHO.unsure)
 t.check('echo well under the ping is unsure', probe.echoRoute(10, 60) == probe.ECHO.unsure)
+t.check('low ping proves nothing', probe.echoRoute(13, 2) == probe.ECHO.unsure
+  and probe.echoRoute(20, probe.MIN_PING_MS - 1) == probe.ECHO.unsure)
 
 t.finish()

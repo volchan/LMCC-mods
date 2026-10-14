@@ -28,7 +28,7 @@ M.NET_NONE_TEXT = 'None yet'
 M.NET_ECHO_TEXT = {
   server = 'It made the trip to the server and back: the server relays messages.',
   ['local'] = 'It came back instantly, as a local copy: the server is not proven.',
-  unsure = 'Not sure it reached the server: test with a second driver.',
+  unsure = 'Cannot tell: with this ping a local copy arriving a frame later looks the same. Test with a second driver.',
 }
 
 -- Cue names in display order.

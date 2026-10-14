@@ -7,6 +7,9 @@ M.KIND = { ping = 1, pong = 2 }
 M.MIN_INTERVAL = 1 -- seconds between pings; the original AC server allows one message per 200 ms
 M.NO_TARGET = -1 -- replyTo of a ping
 M.LOCAL_MS = 5 -- an echo this fast never left this machine
+-- A local copy can still arrive a frame or two later (about 8 ms each at 120 fps), so the echo
+-- only proves the trip to the server when the ping is well above that.
+M.MIN_PING_MS = 30
 M.ECHO = { server = 'server', ['local'] = 'local', unsure = 'unsure' }
 
 ---@class NetMessage
@@ -57,13 +60,14 @@ function M:receive(message, senderIndex, senderSession, mySession, now)
   return nil
 end
 
----Where the own ping went, judged from its echo time against the ping to the server: an
----echo of at least half the ping made the trip to the server and back.
+---Where the own ping went, judged from its echo time against the ping to the server: with a
+---ping of at least MIN_PING_MS, an echo of at least half the ping made the trip to the server
+---and back. With a lower ping a delayed local copy looks the same, so it stays unsure.
 ---@param echoMs integer
 ---@param pingMs integer @-1 when unknown.
 ---@return string @One of `M.ECHO`.
 function M.echoRoute(echoMs, pingMs)
-  if pingMs > 0 and echoMs >= pingMs / 2 then return M.ECHO.server end
+  if pingMs >= M.MIN_PING_MS and echoMs >= pingMs / 2 then return M.ECHO.server end
   if echoMs < M.LOCAL_MS then return M.ECHO['local'] end
   return M.ECHO.unsure
 end
