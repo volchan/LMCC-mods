@@ -63,6 +63,65 @@ In game, open from the app bar:
 
 The strips and sound work even when no window is open.
 
+## Shared data for other mods
+
+LMCC Flags sends its data with CSP online events (`ac.OnlineEvent`), so any other Lua app on the same server can read it. An event only matches when the key and the whole layout are identical: copy the layouts below exactly, field names and types included.
+
+### Penalties
+
+Key `volchan.lmccFlags.penalties`. Each client sends one message when one of its own penalties starts and one when it is served. Nothing is sent periodically, so a client that joins later does not learn about penalties already running.
+
+```lua
+local penaltyEvent = ac.OnlineEvent({
+  ac.StructItem.key('volchan.lmccFlags.penalties'),
+  code = ac.StructItem.byte(),
+  active = ac.StructItem.byte(),
+  parameter = ac.StructItem.int32(),
+}, function(sender, message)
+  -- sender: ac.StateCar of the car the penalty belongs to (sender.index is its local car index),
+  -- nil when the server sent it. Index 0 is a copy of your own message: skip it.
+  if not sender or sender.index == 0 then return end
+  ac.log(ac.getDriverName(sender.index), message.code, message.active, message.parameter)
+end)
+```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `code` | byte | Which penalty, see below. Ignore codes you do not know: new ones may be added at the end. |
+| `active` | byte | `1` the penalty started, `0` it was served. |
+| `parameter` | int32 | When started: the value below, `0` when unknown. When served: always `0`. |
+
+| Code | Penalty | `parameter` when started |
+|---|---|---|
+| 1 | Gas cut (lift off after cutting the track, clears below 35 km/h) | Seconds of lifting left, rounded up; `0` if the game did not report it |
+| 2 | Drive-through (jump start), reported by the game as `ac.PenaltyType.TeleportToPits` | Raw game value: laps left to serve it plus one (3 means "2 laps remaining") |
+| 3 | Pit penalty (`ac.PenaltyType.MandatoryPits`) | Raw game value, same convention as code 2 |
+| 4 | Slow down (`ac.PenaltyType.SlowDown`) | Seconds |
+| 5 | Black flag (flag or penalty) | `0` |
+
+Notes for readers:
+
+- "Served" is decided by the sending client: pit penalties once its car has been through the pit lane, the gas cut when the game lowers it, the slow down when its seconds reach 0.
+- A "served" message can be lost (rate limit, disconnection). LMCC Flags drops a gas cut 3 seconds after its length ends, or 10 seconds after it started when the length is unknown; do something similar.
+- Previews from the setup window are never sent.
+
+### Network test
+
+Key `volchan.lmccFlags.netTest`, used by the setup Network tab. Other mods normally have no reason to send these, but a reader must not answer them.
+
+```lua
+ac.OnlineEvent({
+  ac.StructItem.key('volchan.lmccFlags.netTest'),
+  kind = ac.StructItem.byte(), -- 1 ping (to everybody), 2 pong (answer)
+  id = ac.StructItem.uint16(), -- ping number, echoed by its pongs
+  replyTo = ac.StructItem.int32(), -- pong: sessionID of the pinging car; ping: -1
+}, callback)
+```
+
+### Server limits
+
+On the original AC server, CSP carries these messages as hidden chat: one message per 200 ms at most and 175 bytes each (`ac.getSim().directMessagingAvailable` is `true` on custom servers without those limits). LMCC Flags queues its messages to respect the rate; a mod sending on the same server shares that budget, so send rarely.
+
 ## Layout
 
 ```
