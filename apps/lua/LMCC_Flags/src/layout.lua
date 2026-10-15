@@ -1,4 +1,4 @@
--- Screen positions drivers can snap the flag panel to, and window size comparison.
+-- Screen positions drivers can snap the flag panel to.
 local M = {}
 
 M.MARGIN = 24 -- px from the screen edge
@@ -34,16 +34,6 @@ end
 function M.position(preset, screen, size, margin)
   margin = margin or M.MARGIN
   return vec2(axis(preset.x, screen.x, size.x, margin), axis(preset.y, screen.y, size.y, margin))
-end
-
-M.SIZE_TOLERANCE = 1 -- px, rounding of window sizes
-
----Whether two window sizes match within `M.SIZE_TOLERANCE`.
----@param a vec2
----@param b vec2
----@return boolean
-function M.sameSize(a, b)
-  return math.abs(a.x - b.x) <= M.SIZE_TOLERANCE and math.abs(a.y - b.y) <= M.SIZE_TOLERANCE
 end
 
 return M
