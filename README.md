@@ -51,17 +51,22 @@ git tag v1.2.3
 git push origin v1.2.3
 ```
 
-For development, install a dev copy of every mod instead of copying the folders. It is named `<mod>_dev` (`apps/lua/Flags_dev`) with ` (dev)` after every window name, so it sits next to a release install of the same mod:
+To install the mods from the repo, use the [Task](https://taskfile.dev) tasks (Windows, PowerShell 7). Each one acts on every mod of `apps/lua`, or on one with `MOD=<name>`; `AC_ROOT=<path>` targets another AC folder (default `D:\SteamLibrary\steamapps\common\assettocorsa`):
 
 ```powershell
-./install.ps1                         # dev copies in D:\SteamLibrary\...\assettocorsa\apps\lua
-./install.ps1 -AcRoot "E:\Games\assettocorsa"
-./install.ps1 -Uninstall              # removes the dev copies, the repo is untouched
+task install:dev                      # dev copies, linked to the repo
+task install:normal                   # committed files, as drivers get them
+task uninstall:dev
+task uninstall:normal
+task install:dev MOD=Flags AC_ROOT="E:\Games\assettocorsa"
 ```
 
-The subfolders of a dev copy (`src`, `sounds`) are junctions into the repo, so edits show up in game without copying. CSP loads `<folder>/<folder>.lua`, so the entry and `manifest.ini` are copies: run `./install.ps1` again after changing a manifest or a file at the root of a mod. It also removes links into the repo whose folder no longer exists (a renamed mod).
+They call `install.ps1` (`-Mode dev|normal`, `-Uninstall`, `-Mod`, `-AcRoot`). Only folders made by the script are replaced or removed (it leaves a `.dev-install` or `.normal-install` file in them), so a mod installed from Content Manager is never touched. Both modes also remove links into the repo whose folder no longer exists (a renamed mod).
 
-While the dev copy runs, the release install stays silent (no panel, strips, sound, history or shared penalties; its setup says why) and takes over again about 2 seconds after the dev copy stops. Both still answer the network test ping.
+- **dev**: a copy named `<mod>_dev` (`apps/lua/Flags_dev`) with ` (dev)` after every window name, so it sits next to a normal install of the same mod. Its subfolders (`src`, `sounds`) are junctions into the repo, so edits show up in game without copying. CSP loads `<folder>/<folder>.lua`, so the entry and `manifest.ini` are copies: install again after changing a manifest or a file at the root of a mod.
+- **normal**: `apps/lua/<mod>` with the committed files of the mod, the same as the release zip. Uncommitted changes are left out, with a warning.
+
+While the dev copy runs, the normal install stays silent (no panel, strips, sound, history or shared penalties; its setup says why) and takes over again about 2 seconds after the dev copy stops. Both still answer the network test ping.
 
 In game, open from the app bar:
 
