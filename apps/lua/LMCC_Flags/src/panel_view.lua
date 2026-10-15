@@ -20,7 +20,7 @@ M.IDLE_TEXT = 'NO FLAG'
 ---@field label string
 ---@field instruction string
 ---@field detail string?
----@field extra string? @Second active signal, when there is one.
+---@field extra string? @Second active signal, with the count of the ones below it.
 
 ---Text content of the panel, nil when no signal is active.
 ---@param signals Signal[]
@@ -30,11 +30,12 @@ function M.model(signals, detail)
   local top = signals[1]
   if not top then return nil end
   local second = signals[2]
+  local more = #signals > 2 and string.format(' (+%d)', #signals - 2) or ''
   return {
     label = top.flag.label,
     instruction = top.instruction,
     detail = detail,
-    extra = second and ('+ ' .. second.flag.label .. ': ' .. second.instruction) or nil,
+    extra = second and ('+ ' .. second.flag.label .. ': ' .. second.instruction .. more) or nil,
   }
 end
 

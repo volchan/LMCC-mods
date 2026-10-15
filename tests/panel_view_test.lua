@@ -16,6 +16,10 @@ t.check('model has label, instruction, detail', m.label == 'YELLOW' and m.instru
 local both = signal.resolve(F.FasterCar, P.SlowDown, 4)
 m = panel.model(both, nil)
 t.check('second signal shown as extra line', m.label == 'SLOW DOWN' and m.extra == '+ BLUE: ' .. both[2].instruction)
+local three = { signal.of(flags.GAS_CUT, 3), signal.of(flags.forPenalty(P.TeleportToPits), 3), signal.of(flags.forFlag(F.Caution)) }
+m = panel.model(three, nil)
+t.check('signals below the second are counted', m.label == 'GAS CUT'
+  and m.extra == '+ DRIVE THROUGH: ' .. three[2].instruction .. ' (+1)')
 
 -- draw idle
 panel.draw({}, nil, 0)
