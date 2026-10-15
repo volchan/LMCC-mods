@@ -13,7 +13,7 @@ It uses the flags and penalties the game already raises, so it works on any serv
 - **Flag panel**: big HUD panel with the flag drawn in its colours and pattern, its name, what to do, and where the cause is. It opens by itself on every new flag, even if it was closed:
   - yellow family: `Incident 250 m ahead, Turn 1, J. Doe`
   - blue: every car about to lap you, closest first, with race position and gap: `Let 2 cars pass: P1 A. Fast 80 m, P3 B. Quick 240 m`
-  - a second active signal (for example a penalty during a blue flag) is shown on an extra line.
+  - several signals at once are stacked by priority: the most urgent fills the panel, the next one is shown on an extra line with the count of the others (`+ DRIVE THROUGH: Drive through the pit lane, laps left: 2 (+1)`). A gas cut taken while a drive through is pending goes on top, since it must be done during the current lap.
 - **Screen-edge strips**: solid strips in the flag colour along the top and bottom of the screen with the flag name scrolling across, in the style of the CMRT HUD flag banner. They slide in when a flag appears or changes, slide out when it clears and pulse for urgent flags, so the flag is seen without looking at the panel. Always on: drivers cannot turn them off.
 - **Penalties shared between drivers**: every Flags client tells the others when one of its penalties starts (gas cut with its seconds, drive through, pit penalty, slow down, black flag) and when it is served. Only gas cuts are shown: **GAS CUT AHEAD** warns when a car close ahead (300 m by default) must lift off, with its position, gap and seconds left (`P5 Seygow 120 m, lift 4s`). It ranks below every game flag. Works on the original AC server (messages travel as hidden chat); every driver needs this version.
 - **Sound cues**: a short sound when the flag changes. Four cues: caution (yellow, code 60, slippery, slow vehicle, ambulance), blue, severe (black, red, penalties), info (green, white, checkered, pit closed).
@@ -73,7 +73,7 @@ While the dev copy runs, the normal install stays silent (no panel, strips, soun
 
 In game, open from the app bar:
 
-- **LMCC Flags**: the panel. Drag it to move it; drag the grip in its bottom-right corner (shown while the mouse is over it) to resize it, which scales everything. Right click locks it in place (a padlock animation, the same as the CMRT HUD, shows the change); right click again to unlock. The settings icon opens the setup.
+- **LMCC Flags**: the panel. Drag it to move it; drag the grip in its bottom-right corner (shown while the mouse is over it) to resize it, which scales everything; the size is kept between sessions. Right click locks it in place (a padlock animation, the same as the CMRT HUD, shows the change); right click again to unlock. The settings icon opens the setup.
 - **LMCC Flags Setup**: tests and preferences.
 - **LMCC Flags History**: the flag log.
 
@@ -164,6 +164,7 @@ apps/lua/LMCC_Flags/
   src/window_mover.lua   moves, opens and resizes the panel window
   src/lock.lua           panel lock state and padlock animation timeline
   src/panel_input.lua    right click lock, hover resize grip, move blocking
+  src/panel_size.lua     panel size picked with the grip, saved and applied again
   src/pulse.lua          shared blink
   src/draw.lua           font, text, flag patterns
   src/theme.lua          colours
@@ -207,4 +208,4 @@ tests/                   one *_test.lua per module, helper.lua and ui_stub.lua s
 - The blue flag list uses race order, so in practice and qualifying (ordered by best lap) it can list cars that are simply faster.
 - Very long location lines are clipped to the panel width; widen the panel if needed.
 - The game can keep reporting a penalty after it is served, so the app clears it itself: pit penalties (DRIVE THROUGH, PIT PENALTY) once the car has been in the pit lane and left it, SLOW DOWN when its seconds reach 0. A black flag only clears when the game removes it.
-- The game also keeps some flags raised long after they matter, so the app hides them: green after 5 seconds, checkered once you cross the line or enter the pit lane (shown at least 5 seconds), the gas cut flag when it is raised with a penalty not yet served (the game raises it with every penalty; the penalty has the exact instruction). A gas cut after a served penalty shows normally. Yellow, blue, white and black are lowered by the game itself.
+- The game also keeps some flags raised long after they matter, so the app hides them: green after 5 seconds, checkered once you cross the line or enter the pit lane (shown at least 5 seconds), the gas cut flag when it is raised with a penalty not yet served (the game raises it with every penalty; the penalty has the exact instruction). A gas cut after a served penalty shows normally, and so does a gas cut taken before a penalty is served, while its lift seconds run. Yellow, blue, white and black are lowered by the game itself.
