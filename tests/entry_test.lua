@@ -126,7 +126,7 @@ for _, tx in ipairs(uiStub.texts()) do
 end
 t.check('snap fails while panel window is unknown', failed and moved == nil)
 
-windows[1] = { name = 'panel', title = 'Flags' }
+windows[1] = { name = 'panel', title = 'LMCC Flags' }
 uiStub.reset()
 uiStub.clicks[layout.PRESETS[1].label] = true
 script.windowSetup(0)
@@ -205,7 +205,7 @@ dofile('apps/lua/Flags/Flags.lua')
 script.update(0)
 t.check('dev install leaves a heartbeat', shared[presence.KEY] == wallClock)
 shown = false
-windows[1] = { name = 'panel', title = 'Flags (dev)' }
+windows[1] = { name = 'panel', title = 'LMCC Flags (dev)' }
 uiStub.reset()
 uiStub.clicks[setupView.SHOW_PANEL_LABEL] = true
 script.windowSetup(0)

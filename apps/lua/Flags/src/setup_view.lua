@@ -17,10 +17,10 @@ M.LOCK_LABEL = 'Lock panel (or right click it)'
 M.TEST_HINT = string.format('Click an alert to show it for %d s with its sound. Tests are not saved in the history.',
   preview.DURATION)
 M.NO_GAME_DATA_TEXT = 'Waiting for the game...'
-M.PANEL_MISSING_TEXT = 'Flags panel not found: open it once from the apps bar.'
+M.PANEL_MISSING_TEXT = 'LMCC Flags panel not found: open it once from the apps bar.'
 M.NET_PING_LABEL = 'Send test ping'
-M.SILENT_TEXT = 'A dev install of Flags is running: this one stays silent until it stops.'
-M.NET_HELP = 'Checks that Flags clients can message each other on this server. Every other driver '
+M.SILENT_TEXT = 'A dev install of LMCC Flags is running: this one stays silent until it stops.'
+M.NET_HELP = 'Checks that LMCC Flags clients can message each other on this server. Every other driver '
   .. 'running this version answers the ping; their replies prove alerts could be shared between drivers.'
 M.NET_OFFLINE_TEXT = 'Offline session: join a server to test with other drivers.'
 M.NET_DIRECT_TEXT = 'Server: custom, direct messaging between clients.'
@@ -39,7 +39,7 @@ local CUES = { flags.SOUND.caution, flags.SOUND.blue, flags.SOUND.severe, flags.
 M.GROUPS = {
   { kind = flags.KIND.race, title = 'Race flags' },
   { kind = flags.KIND.penalty, title = 'Penalties' },
-  { kind = flags.KIND.others, title = 'Other drivers (shared by their Flags app)' },
+  { kind = flags.KIND.others, title = 'Other drivers (shared by their LMCC Flags)' },
   { kind = flags.KIND.server, title = 'Server script flags', collapsed = true },
 }
 for _, group in ipairs(M.GROUPS) do

@@ -1,4 +1,4 @@
--- Online messaging test: this client pings every other Flags client and records who
+-- Online messaging test: this client pings every other LMCC Flags client and records who
 -- answers, and answers their pings. Pure: messages come in and go out as plain values.
 local M = {}
 M.__index = M

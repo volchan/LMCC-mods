@@ -21,7 +21,7 @@ local presence = require('src/presence')
 
 -- Must match NAME of the panel window in manifest.ini; install.ps1 adds the dev suffix there too.
 local dev = variant.isDev(ac.dirname())
-local PANEL_TITLE = variant.title('Flags', dev)
+local PANEL_TITLE = variant.title('LMCC Flags', dev)
 
 -- A release install stays silent while a dev install runs in the same session.
 local devPresence = presence.new(dev, os.time, ac.store, ac.load)
