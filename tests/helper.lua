@@ -1,5 +1,5 @@
 -- Shared test helpers. Run tests from the repo root.
-package.path = './apps/lua/LmccFlags/?.lua;./?.lua;' .. package.path
+package.path = './apps/lua/Flags/?.lua;./?.lua;' .. package.path
 
 local M = { failures = 0 }
 

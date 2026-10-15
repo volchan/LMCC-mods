@@ -49,7 +49,7 @@ ac = {
 }
 script = {}
 
-dofile('apps/lua/LmccFlags/LmccFlags.lua')
+dofile('apps/lua/Flags/Flags.lua')
 t.check('callbacks registered', script.update and script.windowPanel and script.windowHistory
   and script.windowSetup and script.drawGlow)
 
@@ -120,7 +120,7 @@ for _, tx in ipairs(uiStub.texts()) do
 end
 t.check('snap fails while panel window is unknown', failed and moved == nil)
 
-windows[1] = { name = 'panel', title = 'LMCC Flags' }
+windows[1] = { name = 'panel', title = 'Flags' }
 uiStub.reset()
 uiStub.clicks[layout.PRESETS[1].label] = true
 script.windowSetup(0)

@@ -3,7 +3,7 @@ local sound = require('src/sound')
 
 local events = {}
 ac = {
-  dirname = function() return 'C:/AC/apps/lua/LmccFlags' end,
+  dirname = function() return 'C:/AC/apps/lua/Flags' end,
   AudioEvent = {
     fromFile = function(params, reverb)
       local ev = { params = params, reverb = reverb, started = false, disposed = false }
@@ -15,7 +15,7 @@ ac = {
   },
 }
 
-t.check('cue path next to script', sound.path('blue') == 'C:/AC/apps/lua/LmccFlags/sounds/blue.wav')
+t.check('cue path next to script', sound.path('blue') == 'C:/AC/apps/lua/Flags/sounds/blue.wav')
 
 sound.play('caution', 0.5)
 local first = events[1]

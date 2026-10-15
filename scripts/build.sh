@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Packages the app into dist/LmccFlags-<version>.zip for drivers. The zip holds
-# apps/lua/LmccFlags/ so it extracts into the AC root or drops into Content Manager.
+# Packages the app into dist/Flags-<version>.zip for drivers. The zip holds
+# apps/lua/Flags/ so it extracts into the AC root or drops into Content Manager.
 # Built from the committed tree only, so local edits never leak into a release.
 # An optional version sets VERSION in the zipped manifest (the repo file is left alone); the
 # release workflow passes the tag. Prints the MD5 of manifest.ini, the file servers checksum.
@@ -8,7 +8,7 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-app=apps/lua/LmccFlags
+app=apps/lua/Flags
 manifest=$app/manifest.ini
 version="${1:-}"
 
@@ -37,7 +37,7 @@ else
   tree=HEAD
 fi
 
-zip="dist/LmccFlags-$version.zip"
+zip="dist/Flags-$version.zip"
 mkdir -p dist
 # autocrlf off: Windows builds would otherwise zip CRLF files and change the checksum.
 git -c core.autocrlf=false archive --format=zip --output="$zip" "$tree" "$app"

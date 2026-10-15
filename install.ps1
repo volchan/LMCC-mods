@@ -7,8 +7,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$Source = Join-Path $PSScriptRoot "apps\lua\LmccFlags"
-$Target = Join-Path $AcRoot "apps\lua\LmccFlags"
+$Source = Join-Path $PSScriptRoot "apps\lua\Flags"
+$Target = Join-Path $AcRoot "apps\lua\Flags"
 
 if (-not (Test-Path (Join-Path $AcRoot "acs.exe"))) {
     throw "Assetto Corsa not found at '$AcRoot'. Pass -AcRoot <path>."

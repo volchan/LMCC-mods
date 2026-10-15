@@ -45,7 +45,7 @@ jobs:
           {
             echo "## Server checksum"
             echo
-            echo "Required Apps file: \`apps/lua/LmccFlags/manifest.ini\`"
+            echo "Required Apps file: \`apps/lua/Flags/manifest.ini\`"
             echo
             echo "MD5: \`$CHECKSUM\`"
             echo
@@ -65,7 +65,7 @@ jobs:
         run: |
           if gh release view "$TAG" > /dev/null 2>&1; then
             gh release upload "$TAG" "$ZIP" --clobber
-            gh release edit "$TAG" --title "LMCC Flags $VERSION" --notes-file notes.md
+            gh release edit "$TAG" --title "Flags $VERSION" --notes-file notes.md
           else
-            gh release create "$TAG" "$ZIP" --title "LMCC Flags $VERSION" --notes-file notes.md
+            gh release create "$TAG" "$ZIP" --title "Flags $VERSION" --notes-file notes.md
           fi

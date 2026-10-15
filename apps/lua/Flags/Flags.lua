@@ -1,4 +1,4 @@
--- LMCC Flags: makes race flags impossible to miss for championship drivers.
+-- Flags: makes race flags impossible to miss for championship drivers.
 -- Wiring only: the logic lives in src/.
 local app = require('src/app')
 local game = require('src/game')
@@ -18,7 +18,7 @@ local net = require('src/net')
 local share = require('src/share')
 
 -- Must match NAME of the panel window in manifest.ini.
-local PANEL_TITLE = 'LMCC Flags'
+local PANEL_TITLE = 'Flags'
 
 local prefs = settings.load()
 local controller = app.new({
