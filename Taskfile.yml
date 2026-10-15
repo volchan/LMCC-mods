@@ -1,4 +1,4 @@
-# Install tasks for the mods of apps/lua, run with https://taskfile.dev (Windows, needs pwsh).
+# Install, build and release tasks for the mods of apps/lua, run with https://taskfile.dev (Windows, needs pwsh).
 # Optional variables: MOD=<name> acts on one mod only, AC_ROOT=<path> for another AC folder.
 #   task install:dev MOD=Flags
 #   task install:normal AC_ROOT="E:\Games\assettocorsa"
@@ -29,3 +29,13 @@ tasks:
     desc: Remove the normal installs made by install:normal
     cmds:
       - pwsh -NoProfile -File install.ps1 -Mode normal -Uninstall {{.ARGS}}
+
+  build:
+    desc: Build dist/LMCC-mods-<release>.zip from the committed mods
+    cmds:
+      - bash scripts/build.sh
+
+  release:
+    desc: Tag the pushed main with its release version and push the tag
+    cmds:
+      - bash scripts/release.sh
