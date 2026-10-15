@@ -23,10 +23,17 @@ local settings = ac.storage({
 local SEND_EVERY_S = 0.2
 -- What is kept while the site cannot be reached, in seconds
 local MAX_PENDING_S = 60
+-- Frames a request carries at most: after an outage the backlog goes in
+-- small pieces, never stringified all at once in a frame
+local MAX_FRAMES_PER_SEND = 25
+-- Seconds between tries while the site fails, doubling up to this
+local MAX_RETRY_S = 10
 
 local clock = 0
 local sinceSample = 0
 local sinceSend = 0
+-- Seconds between two requests: SEND_EVERY_S, longer while the site fails
+local sendEvery = SEND_EVERY_S
 local frames = {}
 local messages = {}
 local laps = {}
@@ -39,6 +46,9 @@ local status = 'waiting'
 -- Set once the site has refused this server: nothing more sent until the
 -- game is restarted on another one
 local ignored = false
+-- Whether this is the league's server, checked once: the name never changes
+-- within a game
+local onLeagueServer = nil
 
 -- Every chat line the game receives, the server's included: a penalty such as
 -- "CUT DETECTED, SLOW DOWN" may only ever reach the driver, never the Server
@@ -129,7 +139,7 @@ function script.update(dt)
     end
   end
 
-  if sinceSend >= SEND_EVERY_S and not sending and (#frames > 0 or #messages > 0 or #laps > 0 or #penalties > 0) then
+  if sinceSend >= sendEvery and not sending and (#frames > 0 or #messages > 0 or #laps > 0 or #penalties > 0) then
     sinceSend = 0
     send()
   end
@@ -160,7 +170,11 @@ function recording()
     return false
   end
 
-  return ac.getServerName():lower():find(SERVER_FILTER, 1, true) ~= nil
+  if onLeagueServer == nil then
+    onLeagueServer = ac.getServerName():lower():find(SERVER_FILTER, 1, true) ~= nil
+  end
+
+  return onLeagueServer
 end
 
 function statusLine()
@@ -221,17 +235,16 @@ function sample()
   end
 
   frames[#frames + 1] = { t = round(clock, 3), cars = cars }
-  trim(frames)
+  frames = trim(frames)
 end
 
 -- `sender` is this game's own driver, car 0; `sentAt` dates the frames
 -- against the arrival time
 function send()
-  local batch = frames
+  local batch = takeFrames()
   local said = messages
   local completed = laps
   local announced = penalties
-  frames = {}
   messages = {}
   laps = {}
   penalties = {}
@@ -273,13 +286,38 @@ function send()
 
     if err or not response or response.status >= 300 then
       status = 'error: ' .. tostring(err or (response and response.status))
+      sendEvery = math.min(math.max(sendEvery * 2, 1), MAX_RETRY_S)
       restore(batch, said, completed, announced)
       return
     end
 
+    sendEvery = SEND_EVERY_S
     heard.sent = heard.sent + #announced
     status = 'sent at ' .. os.date('%H:%M:%S')
   end)
+end
+
+-- The oldest frames, MAX_FRAMES_PER_SEND at most; the rest waits its turn
+function takeFrames()
+  if #frames <= MAX_FRAMES_PER_SEND then
+    local all = frames
+    frames = {}
+    return all
+  end
+
+  local batch = {}
+  local rest = {}
+
+  for index, frame in ipairs(frames) do
+    if index <= MAX_FRAMES_PER_SEND then
+      batch[#batch + 1] = frame
+    else
+      rest[#rest + 1] = frame
+    end
+  end
+
+  frames = rest
+  return batch
 end
 
 function driverNames()
@@ -318,14 +356,25 @@ function restore(batch, said, completed, announced)
   messages = said
   laps = completed
   penalties = announced
-  trim(frames)
+  frames = trim(frames)
 end
 
--- The oldest frames go first once the site has been away too long
+-- The oldest frames go first once the site has been away too long: a second
+-- more than needed, in one pass, so this runs once a second at most
 function trim(list)
-  while #list > MAX_PENDING_S * settings.rate do
-    table.remove(list, 1)
+  local limit = MAX_PENDING_S * settings.rate
+
+  if #list <= limit then
+    return list
   end
+
+  local kept = {}
+
+  for index = #list - limit + settings.rate + 1, #list do
+    kept[#kept + 1] = list[index]
+  end
+
+  return kept
 end
 
 -- How many wheels are off the track: what a cut is judged on. Exact for this
