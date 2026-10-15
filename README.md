@@ -1,17 +1,21 @@
-# LMCC Flags
+# LMCC mods
 
-Assetto Corsa app (Custom Shaders Patch, Lua) that makes race flags impossible to miss for LMCC championship drivers.
+Assetto Corsa mods (Custom Shaders Patch, Lua) for the LMCC championship drivers. Each mod is a folder under `apps/lua/`.
+
+## Flags
+
+Makes race flags impossible to miss.
 
 It uses the flags and penalties the game already raises, so it works on any server without a plugin.
 
-## What drivers get
+### What drivers get
 
 - **Flag panel**: big HUD panel with the flag drawn in its colours and pattern, its name, what to do, and where the cause is. It opens by itself on every new flag, even if it was closed:
   - yellow family: `Incident 250 m ahead, Turn 1, J. Doe`
   - blue: every car about to lap you, closest first, with race position and gap: `Let 2 cars pass: P1 A. Fast 80 m, P3 B. Quick 240 m`
   - a second active signal (for example a penalty during a blue flag) is shown on an extra line.
 - **Screen-edge strips**: solid strips in the flag colour along the top and bottom of the screen with the flag name scrolling across, in the style of the CMRT HUD flag banner. They slide in when a flag appears or changes, slide out when it clears and pulse for urgent flags, so the flag is seen without looking at the panel. Always on: drivers cannot turn them off.
-- **Penalties shared between drivers**: every LMCC Flags client tells the others when one of its penalties starts (gas cut with its seconds, drive through, pit penalty, slow down, black flag) and when it is served. Only gas cuts are shown: **GAS CUT AHEAD** warns when a car close ahead (300 m by default) must lift off, with its position, gap and seconds left (`P5 Seygow 120 m, lift 4s`). It ranks below every game flag. Works on the original AC server (messages travel as hidden chat); every driver needs this version.
+- **Penalties shared between drivers**: every Flags client tells the others when one of its penalties starts (gas cut with its seconds, drive through, pit penalty, slow down, black flag) and when it is served. Only gas cuts are shown: **GAS CUT AHEAD** warns when a car close ahead (300 m by default) must lift off, with its position, gap and seconds left (`P5 Seygow 120 m, lift 4s`). It ranks below every game flag. Works on the original AC server (messages travel as hidden chat); every driver needs this version.
 - **Sound cues**: a short sound when the flag changes. Four cues: caution (yellow, code 60, slippery, slow vehicle, ambulance), blue, severe (black, red, penalties), info (green, white, checkered, pit closed).
 - **Flag history**: every flag of the session with lap, session time, duration and location.
 - **Setup window**, in tabs:
@@ -19,24 +23,24 @@ It uses the flags and penalties the game already raises, so it works on any serv
   - Panel: reopen the panel window, lock it, and snap it to a screen position on a 3x3 grid.
   - Display: pulse urgent flags, show or hide the green flag (shown 5 seconds, since the game keeps it raised all session), strip height, blue flag search range (100 to 1000 m behind you), gas cut ahead range (100 to 1000 m ahead).
   - Sound: sound on or off, master volume, volume per cue with a test button (hover a cue name to see its alerts).
-  - Network: checks that LMCC Flags clients can message each other on the server (needed to share alerts between drivers). "Send test ping" reaches every driver running the same version; each one answers and is listed with its round trip time. Also shows whether the server relays messages directly (custom server) or as hidden chat (original AC server). Alone on the server, the time your own ping takes to come back, compared with your ping, tells whether it went through the server or stayed a local copy.
+  - Network: checks that Flags clients can message each other on the server (needed to share alerts between drivers). "Send test ping" reaches every driver running the same version; each one answers and is listed with its round trip time. Also shows whether the server relays messages directly (custom server) or as hidden chat (original AC server). Alone on the server, the time your own ping takes to come back, compared with your ping, tells whether it went through the server or stayed a local copy.
 
 Flags shown: green, yellow, blue, white, checkered, black, penalties: drive through (jump start, laps left to serve it), pit penalty (laps left to go through the pits), gas cut (track cut: lift off for the seconds left, read from the AC shared memory since it depends on the track, or drop below 35 km/h; reported by the game as its penalty flag), black flag. The game also defines red, code 60, slippery, slow vehicle, ambulance, mechanical, warning, pit closed and black flag withdrawn; those only appear if a server script raises them, and the app displays them correctly when it does.
 
-### How the blue flag list works
+#### How the blue flag list works
 
 A car is listed when it is behind you on track within the search range and ahead of you in the race order, which means it is about to lap you. Cars in the pit lane, disconnected cars and hidden cars are ignored. When no car matches, the panel falls back to the single car the game reports.
 
-## Install
+### Install
 
 Requires Custom Shaders Patch.
 
-For drivers: drag `LmccFlags-<version>.zip` into Content Manager, or extract it into the Assetto Corsa folder (it holds `apps/lua/LmccFlags`).
+For drivers: drag `Flags-<version>.zip` into Content Manager, or extract it into the Assetto Corsa folder (it holds `apps/lua/Flags`).
 
 To build that zip from the committed tree (refuses uncommitted app changes; prints the server checksum):
 
 ```bash
-scripts/build.sh                      # version from manifest.ini -> dist/LmccFlags-<version>.zip
+scripts/build.sh                      # version from manifest.ini -> dist/Flags-<version>.zip
 scripts/build.sh 1.2.3                # sets VERSION in the zipped manifest only
 ```
 
@@ -57,17 +61,17 @@ For development, link the folder instead of copying it:
 
 In game, open from the app bar:
 
-- **LMCC Flags**: the panel. Drag it to move it; drag the grip in its bottom-right corner (shown while the mouse is over it) to resize it, which scales everything. Right click locks it in place (a padlock animation, the same as the CMRT HUD, shows the change); right click again to unlock. The settings icon opens the setup.
-- **LMCC Flags Setup**: tests and preferences.
-- **LMCC Flags History**: the flag log.
+- **Flags**: the panel. Drag it to move it; drag the grip in its bottom-right corner (shown while the mouse is over it) to resize it, which scales everything. Right click locks it in place (a padlock animation, the same as the CMRT HUD, shows the change); right click again to unlock. The settings icon opens the setup.
+- **Flags Setup**: tests and preferences.
+- **Flags History**: the flag log.
 
 The strips and sound work even when no window is open.
 
-## Shared data for other mods
+### Shared data for other mods
 
-LMCC Flags sends its data with CSP online events (`ac.OnlineEvent`), so any other Lua app on the same server can read it. An event only matches when the key and the whole layout are identical: copy the layouts below exactly, field names and types included.
+Flags sends its data with CSP online events (`ac.OnlineEvent`), so any other Lua app on the same server can read it. An event only matches when the key and the whole layout are identical: copy the layouts below exactly, field names and types included.
 
-### Penalties
+#### Penalties
 
 Key `volchan.lmccFlags.penalties`. Each client sends one message when one of its own penalties starts and one when it is served. Nothing is sent periodically, so a client that joins later does not learn about penalties already running.
 
@@ -102,10 +106,10 @@ end)
 Notes for readers:
 
 - "Served" is decided by the sending client: pit penalties once its car has been through the pit lane, the gas cut when the game lowers it, the slow down when its seconds reach 0.
-- A "served" message can be lost (rate limit, disconnection). LMCC Flags drops a gas cut 3 seconds after its length ends, or 10 seconds after it started when the length is unknown; do something similar.
+- A "served" message can be lost (rate limit, disconnection). Flags drops a gas cut 3 seconds after its length ends, or 10 seconds after it started when the length is unknown; do something similar.
 - Previews from the setup window are never sent.
 
-### Network test
+#### Network test
 
 Key `volchan.lmccFlags.netTest`, used by the setup Network tab. Other mods normally have no reason to send these, but a reader must not answer them.
 
@@ -118,16 +122,16 @@ ac.OnlineEvent({
 }, callback)
 ```
 
-### Server limits
+#### Server limits
 
-On the original AC server, CSP carries these messages as hidden chat: one message per 200 ms at most and 175 bytes each (`ac.getSim().directMessagingAvailable` is `true` on custom servers without those limits). LMCC Flags queues its messages to respect the rate; a mod sending on the same server shares that budget, so send rarely.
+On the original AC server, CSP carries these messages as hidden chat: one message per 200 ms at most and 175 bytes each (`ac.getSim().directMessagingAvailable` is `true` on custom servers without those limits). Flags queues its messages to respect the rate; a mod sending on the same server shares that budget, so send rarely.
 
-## Layout
+### Layout
 
 ```
-apps/lua/LmccFlags/
+apps/lua/Flags/
   manifest.ini           windows and the fullscreen strips callback
-  LmccFlags.lua          entry: wiring only
+  Flags.lua              entry: wiring only
   sounds/*.wav           sound cues (generated by scripts/gen_sounds.js)
   src/flags.lua          catalog: every flag and penalty, look, instruction, priority, sound
   src/signal.lua         flag + penalty -> signals, most urgent first
@@ -166,7 +170,7 @@ scripts/changelog.sh     release changelog from commits since the previous tag
 tests/                   one *_test.lua per module, helper.lua and ui_stub.lua shared
 ```
 
-## Development
+### Development
 
 - VS Code with the *Lua* extension (sumneko). `.luarc.json` points to the CSP SDK definitions in the AC install for autocomplete.
 - Tests run with any Lua 5.1+ or LuaJIT interpreter, from the repo root:
@@ -176,7 +180,7 @@ tests/                   one *_test.lua per module, helper.lua and ui_stub.lua s
 - Regenerate sounds after changing a cue: `node scripts/gen_sounds.js`.
 - Debug in game with CSP's **Lua Debug** app (`ac.log`, `ac.debug`).
 
-## Known limits
+### Known limits
 
 - Flags come from the game only. Championship-specific signals (full course yellow, safety car) need a server script that raises the matching game flag.
 - The blue flag list uses race order, so in practice and qualifying (ordered by best lap) it can list cars that are simply faster.
