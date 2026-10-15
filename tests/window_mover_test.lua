@@ -33,4 +33,26 @@ t.check('resize sets the window size', mover.resize('LMCC Flags', vec2(600, 150)
 t.check('resize fails when window missing', mover.resize('Nope', vec2(600, 150)) == false)
 t.check('snap fails when window missing', mover.snap('Nope', preset, vec2(1920, 1080)) == false)
 
+-- The accessor is kept while valid, looked up again once it is not.
+local lookups = 0
+local listWindows = ac.getAppWindows
+ac.getAppWindows = function() lookups = lookups + 1; return listWindows() end
+window.valid = function() return true end
+mover.access('LMCC Flags')
+lookups = 0
+t.check('valid accessor reused', mover.access('LMCC Flags') == window and lookups == 0)
+window.valid = function() return false end
+mover.access('LMCC Flags')
+t.check('invalid accessor looked up again', lookups == 1)
+window.valid = function() return true end
+t.check('size of the window', mover.size('LMCC Flags').x == 500)
+t.check('no size when window missing', mover.size('Nope') == nil)
+
+resized = nil
+mover.keepSize('LMCC Flags', vec2(500, 100))
+t.check('matching size left alone', resized == nil)
+mover.keepSize('LMCC Flags', vec2(600, 150))
+t.check('changed size put back', resized.x == 600 and resized.y == 150)
+mover.keepSize('Nope', vec2(600, 150))
+
 t.finish()

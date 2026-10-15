@@ -4,12 +4,11 @@
 local M = {}
 
 M.GRIP = 16 -- px
-M.MIN_SIZE = vec2(260, 65) -- keep in sync with MIN_SIZE of the panel window in manifest.ini
 
 local gripColor = rgbm(1, 1, 1, 0.5)
 
 ---@param locked boolean
----@param actions {toggleLock: fun(), resize: fun(size: vec2)}
+---@param actions {toggleLock: fun(), resize: fun(delta: vec2)} @`resize` gets the mouse movement while the grip is dragged.
 function M.update(locked, actions)
   local size = ui.windowSize()
   local hovered = ui.windowHovered()
@@ -27,8 +26,7 @@ function M.update(locked, actions)
     ui.drawTriangleFilled(vec2(size.x, corner.y), size, vec2(corner.x, size.y), gripColor)
   end
   if dragging then
-    local d = ui.mouseDelta()
-    actions.resize(vec2(math.max(M.MIN_SIZE.x, size.x + d.x), math.max(M.MIN_SIZE.y, size.y + d.y)))
+    actions.resize(ui.mouseDelta())
   end
 end
 

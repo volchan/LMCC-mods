@@ -159,17 +159,29 @@ script.windowPanel(0)
 t.check('lock animation drawn', #uiStub.named('pathStroke') == 1)
 t.check('locked panel blocks moving', uiStub.named('invisibleButton')[1].args[1] == '##lmccLocked')
 
--- Unlocked again, dragging the grip resizes through the window accessor.
+-- Unlocked again, dragging the grip resizes through the window accessor and saves the size.
 uiStub.reset()
 uiStub.hovered = true
 uiStub.mouseClicks[ui.MouseButton.Right] = true
 script.windowPanel(0)
 local resizedTo
 window.resize = function(_, s) resizedTo = s end
+window.valid = function() return true end
 uiStub.reset()
 uiStub.active, uiStub.delta = true, vec2(10, 0)
 script.windowPanel(0)
-t.check('grip drag resizes the panel', storage.panelLocked == false and resizedTo ~= nil)
+t.check('grip drag resizes the panel', storage.panelLocked == false and resizedTo.x == 530
+  and storage.panelWidth == 530 and storage.panelHeight == 130)
+uiStub.reset()
+uiStub.active, uiStub.delta = true, vec2(10, 0)
+script.windowPanel(0)
+t.check('drags add up from the saved size', resizedTo.x == 540)
+
+-- CSP puts the window back to its manifest size: the saved size is applied again.
+resizedTo = nil
+uiStub.reset()
+script.windowPanel(0)
+t.check('saved size applied again', resizedTo.x == 540 and resizedTo.y == 130)
 
 
 -- Network tab: the ping button sends through the online event.

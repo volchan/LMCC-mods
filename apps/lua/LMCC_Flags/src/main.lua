@@ -9,6 +9,7 @@ local preview = require('src/preview')
 local windowMover = require('src/window_mover')
 local panelView = require('src/panel_view')
 local panelInput = require('src/panel_input')
+local panelSize = require('src/panel_size')
 local lock = require('src/lock')
 local lockView = require('src/lock_view')
 local glowView = require('src/glow_view')
@@ -35,9 +36,14 @@ local controller = app.new({
 
 -- Real time for the lock animation, so it plays even while the game is paused.
 local panelLock = lock.new(prefs.panelLocked)
+local savedSize = panelSize.new(prefs)
 local panelActions = {
   toggleLock = function() prefs.panelLocked = panelLock:toggle(ui.time()) end,
-  resize = function(size) windowMover.resize(PANEL_TITLE, size) end,
+  -- Grows the saved size rather than the window's, so a drag adds up even if CSP resets the window.
+  resize = function(delta)
+    local current = savedSize:target() or windowMover.size(PANEL_TITLE)
+    if current then windowMover.resize(PANEL_TITLE, savedSize:grow(current, delta)) end
+  end,
 }
 
 -- Online messaging test, real time so it works while paused.
@@ -67,6 +73,8 @@ end
 
 function script.windowPanel(dt)
   if devPresence.silent then return end
+  local target = savedSize:target()
+  if target then windowMover.keepSize(PANEL_TITLE, target) end
   panelView.draw(controller:signals(), controller:displayDetail(), controller.now)
   panelInput.update(panelLock.locked, panelActions)
   lockView.draw(panelLock, ui.time(), panelView.scale(ui.windowSize()))

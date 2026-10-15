@@ -14,6 +14,8 @@ M.DEFAULTS = {
   blueRange = blue.DEFAULT_RANGE, -- metres behind the player to look for lapping cars
   gasCutRange = gasCutAhead.DEFAULT_RANGE, -- metres ahead to warn about cars serving a gas cut
   panelLocked = false, -- right click on the panel toggles it
+  panelWidth = 0, -- px, 0 until the driver resizes the panel (see panel_size.lua)
+  panelHeight = 0,
 }
 
 ---Settings key holding the volume of one cue, e.g. `volume_caution`.
