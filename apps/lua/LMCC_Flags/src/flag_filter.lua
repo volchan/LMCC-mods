@@ -4,7 +4,9 @@
 --   pit lane, after at least BRIEF seconds;
 -- - gas cut flag (return to pits): the game also raises it alongside every real penalty, so a raise
 --   that comes with an active penalty is hidden for as long as it lasts; the panel shows that
---   penalty's exact instruction instead. A new raise after the penalty is served is a gas cut.
+--   penalty's exact instruction instead. It still shows while gas cut seconds run (a track cut
+--   during an unserved penalty), since the game gives no other sign of it. A new raise after
+--   the penalty is served is a gas cut.
 -- Every other flag is lowered by the game itself.
 local FLAG = require('src/flags').FLAG
 
@@ -24,8 +26,9 @@ end
 ---@param inPitlane boolean
 ---@param showGreen boolean @Setting.
 ---@param penaltyActive boolean @A penalty not yet served is shown.
+---@param gasCutRunning boolean @The game counts gas cut seconds down.
 ---@return integer
-function M:effective(flagType, now, lap, inPitlane, showGreen, penaltyActive)
+function M:effective(flagType, now, lap, inPitlane, showGreen, penaltyActive, gasCutRunning)
   if flagType ~= self.flag then
     self.flag, self.since, self.raisedLap, self.withPenalty = flagType, now, lap, false
   end
@@ -37,7 +40,7 @@ function M:effective(flagType, now, lap, inPitlane, showGreen, penaltyActive)
   elseif flagType == FLAG.Finished then
     if not brief and (lap ~= self.raisedLap or inPitlane) then return FLAG.None end
   elseif flagType == FLAG.ReturnToPits then
-    if self.withPenalty then return FLAG.None end
+    if self.withPenalty and not gasCutRunning then return FLAG.None end
   end
   return flagType
 end

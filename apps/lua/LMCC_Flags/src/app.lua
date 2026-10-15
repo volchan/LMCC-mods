@@ -49,7 +49,7 @@ function M:refreshVisible(snap)
   local penaltyType = self.penalty:effective(snap.penaltyType, snap.penaltyParameter, snap.inPitlane)
   local penaltyActive = flags.forPenalty(penaltyType) ~= nil
   local flagType = self.flagFilter:effective(snap.flagType, snap.now, snap.lap, snap.inPitlane,
-    self.deps.settings.showGreen, penaltyActive)
+    self.deps.settings.showGreen, penaltyActive, snap.penaltyTime > 0)
   -- Gas cut seconds only, in whole seconds so signals are rebuilt once per second while they count down.
   local gasCut = flags.forFlag(flagType) == flags.GAS_CUT
   local flagParameter = gasCut and snap.penaltyTime > 0 and math.ceil(snap.penaltyTime) or nil
