@@ -31,6 +31,9 @@ local frames = {}
 local messages = {}
 local laps = {}
 local penalties = {}
+-- LMCC Flags' announcements this app heard and sent, shown in the window:
+-- whether they reach it at all
+local heard = { total = 0, own = 0, server = 0, notRecording = 0, sent = 0 }
 local sending = false
 local status = 'waiting'
 -- Set once the site has refused this server: nothing more sent until the
@@ -80,17 +83,30 @@ ac.OnlineEvent({
   active = ac.StructItem.byte(),
   parameter = ac.StructItem.int32(),
 }, function(sender, message)
+  heard.total = heard.total + 1
+
   -- nil: sent by the server, not a driver's penalty
-  if not sender or not recording() then
+  if not sender then
+    heard.server = heard.server + 1
     return
   end
 
+  if sender.index == 0 then
+    heard.own = heard.own + 1
+  end
+
+  if not recording() then
+    heard.notRecording = heard.notRecording + 1
+    return
+  end
+
+  -- Plain numbers, whatever the struct hands over, for the JSON
   penalties[#penalties + 1] = {
     t = round(clock, 3),
     driver = ac.getDriverName(sender.index),
-    code = message.code,
-    active = message.active,
-    parameter = message.parameter,
+    code = tonumber(message.code),
+    active = tonumber(message.active),
+    parameter = tonumber(message.parameter),
   }
 end)
 
@@ -122,6 +138,8 @@ end
 function script.windowMain(dt)
   ui.text(statusLine())
   ui.text(string.format('%d frame(s) waiting', #frames))
+  ui.text(string.format('Penalties heard: %d (%d own, %d from the server, %d not recording), %d sent',
+    heard.total, heard.own, heard.server, heard.notRecording, heard.sent))
 end
 
 function script.windowSettings(dt)
@@ -259,6 +277,7 @@ function send()
       return
     end
 
+    heard.sent = heard.sent + #announced
     status = 'sent at ' .. os.date('%H:%M:%S')
   end)
 end
