@@ -25,7 +25,4 @@ for _, pr in ipairs(layout.PRESETS) do
 end
 t.check('preset ids unique', unique and #layout.PRESETS == 7)
 
-t.check('sizes within tolerance match', layout.sameSize(vec2(520, 130), vec2(520 + layout.SIZE_TOLERANCE, 130)))
-t.check('sizes past tolerance differ', not layout.sameSize(vec2(520, 130), vec2(520, 132)))
-
 t.finish()

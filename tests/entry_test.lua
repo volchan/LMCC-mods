@@ -34,7 +34,7 @@ ac = {
   getSim = function() return sim end,
   getCar = function(i) return i == 0 and car or nil end,
   getSession = function() return { startTime = 0 } end,
-  getUI = function() return { windowSize = vec2(1920, 1080) } end,
+  getUI = function() return { windowSize = vec2(1920, 1080), uiScale = 2 } end,
   getAppWindows = function() return windows end,
   accessAppWindow = function() return window end,
   dirname = function() return dir end,
@@ -159,7 +159,7 @@ script.windowPanel(0)
 t.check('lock animation drawn', #uiStub.named('pathStroke') == 1)
 t.check('locked panel blocks moving', uiStub.named('invisibleButton')[1].args[1] == '##lmccLocked')
 
--- Unlocked again, dragging the grip resizes through the window accessor and saves the size.
+-- Unlocked again, dragging the grip saves the size; the next frames apply it in screen pixels.
 uiStub.reset()
 uiStub.hovered = true
 uiStub.mouseClicks[ui.MouseButton.Right] = true
@@ -170,18 +170,21 @@ window.valid = function() return true end
 uiStub.reset()
 uiStub.active, uiStub.delta = true, vec2(10, 0)
 script.windowPanel(0)
-t.check('grip drag resizes the panel', storage.panelLocked == false and resizedTo.x == 530
+t.check('grip drag saves the size', storage.panelLocked == false and resizedTo == nil
   and storage.panelWidth == 530 and storage.panelHeight == 130)
 uiStub.reset()
 uiStub.active, uiStub.delta = true, vec2(10, 0)
 script.windowPanel(0)
-t.check('drags add up from the saved size', resizedTo.x == 540)
+t.check('saved size applied scaled by the UI', resizedTo.x == 1060 and resizedTo.y == 260)
+t.check('drags add up from the saved size', storage.panelWidth == 540)
 
--- CSP puts the window back to its manifest size: the saved size is applied again.
-resizedTo = nil
-uiStub.reset()
-script.windowPanel(0)
-t.check('saved size applied again', resizedTo.x == 540 and resizedTo.y == 130)
+-- A FIXED_SIZE window goes back to its manifest size: the saved size is set every frame.
+for _ = 1, 2 do
+  resizedTo = nil
+  uiStub.reset()
+  script.windowPanel(0)
+  t.check('saved size set again', resizedTo.x == 1080 and resizedTo.y == 260)
+end
 
 
 -- Network tab: the ping button sends through the online event.

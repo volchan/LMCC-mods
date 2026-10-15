@@ -39,11 +39,8 @@ local panelLock = lock.new(prefs.panelLocked)
 local savedSize = panelSize.new(prefs)
 local panelActions = {
   toggleLock = function() prefs.panelLocked = panelLock:toggle(ui.time()) end,
-  -- Grows the saved size rather than the window's, so a drag adds up even if CSP resets the window.
-  resize = function(delta)
-    local current = savedSize:target() or windowMover.size(PANEL_TITLE)
-    if current then windowMover.resize(PANEL_TITLE, savedSize:grow(current, delta)) end
-  end,
+  -- Only saves: windowPanel applies the saved size every frame.
+  resize = function(delta) savedSize:grow(savedSize:target() or ui.windowSize(), delta) end,
 }
 
 -- Online messaging test, real time so it works while paused.
@@ -73,8 +70,10 @@ end
 
 function script.windowPanel(dt)
   if devPresence.silent then return end
+  -- A FIXED_SIZE window keeps a size set from Lua for one frame only, then goes back to SIZE of
+  -- manifest.ini: set it every frame, as the CMRT HUD does. Skipping a frame makes it flicker.
   local target = savedSize:target()
-  if target then windowMover.keepSize(PANEL_TITLE, target) end
+  if target then windowMover.resize(PANEL_TITLE, target) end
   panelView.draw(controller:signals(), controller:displayDetail(), controller.now)
   panelInput.update(panelLock.locked, panelActions)
   lockView.draw(panelLock, ui.time(), panelView.scale(ui.windowSize()))

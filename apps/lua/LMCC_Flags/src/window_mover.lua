@@ -36,29 +36,15 @@ function M.show(title)
   return true
 end
 
+---The accessor works in screen pixels, IMGUI sizes are scaled by the UI scale.
 ---@param title string
----@param size vec2
+---@param size vec2 @IMGUI units, as `ui.windowSize()` gives them.
 ---@return boolean @False when the window was not found.
 function M.resize(title, size)
   local window = M.access(title)
   if not window then return false end
-  window:resize(size)
+  window:resize(size * ac.getUI().uiScale)
   return true
-end
-
----@param title string
----@return vec2? @Nil when the window was not found.
-function M.size(title)
-  local window = M.access(title)
-  return window and window:size() or nil
-end
-
----Resizes the window back to `size` when something else changed it.
----@param title string
----@param size vec2
-function M.keepSize(title, size)
-  local window = M.access(title)
-  if window and not layout.sameSize(window:size(), size) then window:resize(size) end
 end
 
 ---Snaps a window to a layout preset and opens it, since moving a hidden window shows nothing.

@@ -1,6 +1,6 @@
 -- Panel size the driver picked with the resize grip. CSP brings a FIXED_SIZE window back to SIZE
--- of manifest.ini, so the size is kept in the settings and applied again whenever the window
--- differs. Pure: the settings table is injected.
+-- of manifest.ini, so the size is kept in the settings and applied again every frame. Pure: the
+-- settings table is injected.
 local M = {}
 M.__index = M
 
