@@ -35,21 +35,24 @@ A car is listed when it is behind you on track within the search range and ahead
 
 Requires Custom Shaders Patch.
 
-For drivers: drag `Flags-<version>.zip` into Content Manager, or extract it into the Assetto Corsa folder (it holds `apps/lua/Flags`).
+For drivers: drag `LMCC-mods-<release>.zip` into Content Manager, or extract it into the Assetto Corsa folder. It holds every mod (`apps/lua/Flags`, ...): all of them are required.
 
-To build that zip from the committed tree (refuses uncommitted app changes; prints the server checksum):
+#### Versions
+
+- Each mod has its own version, `VERSION` in its `manifest.ini`, in SemVer: major when drivers or servers must change something together (online event keys, folder name, settings), minor for a feature, patch for a fix. It is written by hand and never changed by the build.
+- A release has its own version, taken from the commit it is built from: `YYYY.MM.DD.<short hash>`, the commit date in UTC then its 7-character hash (`2026.10.15.29e530e`, tag `v2026.10.15.29e530e`). `scripts/version.sh [commit]` prints it.
+- A mod whose files changed since the previous release must have a new `VERSION`, or the CI fails (`scripts/check_versions.sh`).
+
+#### Build and release
 
 ```bash
-scripts/build.sh                      # version from manifest.ini -> dist/Flags-<version>.zip
-scripts/build.sh 1.2.3                # sets VERSION in the zipped manifest only
+task build                            # dist/LMCC-mods-<release>.zip from the committed mods, prints the server checksums
+task release                          # tags the pushed main with its release version and pushes the tag
 ```
 
-Releases: push a version tag and GitHub Actions (Linux) runs the tests on LuaJIT, builds the zip with the tag as version, and publishes a GitHub release with the zip, the server checksum and the changelog (feat, fix and perf commits since the previous tag):
+`task build` refuses uncommitted changes in `apps/lua`. `task release` refuses a dirty tree, a branch other than main, a HEAD not pushed, or a mod changed without a new version.
 
-```bash
-git tag v1.2.3
-git push origin v1.2.3
-```
+GitHub Actions runs the tests on LuaJIT, the mod version check and a build on every push and pull request (`ci.yml`). On a release tag (`release.yml`) it runs the same checks, verifies that the tag matches its commit, then publishes a GitHub release named `LMCC mods <release>` with the zip and the notes (`scripts/notes.sh`): a table of every mod with its version, whether it changed since the previous release, and the manifest MD5 servers need, then the changelog of each mod (breaking, feat, fix and perf commits touching its folder).
 
 To install the mods from the repo, use the [Task](https://taskfile.dev) tasks (Windows, PowerShell 7). Each one acts on every mod of `apps/lua`, or on one with `MOD=<name>`; `AC_ROOT=<path>` targets another AC folder (default `D:\SteamLibrary\steamapps\common\assettocorsa`):
 
@@ -176,9 +179,15 @@ apps/lua/Flags/
   src/history_view.lua   history window
   src/setup_view.lua     setup window
 scripts/gen_sounds.js    regenerates the wav files
-scripts/build.sh         builds the release zip and prints the server checksum
-scripts/changelog.sh     release changelog from commits since the previous tag
-.github/workflows/       release on version tags
+scripts/lib.sh           helpers shared by the release scripts
+scripts/version.sh       release version of a commit
+scripts/check_versions.sh  fails when a changed mod kept its version
+scripts/build.sh         builds the release zip and prints the server checksums
+scripts/changelog.sh     changelog of one mod since the previous release
+scripts/notes.sh         release notes: mod table and changelogs
+scripts/test.sh          runs every test with LuaJIT
+scripts/release.sh       tags and pushes a release
+.github/workflows/       checks on every push, release on release tags
 tests/                   one *_test.lua per module, helper.lua and ui_stub.lua shared
 ```
 
