@@ -19,6 +19,7 @@ M.TEST_HINT = string.format('Click an alert to show it for %d s with its sound. 
 M.NO_GAME_DATA_TEXT = 'Waiting for the game...'
 M.PANEL_MISSING_TEXT = 'Flags panel not found: open it once from the apps bar.'
 M.NET_PING_LABEL = 'Send test ping'
+M.SILENT_TEXT = 'A dev install of Flags is running: this one stays silent until it stops.'
 M.NET_HELP = 'Checks that Flags clients can message each other on this server. Every other driver '
   .. 'running this version answers the ping; their replies prove alerts could be shared between drivers.'
 M.NET_OFFLINE_TEXT = 'Offline session: join a server to test with other drivers.'
@@ -246,6 +247,11 @@ local function drawNetwork(net, actions)
   end
   ui.header('Pings received from other drivers')
   drawList(net.pingsFrom, function(p) return string.format('%s, %d s ago', p.name, p.ago) end)
+end
+
+---Setup content of a release install silenced by a running dev install.
+function M.drawSilent()
+  ui.textWrapped(M.SILENT_TEXT)
 end
 
 ---@param s table @Loaded settings, edited in place.

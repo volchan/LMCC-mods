@@ -196,4 +196,10 @@ setup.draw(s, idle({ net = net }), actions)
 t.check('local echo explained, ping unknown', hasText('Own ping came back after 1 ms (your ping to the server: unknown)')
   and hasText(setup.NET_ECHO_TEXT['local']))
 
+
+-- Release install silenced by a dev install.
+uiStub.reset()
+setup.drawSilent()
+t.check('silent install explained', hasText(setup.SILENT_TEXT))
+
 t.finish()

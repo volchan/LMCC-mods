@@ -21,6 +21,10 @@ local windows = {}
 local audio = 0
 netSent = {}
 os.preciseClock = function() return 100 end
+local wallClock = 1000
+os.time = function() return wallClock end
+local shared = {}
+local dir = 'app'
 ac = {
   storage = function(layout)
     storage = {}
@@ -33,7 +37,9 @@ ac = {
   getUI = function() return { windowSize = vec2(1920, 1080) } end,
   getAppWindows = function() return windows end,
   accessAppWindow = function() return window end,
-  dirname = function() return 'app' end,
+  dirname = function() return dir end,
+  store = function(k, v) shared[k] = v end,
+  load = function(k) return shared[k] end,
   StructItem = { key = function(k) return k end, byte = function() end, uint16 = function() end, int32 = function() end },
   -- Only the network test event is recorded; penalty sharing has its own key.
   OnlineEvent = function(layout)
@@ -171,5 +177,38 @@ uiStub.reset()
 uiStub.clicks[require('src/setup_view').NET_PING_LABEL] = true
 script.windowSetup(0)
 t.check('network ping sent', #netSent == 1)
+
+-- A dev install running in the same session silences this release install.
+local presence = require('src/presence')
+local setupView = require('src/setup_view')
+shared[presence.KEY] = wallClock
+script.update(0)
+uiStub.reset()
+script.windowPanel(0)
+script.windowHistory(0)
+script.drawGlow(0)
+t.check('silent release draws nothing', #uiStub.calls == 0)
+script.windowSetup(0)
+t.check('silent release explains why in setup', uiStub.texts()[1] == setupView.SILENT_TEXT)
+wallClock = wallClock + presence.TIMEOUT + 1
+script.update(0)
+uiStub.reset()
+script.windowPanel(0)
+t.check('release back once the dev install stops', #uiStub.calls > 0)
+
+-- The same entry in a dev folder announces itself and uses the dev window titles.
+shared = {}
+dir = 'C:/AC/apps/lua/Flags_dev'
+package.loaded['src/main'] = nil
+script = {}
+dofile('apps/lua/Flags/Flags.lua')
+script.update(0)
+t.check('dev install leaves a heartbeat', shared[presence.KEY] == wallClock)
+shown = false
+windows[1] = { name = 'panel', title = 'Flags (dev)' }
+uiStub.reset()
+uiStub.clicks[setupView.SHOW_PANEL_LABEL] = true
+script.windowSetup(0)
+t.check('dev install opens its own panel', shown == true)
 
 t.finish()
