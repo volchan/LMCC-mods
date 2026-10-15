@@ -73,11 +73,11 @@ Flags sends its data with CSP online events (`ac.OnlineEvent`), so any other Lua
 
 #### Penalties
 
-Key `volchan.lmccFlags.penalties`. Each client sends one message when one of its own penalties starts and one when it is served. Nothing is sent periodically, so a client that joins later does not learn about penalties already running.
+Key `dazworks.flags.penalties`. Each client sends one message when one of its own penalties starts and one when it is served. Nothing is sent periodically, so a client that joins later does not learn about penalties already running.
 
 ```lua
 local penaltyEvent = ac.OnlineEvent({
-  ac.StructItem.key('volchan.lmccFlags.penalties'),
+  ac.StructItem.key('dazworks.flags.penalties'),
   code = ac.StructItem.byte(),
   active = ac.StructItem.byte(),
   parameter = ac.StructItem.int32(),
@@ -111,11 +111,11 @@ Notes for readers:
 
 #### Network test
 
-Key `volchan.lmccFlags.netTest`, used by the setup Network tab. Other mods normally have no reason to send these, but a reader must not answer them.
+Key `dazworks.flags.netTest`, used by the setup Network tab. Other mods normally have no reason to send these, but a reader must not answer them.
 
 ```lua
 ac.OnlineEvent({
-  ac.StructItem.key('volchan.lmccFlags.netTest'),
+  ac.StructItem.key('dazworks.flags.netTest'),
   kind = ac.StructItem.byte(), -- 1 ping (to everybody), 2 pong (answer)
   id = ac.StructItem.uint16(), -- ping number, echoed by its pongs
   replyTo = ac.StructItem.int32(), -- pong: sessionID of the pinging car; ping: -1

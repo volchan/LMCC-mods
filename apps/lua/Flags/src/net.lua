@@ -5,7 +5,7 @@ local probe = require('src/net_probe')
 local M = {}
 M.__index = M
 
-M.KEY = 'volchan.lmccFlags.netTest'
+M.KEY = 'dazworks.flags.netTest'
 
 ---@class NetStatus
 ---@field online boolean

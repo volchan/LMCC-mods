@@ -5,7 +5,7 @@ local penaltyShare = require('src/penalty_share')
 local M = {}
 M.__index = M
 
-M.KEY = 'volchan.lmccFlags.penalties'
+M.KEY = 'dazworks.flags.penalties'
 
 ---@param clock fun(): number @Seconds, same clock as `gasCuts`.
 function M.new(clock)
