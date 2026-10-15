@@ -1,0 +1,31 @@
+# Install tasks for the mods of apps/lua, run with https://taskfile.dev (Windows, needs pwsh).
+# Optional variables: MOD=<name> acts on one mod only, AC_ROOT=<path> for another AC folder.
+#   task install:dev MOD=Flags
+#   task install:normal AC_ROOT="E:\Games\assettocorsa"
+version: '3'
+
+vars:
+  MOD: ''
+  AC_ROOT: ''
+  ARGS: '{{if .MOD}}-Mod "{{.MOD}}"{{end}} {{if .AC_ROOT}}-AcRoot "{{.AC_ROOT}}"{{end}}'
+
+tasks:
+  install:dev:
+    desc: Install the mods as <mod>_dev copies linked to the repo
+    cmds:
+      - pwsh -NoProfile -File install.ps1 -Mode dev {{.ARGS}}
+
+  install:normal:
+    desc: Install the committed mods as drivers get them
+    cmds:
+      - pwsh -NoProfile -File install.ps1 -Mode normal {{.ARGS}}
+
+  uninstall:dev:
+    desc: Remove the <mod>_dev copies
+    cmds:
+      - pwsh -NoProfile -File install.ps1 -Mode dev -Uninstall {{.ARGS}}
+
+  uninstall:normal:
+    desc: Remove the normal installs made by install:normal
+    cmds:
+      - pwsh -NoProfile -File install.ps1 -Mode normal -Uninstall {{.ARGS}}
