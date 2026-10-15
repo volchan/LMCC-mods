@@ -6,7 +6,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 . scripts/lib.sh
 
-if [ -n "$(git status --porcelain)" ]; then
+# Untracked files are ignored: the tag only holds committed files.
+if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
   echo "Uncommitted changes. Commit or stash them first." >&2
   exit 1
 fi
