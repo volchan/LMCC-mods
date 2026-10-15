@@ -2,9 +2,9 @@
 
 Assetto Corsa mods (Custom Shaders Patch, Lua) for the LMCC championship drivers. Each mod is a folder under `apps/lua/`.
 
-## Flags
+## LMCC Flags
 
-Makes race flags impossible to miss.
+Makes race flags impossible to miss. Folder `apps/lua/Flags`.
 
 It uses the flags and penalties the game already raises, so it works on any server without a plugin.
 
@@ -23,7 +23,7 @@ It uses the flags and penalties the game already raises, so it works on any serv
   - Panel: reopen the panel window, lock it, and snap it to a screen position on a 3x3 grid.
   - Display: pulse urgent flags, show or hide the green flag (shown 5 seconds, since the game keeps it raised all session), strip height, blue flag search range (100 to 1000 m behind you), gas cut ahead range (100 to 1000 m ahead).
   - Sound: sound on or off, master volume, volume per cue with a test button (hover a cue name to see its alerts).
-  - Network: checks that Flags clients can message each other on the server (needed to share alerts between drivers). "Send test ping" reaches every driver running the same version; each one answers and is listed with its round trip time. Also shows whether the server relays messages directly (custom server) or as hidden chat (original AC server). Alone on the server, the time your own ping takes to come back, compared with your ping, tells whether it went through the server or stayed a local copy.
+  - Network: checks that LMCC Flags clients can message each other on the server (needed to share alerts between drivers). "Send test ping" reaches every driver running the same version; each one answers and is listed with its round trip time. Also shows whether the server relays messages directly (custom server) or as hidden chat (original AC server). Alone on the server, the time your own ping takes to come back, compared with your ping, tells whether it went through the server or stayed a local copy.
 
 Flags shown: green, yellow, blue, white, checkered, black, penalties: drive through (jump start, laps left to serve it), pit penalty (laps left to go through the pits), gas cut (track cut: lift off for the seconds left, read from the AC shared memory since it depends on the track, or drop below 35 km/h; reported by the game as its penalty flag), black flag. The game also defines red, code 60, slippery, slow vehicle, ambulance, mechanical, warning, pit closed and black flag withdrawn; those only appear if a server script raises them, and the app displays them correctly when it does.
 
@@ -73,15 +73,15 @@ While the dev copy runs, the normal install stays silent (no panel, strips, soun
 
 In game, open from the app bar:
 
-- **Flags**: the panel. Drag it to move it; drag the grip in its bottom-right corner (shown while the mouse is over it) to resize it, which scales everything. Right click locks it in place (a padlock animation, the same as the CMRT HUD, shows the change); right click again to unlock. The settings icon opens the setup.
-- **Flags Setup**: tests and preferences.
-- **Flags History**: the flag log.
+- **LMCC Flags**: the panel. Drag it to move it; drag the grip in its bottom-right corner (shown while the mouse is over it) to resize it, which scales everything. Right click locks it in place (a padlock animation, the same as the CMRT HUD, shows the change); right click again to unlock. The settings icon opens the setup.
+- **LMCC Flags Setup**: tests and preferences.
+- **LMCC Flags History**: the flag log.
 
 The strips and sound work even when no window is open.
 
 ### Shared data for other mods
 
-Flags sends its data with CSP online events (`ac.OnlineEvent`), so any other Lua app on the same server can read it. An event only matches when the key and the whole layout are identical: copy the layouts below exactly, field names and types included.
+LMCC Flags sends its data with CSP online events (`ac.OnlineEvent`), so any other Lua app on the same server can read it. An event only matches when the key and the whole layout are identical: copy the layouts below exactly, field names and types included.
 
 #### Penalties
 
@@ -118,7 +118,7 @@ end)
 Notes for readers:
 
 - "Served" is decided by the sending client: pit penalties once its car has been through the pit lane, the gas cut when the game lowers it, the slow down when its seconds reach 0.
-- A "served" message can be lost (rate limit, disconnection). Flags drops a gas cut 3 seconds after its length ends, or 10 seconds after it started when the length is unknown; do something similar.
+- A "served" message can be lost (rate limit, disconnection). LMCC Flags drops a gas cut 3 seconds after its length ends, or 10 seconds after it started when the length is unknown; do something similar.
 - Previews from the setup window are never sent.
 
 #### Network test
@@ -136,7 +136,7 @@ ac.OnlineEvent({
 
 #### Server limits
 
-On the original AC server, CSP carries these messages as hidden chat: one message per 200 ms at most and 175 bytes each (`ac.getSim().directMessagingAvailable` is `true` on custom servers without those limits). Flags queues its messages to respect the rate; a mod sending on the same server shares that budget, so send rarely.
+On the original AC server, CSP carries these messages as hidden chat: one message per 200 ms at most and 175 bytes each (`ac.getSim().directMessagingAvailable` is `true` on custom servers without those limits). LMCC Flags queues its messages to respect the rate; a mod sending on the same server shares that budget, so send rarely.
 
 ### Layout
 
