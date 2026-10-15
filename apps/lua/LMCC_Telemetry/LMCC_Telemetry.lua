@@ -30,6 +30,7 @@ local sinceSend = 0
 local frames = {}
 local messages = {}
 local laps = {}
+local penalties = {}
 local sending = false
 local status = 'waiting'
 -- Set once the site has refused this server: nothing more sent until the
@@ -70,6 +71,29 @@ pcall(ac.onLapCompleted, 0, function(carIndex, lapTime, valid, cuts, lapsCount)
   }
 end)
 
+-- Every penalty LMCC Flags announces, this driver's own included (its copy
+-- comes back as car 0): start and served, for the stewards. Same key and
+-- layout as LMCC Flags (src/share.lua), or no message matches.
+ac.OnlineEvent({
+  ac.StructItem.key('dazworks.flags.penalties'),
+  code = ac.StructItem.byte(),
+  active = ac.StructItem.byte(),
+  parameter = ac.StructItem.int32(),
+}, function(sender, message)
+  -- nil: sent by the server, not a driver's penalty
+  if not sender or not recording() then
+    return
+  end
+
+  penalties[#penalties + 1] = {
+    t = round(clock, 3),
+    driver = ac.getDriverName(sender.index),
+    code = message.code,
+    active = message.active,
+    parameter = message.parameter,
+  }
+end)
+
 function script.update(dt)
   clock = clock + dt
   sinceSample = sinceSample + dt
@@ -89,7 +113,7 @@ function script.update(dt)
     end
   end
 
-  if sinceSend >= SEND_EVERY_S and not sending and (#frames > 0 or #messages > 0 or #laps > 0) then
+  if sinceSend >= SEND_EVERY_S and not sending and (#frames > 0 or #messages > 0 or #laps > 0 or #penalties > 0) then
     sinceSend = 0
     send()
   end
@@ -188,9 +212,11 @@ function send()
   local batch = frames
   local said = messages
   local completed = laps
+  local announced = penalties
   frames = {}
   messages = {}
   laps = {}
+  penalties = {}
   sending = true
 
   local body = JSON.stringify({
@@ -202,6 +228,7 @@ function send()
     frames = batch,
     messages = said,
     laps = completed,
+    penalties = announced,
   })
   local headers = {
     ['Authorization'] = 'Bearer ' .. TOKEN,
@@ -219,6 +246,7 @@ function send()
       frames = {}
       messages = {}
       laps = {}
+      penalties = {}
       status = 'other server, ignored (expected: '
         .. tostring(expected.expected and expected.expected.server)
         .. ')'
@@ -227,7 +255,7 @@ function send()
 
     if err or not response or response.status >= 300 then
       status = 'error: ' .. tostring(err or (response and response.status))
-      restore(batch, said, completed)
+      restore(batch, said, completed, announced)
       return
     end
 
@@ -250,7 +278,7 @@ function driverNames()
 end
 
 -- A failed batch goes back in front of what was taken since
-function restore(batch, said, completed)
+function restore(batch, said, completed, announced)
   for _, frame in ipairs(frames) do
     batch[#batch + 1] = frame
   end
@@ -263,9 +291,14 @@ function restore(batch, said, completed)
     completed[#completed + 1] = lap
   end
 
+  for _, penalty in ipairs(penalties) do
+    announced[#announced + 1] = penalty
+  end
+
   frames = batch
   messages = said
   laps = completed
+  penalties = announced
   trim(frames)
 end
 
