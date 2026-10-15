@@ -49,6 +49,8 @@ local ignored = false
 -- Whether this is the league's server, checked once: the name never changes
 -- within a game
 local onLeagueServer = nil
+-- Which of the optional fields this CSP version has (see detectFields)
+local fields = nil
 
 -- Every chat line the game receives, the server's included: a penalty such as
 -- "CUT DETECTED, SLOW DOWN" may only ever reach the driver, never the Server
@@ -205,6 +207,7 @@ end
 -- batch.
 function sample()
   local cars = {}
+  fields = fields or detectFields(ac.getCar(0))
 
   for i = 0, ac.getSim().carsCount - 1 do
     local car = ac.getCar(i)
@@ -377,81 +380,92 @@ function trim(list)
   return kept
 end
 
+-- Which of the fields read below this CSP version has, found once on the own
+-- car: they are then read straight, rather than through a closure and a pcall
+-- per field, car and sample, the garbage the collector stutters on.
+-- ponytail: a field missing reads 0, the frame keeps its shape
+function detectFields(car)
+  return {
+    wheelsOutside = has(function()
+      return car.wheelsOutside
+    end),
+    collidedWith = has(function()
+      return car.collidedWith
+    end),
+    acceleration = has(function()
+      return car.acceleration.z
+    end),
+    angularVelocity = has(function()
+      return car.localAngularVelocity.y
+    end),
+    abs = has(function()
+      return car.absInAction
+    end),
+    tractionControl = has(function()
+      return car.tractionControlInAction
+    end),
+    clutch = has(function()
+      return car.clutch
+    end),
+    handbrake = has(function()
+      return car.handbrake
+    end),
+    fuel = has(function()
+      return car.fuel
+    end),
+    damage = has(function()
+      return car.damage[4]
+    end),
+    tyres = has(function()
+      local wheel = car.wheels[3]
+      return wheel.tyreWear and wheel.tyreCoreTemperature and wheel.tyrePressure
+    end),
+  }
+end
+
+function has(read)
+  local ok, value = pcall(read)
+  return ok and value ~= nil
+end
+
 -- How many wheels are off the track: what a cut is judged on. Exact for this
 -- game's own car only, the others' physics run in their own games.
--- ponytail: 0 when this CSP version lacks the field
 function wheelsOutside(car)
-  local ok, count = pcall(function()
-    return car.wheelsOutside
-  end)
-  return ok and tonumber(count) or 0
+  if not fields.wheelsOutside then
+    return 0
+  end
+
+  return tonumber(car.wheelsOutside) or 0
 end
 
 -- How the car moves and how it is driven, seen from any game
 function appendInputs(row, car)
-  local hit = safe(function()
-    return car.collidedWith
-  end, -1)
-  row[#row + 1] = round(safe(function()
-    return car.acceleration.x
-  end, 0), 2)
-  row[#row + 1] = round(safe(function()
-    return car.acceleration.z
-  end, 0), 2)
-  row[#row + 1] = round(safe(function()
-    return car.localAngularVelocity.y
-  end, 0), 3)
-  row[#row + 1] = safe(function()
-    return car.absInAction
-  end, false) and 1 or 0
-  row[#row + 1] = safe(function()
-    return car.tractionControlInAction
-  end, false) and 1 or 0
-  row[#row + 1] = round(safe(function()
-    return car.clutch
-  end, 0), 2)
-  row[#row + 1] = round(safe(function()
-    return car.handbrake
-  end, 0), 2)
+  local hit = fields.collidedWith and car.collidedWith or -1
+  row[#row + 1] = fields.acceleration and round(car.acceleration.x, 2) or 0
+  row[#row + 1] = fields.acceleration and round(car.acceleration.z, 2) or 0
+  row[#row + 1] = fields.angularVelocity and round(car.localAngularVelocity.y, 3) or 0
+  row[#row + 1] = fields.abs and car.absInAction and 1 or 0
+  row[#row + 1] = fields.tractionControl and car.tractionControlInAction and 1 or 0
+  row[#row + 1] = fields.clutch and round(car.clutch, 2) or 0
+  row[#row + 1] = fields.handbrake and round(car.handbrake, 2) or 0
   row[#row + 1] = hit >= 0 and (ac.getDriverName(hit) or '') or ''
 end
 
 -- Only this game simulates its own car: the others get no fuel, damage nor
 -- tyres over the network
 function appendOwnCar(row, car)
-  row[#row + 1] = round(safe(function()
-    return car.fuel
-  end, 0), 2)
+  row[#row + 1] = fields.fuel and round(car.fuel, 2) or 0
 
   for part = 0, 4 do
-    row[#row + 1] = round(safe(function()
-      return car.damage[part]
-    end, 0), 3)
+    row[#row + 1] = fields.damage and round(car.damage[part], 3) or 0
   end
 
   for wheel = 0, 3 do
-    row[#row + 1] = round(safe(function()
-      return car.wheels[wheel].tyreWear
-    end, 0), 4)
-    row[#row + 1] = round(safe(function()
-      return car.wheels[wheel].tyreCoreTemperature
-    end, 0), 1)
-    row[#row + 1] = round(safe(function()
-      return car.wheels[wheel].tyrePressure
-    end, 0), 2)
+    local tyre = fields.tyres and car.wheels[wheel]
+    row[#row + 1] = fields.tyres and round(tyre.tyreWear, 4) or 0
+    row[#row + 1] = fields.tyres and round(tyre.tyreCoreTemperature, 1) or 0
+    row[#row + 1] = fields.tyres and round(tyre.tyrePressure, 2) or 0
   end
-end
-
--- ponytail: a field this CSP version lacks reads as the fallback, the frame
--- keeps its shape
-function safe(read, fallback)
-  local ok, value = pcall(read)
-
-  if ok and value ~= nil then
-    return value
-  end
-
-  return fallback
 end
 
 function round(value, decimals)
