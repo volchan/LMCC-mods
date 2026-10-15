@@ -23,10 +23,17 @@ local settings = ac.storage({
 local SEND_EVERY_S = 0.2
 -- What is kept while the site cannot be reached, in seconds
 local MAX_PENDING_S = 60
+-- Frames a request carries at most: after an outage the backlog goes in
+-- small pieces, never stringified all at once in a frame
+local MAX_FRAMES_PER_SEND = 25
+-- Seconds between tries while the site fails, doubling up to this
+local MAX_RETRY_S = 10
 
 local clock = 0
 local sinceSample = 0
 local sinceSend = 0
+-- Seconds between two requests: SEND_EVERY_S, longer while the site fails
+local sendEvery = SEND_EVERY_S
 local frames = {}
 local messages = {}
 local laps = {}
@@ -39,6 +46,11 @@ local status = 'waiting'
 -- Set once the site has refused this server: nothing more sent until the
 -- game is restarted on another one
 local ignored = false
+-- Whether this is the league's server, checked once: the name never changes
+-- within a game
+local onLeagueServer = nil
+-- Which of the optional fields this CSP version has (see detectFields)
+local fields = nil
 
 -- Every chat line the game receives, the server's included: a penalty such as
 -- "CUT DETECTED, SLOW DOWN" may only ever reach the driver, never the Server
@@ -129,7 +141,7 @@ function script.update(dt)
     end
   end
 
-  if sinceSend >= SEND_EVERY_S and not sending and (#frames > 0 or #messages > 0 or #laps > 0 or #penalties > 0) then
+  if sinceSend >= sendEvery and not sending and (#frames > 0 or #messages > 0 or #laps > 0 or #penalties > 0) then
     sinceSend = 0
     send()
   end
@@ -160,7 +172,11 @@ function recording()
     return false
   end
 
-  return ac.getServerName():lower():find(SERVER_FILTER, 1, true) ~= nil
+  if onLeagueServer == nil then
+    onLeagueServer = ac.getServerName():lower():find(SERVER_FILTER, 1, true) ~= nil
+  end
+
+  return onLeagueServer
 end
 
 function statusLine()
@@ -191,6 +207,7 @@ end
 -- batch.
 function sample()
   local cars = {}
+  fields = fields or detectFields(ac.getCar(0))
 
   for i = 0, ac.getSim().carsCount - 1 do
     local car = ac.getCar(i)
@@ -221,17 +238,16 @@ function sample()
   end
 
   frames[#frames + 1] = { t = round(clock, 3), cars = cars }
-  trim(frames)
+  frames = trim(frames)
 end
 
 -- `sender` is this game's own driver, car 0; `sentAt` dates the frames
 -- against the arrival time
 function send()
-  local batch = frames
+  local batch = takeFrames()
   local said = messages
   local completed = laps
   local announced = penalties
-  frames = {}
   messages = {}
   laps = {}
   penalties = {}
@@ -273,13 +289,38 @@ function send()
 
     if err or not response or response.status >= 300 then
       status = 'error: ' .. tostring(err or (response and response.status))
+      sendEvery = math.min(math.max(sendEvery * 2, 1), MAX_RETRY_S)
       restore(batch, said, completed, announced)
       return
     end
 
+    sendEvery = SEND_EVERY_S
     heard.sent = heard.sent + #announced
     status = 'sent at ' .. os.date('%H:%M:%S')
   end)
+end
+
+-- The oldest frames, MAX_FRAMES_PER_SEND at most; the rest waits its turn
+function takeFrames()
+  if #frames <= MAX_FRAMES_PER_SEND then
+    local all = frames
+    frames = {}
+    return all
+  end
+
+  local batch = {}
+  local rest = {}
+
+  for index, frame in ipairs(frames) do
+    if index <= MAX_FRAMES_PER_SEND then
+      batch[#batch + 1] = frame
+    else
+      rest[#rest + 1] = frame
+    end
+  end
+
+  frames = rest
+  return batch
 end
 
 function driverNames()
@@ -318,91 +359,113 @@ function restore(batch, said, completed, announced)
   messages = said
   laps = completed
   penalties = announced
-  trim(frames)
+  frames = trim(frames)
 end
 
--- The oldest frames go first once the site has been away too long
+-- The oldest frames go first once the site has been away too long: a second
+-- more than needed, in one pass, so this runs once a second at most
 function trim(list)
-  while #list > MAX_PENDING_S * settings.rate do
-    table.remove(list, 1)
+  local limit = MAX_PENDING_S * settings.rate
+
+  if #list <= limit then
+    return list
   end
+
+  local kept = {}
+
+  for index = #list - limit + settings.rate + 1, #list do
+    kept[#kept + 1] = list[index]
+  end
+
+  return kept
+end
+
+-- Which of the fields read below this CSP version has, found once on the own
+-- car: they are then read straight, rather than through a closure and a pcall
+-- per field, car and sample, the garbage the collector stutters on.
+-- ponytail: a field missing reads 0, the frame keeps its shape
+function detectFields(car)
+  return {
+    wheelsOutside = has(function()
+      return car.wheelsOutside
+    end),
+    collidedWith = has(function()
+      return car.collidedWith
+    end),
+    acceleration = has(function()
+      return car.acceleration.z
+    end),
+    angularVelocity = has(function()
+      return car.localAngularVelocity.y
+    end),
+    abs = has(function()
+      return car.absInAction
+    end),
+    tractionControl = has(function()
+      return car.tractionControlInAction
+    end),
+    clutch = has(function()
+      return car.clutch
+    end),
+    handbrake = has(function()
+      return car.handbrake
+    end),
+    fuel = has(function()
+      return car.fuel
+    end),
+    damage = has(function()
+      return car.damage[4]
+    end),
+    tyres = has(function()
+      local wheel = car.wheels[3]
+      return wheel.tyreWear and wheel.tyreCoreTemperature and wheel.tyrePressure
+    end),
+  }
+end
+
+function has(read)
+  local ok, value = pcall(read)
+  return ok and value ~= nil
 end
 
 -- How many wheels are off the track: what a cut is judged on. Exact for this
 -- game's own car only, the others' physics run in their own games.
--- ponytail: 0 when this CSP version lacks the field
 function wheelsOutside(car)
-  local ok, count = pcall(function()
-    return car.wheelsOutside
-  end)
-  return ok and tonumber(count) or 0
+  if not fields.wheelsOutside then
+    return 0
+  end
+
+  return tonumber(car.wheelsOutside) or 0
 end
 
 -- How the car moves and how it is driven, seen from any game
 function appendInputs(row, car)
-  local hit = safe(function()
-    return car.collidedWith
-  end, -1)
-  row[#row + 1] = round(safe(function()
-    return car.acceleration.x
-  end, 0), 2)
-  row[#row + 1] = round(safe(function()
-    return car.acceleration.z
-  end, 0), 2)
-  row[#row + 1] = round(safe(function()
-    return car.localAngularVelocity.y
-  end, 0), 3)
-  row[#row + 1] = safe(function()
-    return car.absInAction
-  end, false) and 1 or 0
-  row[#row + 1] = safe(function()
-    return car.tractionControlInAction
-  end, false) and 1 or 0
-  row[#row + 1] = round(safe(function()
-    return car.clutch
-  end, 0), 2)
-  row[#row + 1] = round(safe(function()
-    return car.handbrake
-  end, 0), 2)
+  local hit = fields.collidedWith and car.collidedWith or -1
+  row[#row + 1] = fields.acceleration and round(car.acceleration.x, 2) or 0
+  row[#row + 1] = fields.acceleration and round(car.acceleration.z, 2) or 0
+  row[#row + 1] = fields.angularVelocity and round(car.localAngularVelocity.y, 3) or 0
+  row[#row + 1] = fields.abs and car.absInAction and 1 or 0
+  row[#row + 1] = fields.tractionControl and car.tractionControlInAction and 1 or 0
+  row[#row + 1] = fields.clutch and round(car.clutch, 2) or 0
+  row[#row + 1] = fields.handbrake and round(car.handbrake, 2) or 0
   row[#row + 1] = hit >= 0 and (ac.getDriverName(hit) or '') or ''
 end
 
 -- Only this game simulates its own car: the others get no fuel, damage nor
 -- tyres over the network
 function appendOwnCar(row, car)
-  row[#row + 1] = round(safe(function()
-    return car.fuel
-  end, 0), 2)
+  row[#row + 1] = fields.fuel and round(car.fuel, 2) or 0
 
   for part = 0, 4 do
-    row[#row + 1] = round(safe(function()
-      return car.damage[part]
-    end, 0), 3)
+    row[#row + 1] = fields.damage and round(car.damage[part], 3) or 0
   end
 
   for wheel = 0, 3 do
-    row[#row + 1] = round(safe(function()
-      return car.wheels[wheel].tyreWear
-    end, 0), 4)
-    row[#row + 1] = round(safe(function()
-      return car.wheels[wheel].tyreCoreTemperature
-    end, 0), 1)
-    row[#row + 1] = round(safe(function()
-      return car.wheels[wheel].tyrePressure
-    end, 0), 2)
+    local tyre = fields.tyres and car.wheels[wheel]
+    row[#row + 1] = fields.tyres and round(tyre.tyreWear, 4) or 0
+    row[#row + 1] = fields.tyres and round(tyre.tyreCoreTemperature, 1) or 0
+    row[#row + 1] = fields.tyres and round(tyre.tyrePressure, 2) or 0
   end
-end
-
--- ponytail: a field this CSP version lacks reads as the fallback, the frame
--- keeps its shape
-function safe(read, fallback)
-  local ok, value = pcall(read)
-
-  if ok and value ~= nil then
-    return value
-  end
-
-  return fallback
 end
 
 function round(value, decimals)
