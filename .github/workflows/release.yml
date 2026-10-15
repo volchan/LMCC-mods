@@ -1,59 +1,44 @@
-# Builds and publishes a release when a version tag is created: pushed from git
-# (`git tag v1.0.1 && git push origin v1.0.1`) or created with a new release on GitHub.
-# The tag sets VERSION in the zipped manifest; the release notes give the server checksum and the changelog.
+# Publishes a release when a release tag is pushed (scripts/release.sh, or `task release`).
+# The tag must be the release version of its commit: v<YYYY.MM.DD>.<short hash>.
+# The release notes list every mod with its version and server checksum, then the changelogs.
 name: Release
 
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9][0-9][0-9][0-9].[0-9][0-9].[0-9][0-9].*'
 
 permissions:
   contents: write
 
 jobs:
+  check:
+    uses: ./.github/workflows/ci.yml
+
   release:
+    needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # full history and tags for the changelog
 
-      # LuaJIT is what CSP runs.
-      - uses: leafo/gh-actions-lua@v10
-        with:
-          luaVersion: luajit-openresty
-
-      - name: Test
+      - name: Tag matches its commit
+        env:
+          TAG: ${{ github.ref_name }}
         run: |
-          for f in tests/*_test.lua; do
-            echo "== $f"
-            luajit "$f"
-          done
+          expected="v$(scripts/version.sh "$TAG^{commit}")"
+          if [ "$TAG" != "$expected" ]; then
+            echo "Tag $TAG does not match its commit: expected $expected." >&2
+            exit 1
+          fi
 
       - name: Build
         id: build
-        env:
-          TAG: ${{ github.ref_name }}
-        run: ./scripts/build.sh "${TAG#v}"
+        run: scripts/build.sh
 
       - name: Release notes
-        env:
-          TAG: ${{ github.ref_name }}
-          CHECKSUM: ${{ steps.build.outputs.checksum }}
-        run: |
-          {
-            echo "## Server checksum"
-            echo
-            echo "Required Apps file: \`apps/lua/Flags/manifest.ini\`"
-            echo
-            echo "MD5: \`$CHECKSUM\`"
-            echo
-            echo "## Changes"
-            echo
-            ./scripts/changelog.sh "$TAG"
-          } > notes.md
-          cat notes.md
+        run: scripts/notes.sh HEAD | tee notes.md
 
       - name: Publish
         env:
@@ -65,7 +50,7 @@ jobs:
         run: |
           if gh release view "$TAG" > /dev/null 2>&1; then
             gh release upload "$TAG" "$ZIP" --clobber
-            gh release edit "$TAG" --title "Flags $VERSION" --notes-file notes.md
+            gh release edit "$TAG" --title "LMCC mods $VERSION" --notes-file notes.md
           else
-            gh release create "$TAG" "$ZIP" --title "Flags $VERSION" --notes-file notes.md
+            gh release create "$TAG" "$ZIP" --title "LMCC mods $VERSION" --notes-file notes.md
           fi
