@@ -4,7 +4,7 @@ Assetto Corsa mods (Custom Shaders Patch, Lua) for the LMCC championship drivers
 
 ## LMCC Flags
 
-Makes race flags impossible to miss. Folder `apps/lua/Flags`.
+Makes race flags impossible to miss. Folder `apps/lua/LMCC_Flags`.
 
 It uses the flags and penalties the game already raises, so it works on any server without a plugin.
 
@@ -35,7 +35,7 @@ A car is listed when it is behind you on track within the search range and ahead
 
 Requires Custom Shaders Patch.
 
-For drivers: drag `LMCC-mods-<release>.zip` into Content Manager, or extract it into the Assetto Corsa folder. It holds every mod (`apps/lua/Flags`, ...): all of them are required.
+For drivers: drag `LMCC-mods-<release>.zip` into Content Manager, or extract it into the Assetto Corsa folder. It holds every mod (`apps/lua/LMCC_Flags`, ...): all of them are required.
 
 #### Versions
 
@@ -66,7 +66,7 @@ task install:dev MOD=Flags AC_ROOT="E:\Games\assettocorsa"
 
 They call `install.ps1` (`-Mode dev|normal`, `-Uninstall`, `-Mod`, `-AcRoot`). Only folders made by the script are replaced or removed (it leaves a `.dev-install` or `.normal-install` file in them), so a mod installed from Content Manager is never touched. Both modes also remove links into the repo whose folder no longer exists (a renamed mod).
 
-- **dev**: a copy named `<mod>_dev` (`apps/lua/Flags_dev`) with ` (dev)` after every window name, so it sits next to a normal install of the same mod. Its subfolders (`src`, `sounds`) are junctions into the repo, so edits show up in game without copying. CSP loads `<folder>/<folder>.lua`, so the entry and `manifest.ini` are copies: install again after changing a manifest or a file at the root of a mod.
+- **dev**: a copy named `<mod>_dev` (`apps/lua/LMCC_Flags_dev`) with ` (dev)` after every window name, so it sits next to a normal install of the same mod. Its subfolders (`src`, `sounds`) are junctions into the repo, so edits show up in game without copying. CSP loads `<folder>/<folder>.lua`, so the entry and `manifest.ini` are copies: install again after changing a manifest or a file at the root of a mod.
 - **normal**: `apps/lua/<mod>` with the committed files of the mod, the same as the release zip. Uncommitted changes are left out, with a warning.
 
 While the dev copy runs, the normal install stays silent (no panel, strips, sound, history or shared penalties; its setup says why) and takes over again about 2 seconds after the dev copy stops. Both still answer the network test ping.
@@ -141,9 +141,9 @@ On the original AC server, CSP carries these messages as hidden chat: one messag
 ### Layout
 
 ```
-apps/lua/Flags/
+apps/lua/LMCC_Flags/
   manifest.ini           windows and the fullscreen strips callback
-  Flags.lua              entry: loads src/main.lua
+  LMCC_Flags.lua         entry: loads src/main.lua
   src/main.lua           wiring only
   src/variant.lua        dev or release install, from the folder name
   src/presence.lua       dev install heartbeat, silences the release install
