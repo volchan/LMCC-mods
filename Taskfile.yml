@@ -8,6 +8,16 @@ vars:
   MOD: ''
   AC_ROOT: ''
   ARGS: '{{if .MOD}}-Mod "{{.MOD}}"{{end}} {{if .AC_ROOT}}-AcRoot "{{.AC_ROOT}}"{{end}}'
+  # bash for the release scripts: from PATH, else the one Git for Windows installs next to git
+  # (git --exec-path is <git>/mingw64/libexec/git-core), which is usually not on PATH.
+  BASH:
+    sh: |
+      if command -v bash > /dev/null 2>&1; then
+        echo bash
+      else
+        p="$(git --exec-path)"
+        echo "${p%/mingw64/libexec/git-core}/bin/bash.exe"
+      fi
 
 tasks:
   install:dev:
@@ -33,9 +43,9 @@ tasks:
   build:
     desc: Build dist/LMCC-mods-<release>.zip from the committed mods
     cmds:
-      - bash scripts/build.sh
+      - '"{{.BASH}}" scripts/build.sh'
 
   release:
     desc: Tag the pushed main with its release version and push the tag
     cmds:
-      - bash scripts/release.sh
+      - '"{{.BASH}}" scripts/release.sh'
