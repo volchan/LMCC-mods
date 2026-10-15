@@ -1,54 +1,33 @@
 #!/usr/bin/env bash
-# Packages the app into dist/Flags-<version>.zip for drivers. The zip holds
-# apps/lua/Flags/ so it extracts into the AC root or drops into Content Manager.
-# Built from the committed tree only, so local edits never leak into a release.
-# An optional version sets VERSION in the zipped manifest (the repo file is left alone); the
-# release workflow passes the tag. Prints the MD5 of manifest.ini, the file servers checksum.
-# Usage: scripts/build.sh [version]
+# Packages every mod of apps/lua into dist/LMCC-mods-<release>.zip for drivers. The zip holds
+# apps/lua/<mod>/ so it extracts into the AC root or drops into Content Manager.
+# Built from a commit (default HEAD) only, so local edits never leak into a release, and with
+# line endings as committed so the server checksums are stable. Mod versions are left as written
+# in their manifests; the release version comes from the commit (scripts/version.sh).
+# Usage: scripts/build.sh [commit]
 set -euo pipefail
-
 cd "$(dirname "$0")/.."
-app=apps/lua/Flags
-manifest=$app/manifest.ini
-version="${1:-}"
+. scripts/lib.sh
 
-if [ -n "$(git status --porcelain -- "$app")" ]; then
-  echo "Uncommitted changes in $app. Commit them first." >&2
+rev="${1:-HEAD}"
+if [ "$rev" = HEAD ] && [ -n "$(git status --porcelain -- "$APPS")" ]; then
+  echo "Uncommitted changes in $APPS. Commit them first." >&2
   exit 1
 fi
 
-if [ -n "$version" ]; then
-  if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo "Version must look like 1.2.3, got '$version'." >&2
-    exit 1
-  fi
-  # Store the edited manifest in a temporary index and archive that tree: no commit, no
-  # working tree change, and line endings stay as committed so the checksum is stable.
-  blob=$(git show "HEAD:$manifest" | sed -E "s/^VERSION *=.*/VERSION = $version/" | git hash-object -w --stdin)
-  tmp=$(mktemp -d)
-  trap 'rm -rf "$tmp"' EXIT
-  export GIT_INDEX_FILE="$tmp/index"
-  git read-tree HEAD
-  git update-index --cacheinfo "100644,$blob,$manifest"
-  tree=$(git write-tree)
-  unset GIT_INDEX_FILE
-else
-  version=$(git show "HEAD:$manifest" | sed -nE 's/^VERSION *= *([0-9.]+).*/\1/p')
-  tree=HEAD
-fi
-
-zip="dist/Flags-$version.zip"
+version=$(release_version "$rev")
+zip="dist/LMCC-mods-$version.zip"
 mkdir -p dist
-# autocrlf off: Windows builds would otherwise zip CRLF files and change the checksum.
-git -c core.autocrlf=false archive --format=zip --output="$zip" "$tree" "$app"
-checksum=$(unzip -p "$zip" "$manifest" | md5sum | cut -d' ' -f1)
+# autocrlf off: Windows builds would otherwise zip CRLF files and change the checksums.
+git -c core.autocrlf=false archive --format=zip --output="$zip" "$rev" "$APPS"
 
 echo "Built $zip"
-echo "Server checksum (MD5 of $manifest): $checksum"
+for mod in $(mods "$rev"); do
+  echo "$mod $(mod_version "$rev" "$mod"): server checksum $(mod_checksum "$rev" "$mod")"
+done
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
   {
     echo "zip=$zip"
     echo "version=$version"
-    echo "checksum=$checksum"
   } >> "$GITHUB_OUTPUT"
 fi
