@@ -1,4 +1,4 @@
--- Wiring only: the logic lives in the other src/ modules. Loaded by Flags.lua, and by the entry
+-- Wiring only: the logic lives in the other src/ modules. Loaded by LMCC_Flags.lua, and by the entry
 -- of a dev install (install.ps1), which differs only by its folder name.
 local app = require('src/app')
 local game = require('src/game')

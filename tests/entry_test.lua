@@ -55,7 +55,7 @@ ac = {
 }
 script = {}
 
-dofile('apps/lua/Flags/Flags.lua')
+dofile('apps/lua/LMCC_Flags/LMCC_Flags.lua')
 t.check('callbacks registered', script.update and script.windowPanel and script.windowHistory
   and script.windowSetup and script.drawGlow)
 
@@ -198,10 +198,10 @@ t.check('release back once the dev install stops', #uiStub.calls > 0)
 
 -- The same entry in a dev folder announces itself and uses the dev window titles.
 shared = {}
-dir = 'C:/AC/apps/lua/Flags_dev'
+dir = 'C:/AC/apps/lua/LMCC_Flags_dev'
 package.loaded['src/main'] = nil
 script = {}
-dofile('apps/lua/Flags/Flags.lua')
+dofile('apps/lua/LMCC_Flags/LMCC_Flags.lua')
 script.update(0)
 t.check('dev install leaves a heartbeat', shared[presence.KEY] == wallClock)
 shown = false

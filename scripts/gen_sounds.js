@@ -1,5 +1,5 @@
 // Generates the flag sound cues as 16-bit mono WAV files.
-// Usage: node scripts/gen_sounds.js   (writes apps/lua/Flags/sounds/*.wav)
+// Usage: node scripts/gen_sounds.js   (writes apps/lua/LMCC_Flags/sounds/*.wav)
 const fs = require('fs');
 const path = require('path');
 
@@ -65,7 +65,7 @@ function toWav(samples) {
   return Buffer.concat([header, data]);
 }
 
-const outDir = path.join(__dirname, '..', 'apps', 'lua', 'Flags', 'sounds');
+const outDir = path.join(__dirname, '..', 'apps', 'lua', 'LMCC_Flags', 'sounds');
 fs.mkdirSync(outDir, { recursive: true });
 for (const [name, tones] of Object.entries(CUES)) {
   const file = path.join(outDir, name + '.wav');
