@@ -35,6 +35,9 @@ jobs:
 
       - name: Build
         id: build
+        env:
+          # The stats site's token, written into LMCC_Telemetry in the zip only
+          TELEMETRY_TOKEN: ${{ secrets.TELEMETRY_TOKEN }}
         run: scripts/build.sh
 
       - name: Release notes

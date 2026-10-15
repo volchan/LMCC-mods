@@ -179,6 +179,10 @@ apps/lua/LMCC_Flags/
   src/glow_view.lua      screen-edge strips
   src/history_view.lua   history window
   src/setup_view.lua     setup window
+apps/lua/LMCC_Telemetry/
+  manifest.ini           window and its settings cog
+  LMCC_Telemetry.lua     samples every car and sends the batches
+  src/token.lua          the site's token, empty in git, filled in the release zip
 scripts/gen_sounds.js    regenerates the wav files
 scripts/lib.sh           helpers shared by the release scripts
 scripts/version.sh       release version of a commit
@@ -209,3 +213,13 @@ tests/                   one *_test.lua per module, helper.lua and ui_stub.lua s
 - Very long location lines are clipped to the panel width; widen the panel if needed.
 - The game can keep reporting a penalty after it is served, so the app clears it itself: pit penalties (DRIVE THROUGH, PIT PENALTY) once the car has been in the pit lane and left it, SLOW DOWN when its seconds reach 0. A black flag only clears when the game removes it.
 - The game also keeps some flags raised long after they matter, so the app hides them: green after 5 seconds, checkered once you cross the line or enter the pit lane (shown at least 5 seconds), the gas cut flag when it is raised with a penalty not yet served (the game raises it with every penalty; the penalty has the exact instruction). A gas cut after a served penalty shows normally, and so does a gas cut taken before a penalty is served, while its lift seconds run. Yellow, blue, white and black are lowered by the game itself.
+
+## LMCC Telemetry
+
+Sends every car the game knows to the LMCC stats site (lmcc.seygow.fr), for the race direction: replays, contact clips and lap comparisons. Folder `apps/lua/LMCC_Telemetry`, ported from the site's own app (`telemetry-app/` of ac-championship-stats) with its address, token and server filter fixed for the league.
+
+- **What is sent**, several times a second (20 by default, 5 to 30 in the window's settings): position, speed, gear, pedals, steering, rpm, lap and pit lane of every connected car, every chat line the game receives, the laps of your own car, and for your own car only its fuel, damage and tyres.
+- **Where**: only online, on a server whose name contains "DazWorks", never in a replay or solo session. The site refuses batches from any other server, and the app then stays silent until the game restarts.
+- **Token**: never committed. `src/token.lua` is empty in git, so a dev or local install sends nothing; the release zip gets it from the `TELEMETRY_TOKEN` secret.
+
+Its window (LMCC Telemetry, optional) tells whether the batches get through.
