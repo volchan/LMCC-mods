@@ -46,11 +46,19 @@ local share = {
   gasCuts = function() return sharedCuts end,
 }
 
+-- Fake flag sharing: records the raw flags and causes it is given.
+local flagsAnnounced, flagFlushes = {}, 0
+local flagShare = {
+  announce = function(_, flagType, cause) flagsAnnounced[#flagsAnnounced + 1] = { flagType, cause } end,
+  flush = function() flagFlushes = flagFlushes + 1 end,
+}
+
 local panelShown = 0
 local panel = { show = function() panelShown = panelShown + 1 end }
 
 local a = app.new({ game = game, sound = sound, settings = s, tracker = tracker.new({ hold = 0 }),
-  preview = preview.new(function() return 2 end), panel = panel, share = share })
+  preview = preview.new(function() return 2 end), panel = panel, share = share,
+  flagShare = flagShare })
 
 -- Clear track.
 a:update()
@@ -200,6 +208,12 @@ state.flagType, state.penaltyType, state.penaltyParameter = F.None, P.None, 0
 -- Own signals are announced to other drivers when they change, and queued messages flushed each frame.
 t.check('own signals announced on change', #announced > 0 and announced[#announced] == a.own)
 t.check('share flushed every update', flushes > 0)
+t.check('raw flag shared and flushed every update', #flagsAnnounced > 0 and flagFlushes == #flagsAnnounced)
+local caution = false
+for _, f in ipairs(flagsAnnounced) do
+  if f[1] == F.Caution and f[2] == 3 then caution = true end
+end
+t.check('yellow shared with its cause', caution)
 state.now = 69
 a:update()
 local announcedBefore = #announced

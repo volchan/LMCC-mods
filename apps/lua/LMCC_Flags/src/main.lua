@@ -17,6 +17,7 @@ local historyView = require('src/history_view')
 local setupView = require('src/setup_view')
 local net = require('src/net')
 local share = require('src/share')
+local flagShare = require('src/flag_share')
 local variant = require('src/variant')
 local presence = require('src/presence')
 
@@ -33,6 +34,7 @@ local controller = app.new({
   game = game, sound = sound, settings = prefs, tracker = tracker.new(), preview = preview.new(),
   panel = { show = function() windowMover.show(PANEL_TITLE) end },
   share = penalties,
+  flagShare = flagShare.new(),
 })
 
 -- Real time for the lock animation, so it plays even while the game is paused.

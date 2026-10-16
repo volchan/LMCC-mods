@@ -123,6 +123,33 @@ Notes for readers:
 - Previews from the setup window are never sent.
 - LMCC Telemetry forwards every code to the stats site, the test one included; its own window has a **Send test penalty** button too, sent with `parameter` `1`, that only checks the trip from LMCC Telemetry to the site.
 
+#### Flags
+
+Key `dazworks.flags.flag`. Each client sends the race flag its game raises for it, every time the flag or the car that caused it changes. A clear track at the start is not sent; going back to a clear track is. Nothing is sent periodically either: a client that joins later learns a flag at its next change.
+
+```lua
+local flagEvent = ac.OnlineEvent({
+  ac.StructItem.key('dazworks.flags.flag'),
+  flag = ac.StructItem.byte(),
+  cause = ac.StructItem.int32(),
+}, function(sender, message)
+  -- sender: ac.StateCar of the driver who sees the flag. Index 0 is your own game.
+  if not sender then return end
+  ac.log(ac.getDriverName(sender.index), message.flag, message.cause)
+end)
+```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `flag` | byte | The raw `ac.FlagType` (`0` none, `1` green, `2` yellow, `5` black, `8` gas cut, `12` blue, `13` checkered…), as the game raises it: not hidden like on the panel. |
+| `cause` | int32 | Session ID (`ac.StateCar.sessionID`) of the car that caused it, `-1` when none. Car indexes differ from one game to the next, session IDs do not. |
+
+Notes for readers:
+
+- A yellow is local: every driver close to the incident sees it and sends it, each with the same cause.
+- The game keeps green raised for the whole session and checkered until the session ends: decide yourself how long they matter.
+- With the original AC server only the latest state is sent when the rate limit holds a change back: a short flag can be skipped.
+
 #### Network test
 
 Key `dazworks.flags.netTest`, used by the setup Network tab. Other mods normally have no reason to send these, but a reader must not answer them.
