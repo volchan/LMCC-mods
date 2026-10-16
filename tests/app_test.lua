@@ -164,12 +164,13 @@ a:update()
 local jump = a:signals()
 t.check('jump start shows a drive through alone', #jump == 1 and jump[1].flag.id == 'driveThrough'
   and jump[1].instruction == 'Drive through the pit lane, laps left: 2')
--- Track cut before serving it: the gas cut must be done this lap, so it goes on top.
+-- Track cut before serving it: the gas cut must be done now, so it replaces the drive-through.
 state.now, state.penaltyTime = 50.5, 2.5
 a:update()
 local stack = a:signals()
-t.check('gas cut stacked above the drive through', #stack == 2 and stack[1].flag.id == 'gasCut'
-  and stack[1].instruction == 'Lift off for 3s or drop below 35 km/h' and stack[2].flag.id == 'driveThrough')
+t.check('gas cut replaces the drive through', #stack == 1 and stack[1].flag.id == 'gasCut'
+  and stack[1].instruction == 'Lift off for 3s or drop below 35 km/h')
+t.check('drive through still shared during the gas cut', a.own[2] and a.own[2].flag.id == 'driveThrough')
 state.now, state.penaltyTime = 50.8, 0
 a:update()
 t.check('drive through alone again once the gas cut is done', #a:signals() == 1

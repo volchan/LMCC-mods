@@ -67,14 +67,7 @@ end
 ---Visible signals: own ones, plus the gas cut ahead alert while a car ahead serves one.
 ---@private
 function M:compose()
-  if not self.aheadDetail then
-    self.visible = self.own
-    return
-  end
-  local list = { self.aheadSignal }
-  for _, s in ipairs(self.own) do list[#list + 1] = s end
-  signal.sort(list)
-  self.visible = list
+  self.visible = signal.display(self.own, self.aheadDetail and self.aheadSignal)
 end
 
 ---Gas cuts other drivers share, kept only for cars close ahead. 4 Hz like the location line.

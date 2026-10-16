@@ -38,4 +38,23 @@ local list = { signal.of(flags.GAS_CUT_AHEAD), signal.of(flags.forFlag(F.Caution
 signal.sort(list)
 t.check('sort puts the most urgent first', list[1].flag.id == 'yellow')
 
+local ids = function(signals)
+  local out = {}
+  for i, s in ipairs(signals) do out[i] = s.flag.id end
+  return table.concat(out, ',')
+end
+local ahead = signal.of(flags.GAS_CUT_AHEAD)
+local cutAndDrive = signal.resolve(F.ReturnToPits, P.TeleportToPits, 3, 5)
+t.check('gas cut replaces the drive through', ids(signal.display(cutAndDrive)) == 'gasCut')
+t.check('drive through back once the gas cut is served',
+  ids(signal.display(signal.resolve(F.None, P.TeleportToPits, 3))) == 'driveThrough')
+t.check('gas cut ahead above the own gas cut', ids(signal.display(cutAndDrive, ahead)) == 'gasCutAhead,gasCut')
+t.check('gas cut ahead above the drive through',
+  ids(signal.display(signal.resolve(F.Caution, P.TeleportToPits, 3), ahead)) == 'gasCutAhead,driveThrough,yellow')
+t.check('gas cut ahead below a flag that is no penalty',
+  ids(signal.display(signal.resolve(F.Stop, P.None), ahead)) == 'black,gasCutAhead')
+t.check('gas cut ahead last when it is the most urgent', ids(signal.display(signal.resolve(F.OneLapLeft, P.None), ahead)) == 'gasCutAhead,white')
+t.check('gas cut ahead alone', ids(signal.display({}, ahead)) == 'gasCutAhead')
+t.check('nothing to display', #signal.display({}) == 0)
+
 t.finish()
