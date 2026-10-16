@@ -71,11 +71,11 @@ ac.onChatMessage(function(message, senderCarIndex)
     return
   end
 
-  messages[#messages + 1] = {
+  messages = enqueue(messages, {
     t = round(clock, 3),
     driver = senderCarIndex >= 0 and ac.getDriverName(senderCarIndex) or nil,
     text = message,
-  }
+  })
 end)
 
 -- Each lap this game's own car completes, valid or not: the game knows at
@@ -86,14 +86,14 @@ pcall(ac.onLapCompleted, 0, function(carIndex, lapTime, valid, cuts, lapsCount)
     return
   end
 
-  laps[#laps + 1] = {
+  laps = enqueue(laps, {
     t = round(clock, 3),
     driver = ac.getDriverName(carIndex),
     lapTimeMs = lapTime,
     valid = valid,
     cuts = cuts,
     laps = lapsCount,
-  }
+  })
 end)
 
 -- Every penalty LMCC Flags announces, this driver's own included (its copy
@@ -123,13 +123,13 @@ ac.OnlineEvent({
   end
 
   -- Plain numbers, whatever the struct hands over, for the JSON
-  penalties[#penalties + 1] = {
+  penalties = enqueue(penalties, {
     t = round(clock, 3),
     driver = ac.getDriverName(sender.index),
     code = tonumber(message.code),
     active = tonumber(message.active),
     parameter = tonumber(message.parameter),
-  }
+  })
 end)
 
 function script.update(dt)
@@ -263,13 +263,13 @@ function addTestPenalty()
     return
   end
 
-  penalties[#penalties + 1] = {
+  penalties = enqueue(penalties, {
     t = round(clock, 3),
     driver = ac.getDriverName(0),
     code = TEST_PENALTY,
     active = 1,
     parameter = 1,
-  }
+  })
 end
 
 -- `sender` is this game's own driver, car 0; `sentAt` dates the frames
@@ -379,6 +379,13 @@ function restore(batch, said, completed, announced)
   messages = trim(append(said, messages), MAX_PENDING_EVENTS, MAX_PER_SEND)
   laps = trim(append(completed, laps), MAX_PENDING_EVENTS, MAX_PER_SEND)
   penalties = trim(append(announced, penalties), MAX_PENDING_EVENTS, MAX_PER_SEND)
+end
+
+-- A chat line, lap or penalty at the end of its list, kept to the newest
+-- MAX_PENDING_EVENTS: they may arrive faster than requests carry them
+function enqueue(list, item)
+  list[#list + 1] = item
+  return trim(list, MAX_PENDING_EVENTS, MAX_PER_SEND)
 end
 
 function append(list, items)

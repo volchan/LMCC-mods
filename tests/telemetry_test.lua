@@ -161,6 +161,22 @@ for _ = 1, 60 do
 end
 t.check('chat backlog capped', sent > 400 and sent <= 500 and newest)
 
+-- More than the cap arriving while a request is on its way, then a success: still the newest 500 at most.
+for _ = 1, 60 do
+  answer(nil, { status = 200 })
+  script.update(0.2)
+end
+script.update(0.2)
+for i = 1, 700 do chat('flood ' .. i, 1) end
+sent, newest = 0, false
+for _ = 1, 60 do
+  answer(nil, { status = 200 })
+  script.update(0.2)
+  sent = sent + select(2, posts[#posts].body:gsub('"flood ', ''))
+  newest = newest or posts[#posts].body:find('"flood 700"', 1, true) ~= nil
+end
+t.check('chat capped while a request is pending', sent > 400 and sent <= 500 and newest)
+
 -- Drains the queue, then sends a chat line in a request of its own.
 local function sendAlone(text)
   for _ = 1, 60 do
