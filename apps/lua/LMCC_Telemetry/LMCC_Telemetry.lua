@@ -28,6 +28,9 @@ local MAX_PENDING_S = 60
 local MAX_FRAMES_PER_SEND = 25
 -- Seconds between tries while the site fails, doubling up to this
 local MAX_RETRY_S = 10
+-- One car's row up to its inputs, the closing bracket left out for the own
+-- car's extra values (see sample)
+local ROW = '[%d,%.2f,%.2f,%.2f,%.1f,%.5f,%d,%d,%d,%.2f,%.2f,%d,%.1f,%d,%.2f,%.2f,%.3f,%d,%d,%.2f,%.2f,%s'
 
 local clock = 0
 local sinceSample = 0
@@ -229,6 +232,8 @@ end
 -- pressure (psi)] per connected car, positions in the track's world coordinates as the Server
 -- Manager reports them. Indexes are this game's own: the names go with the
 -- batch.
+-- Each frame is JSON text from the start: no table per car for the collector,
+-- and no stringify of the whole batch in the frame that sends it.
 function sample()
   local cars = {}
   fields = fields or detectFields(ac.getCar(0))
@@ -237,31 +242,15 @@ function sample()
     local car = ac.getCar(i)
 
     if car and car.isConnected then
-      cars[#cars + 1] = {
-        i,
-        round(car.position.x, 2),
-        round(car.position.y, 2),
-        round(car.position.z, 2),
-        round(car.speedKmh, 1),
-        round(car.splinePosition, 5),
-        car.lapCount,
-        car.gear,
-        car.isInPitlane and 1 or 0,
-        round(car.gas, 2),
-        round(car.brake, 2),
-        wheelsOutside(car),
-        round(car.steer, 1),
-        math.floor(car.rpm),
-      }
-      appendInputs(cars[#cars], car)
-
-      if i == 0 then
-        appendOwnCar(cars[#cars], car)
-      end
+      local p = car.position
+      local row = string.format(ROW, i, p.x, p.y, p.z, car.speedKmh, car.splinePosition, car.lapCount, car.gear,
+        car.isInPitlane and 1 or 0, car.gas, car.brake, wheelsOutside(car), car.steer, math.floor(car.rpm),
+        inputs(car))
+      cars[#cars + 1] = (i == 0 and row .. ownCar(car) or row) .. ']'
     end
   end
 
-  frames[#frames + 1] = { t = round(clock, 3), cars = cars }
+  frames[#frames + 1] = string.format('{"t":%.3f,"cars":[%s]}', clock, table.concat(cars, ','))
   frames = trim(frames)
 end
 
@@ -292,17 +281,18 @@ function send()
   penalties = {}
   sending = true
 
-  local body = JSON.stringify({
+  local head = JSON.stringify({
     sender = ac.getDriverName(0),
     server = ac.getServerName(),
     track = ac.getTrackID(),
     sentAt = round(clock, 3),
     drivers = driverNames(),
-    frames = batch,
     messages = said,
     laps = completed,
     penalties = announced,
   })
+  -- The frames are JSON text already: spliced in before the closing brace
+  local body = head:sub(1, -2) .. ',"frames":[' .. table.concat(batch, ',') .. ']}'
   local headers = {
     ['Authorization'] = 'Bearer ' .. TOKEN,
     ['Content-Type'] = 'application/json',
@@ -477,34 +467,40 @@ function wheelsOutside(car)
   return tonumber(car.wheelsOutside) or 0
 end
 
--- How the car moves and how it is driven, seen from any game
-function appendInputs(row, car)
+-- How the car moves and how it is driven, seen from any game: the last 8
+-- values of ROW
+function inputs(car)
   local hit = fields.collidedWith and car.collidedWith or -1
-  row[#row + 1] = fields.acceleration and round(car.acceleration.x, 2) or 0
-  row[#row + 1] = fields.acceleration and round(car.acceleration.z, 2) or 0
-  row[#row + 1] = fields.angularVelocity and round(car.localAngularVelocity.y, 3) or 0
-  row[#row + 1] = fields.abs and car.absInAction and 1 or 0
-  row[#row + 1] = fields.tractionControl and car.tractionControlInAction and 1 or 0
-  row[#row + 1] = fields.clutch and round(car.clutch, 2) or 0
-  row[#row + 1] = fields.handbrake and round(car.handbrake, 2) or 0
-  row[#row + 1] = hit >= 0 and (ac.getDriverName(hit) or '') or ''
+  local acceleration = fields.acceleration and car.acceleration
+
+  return acceleration and acceleration.x or 0,
+    acceleration and acceleration.z or 0,
+    fields.angularVelocity and car.localAngularVelocity.y or 0,
+    fields.abs and car.absInAction and 1 or 0,
+    fields.tractionControl and car.tractionControlInAction and 1 or 0,
+    fields.clutch and car.clutch or 0,
+    fields.handbrake and car.handbrake or 0,
+    -- A driver's name may hold quotes: the JSON library escapes it
+    hit >= 0 and JSON.stringify(ac.getDriverName(hit) or '') or '""'
 end
 
 -- Only this game simulates its own car: the others get no fuel, damage nor
 -- tyres over the network
-function appendOwnCar(row, car)
-  row[#row + 1] = fields.fuel and round(car.fuel, 2) or 0
+function ownCar(car)
+  local damage = fields.damage and car.damage
+  local text = string.format(',%.2f', fields.fuel and car.fuel or 0)
 
   for part = 0, 4 do
-    row[#row + 1] = fields.damage and round(car.damage[part], 3) or 0
+    text = text .. string.format(',%.3f', damage and damage[part] or 0)
   end
 
   for wheel = 0, 3 do
     local tyre = fields.tyres and car.wheels[wheel]
-    row[#row + 1] = fields.tyres and round(tyre.tyreWear, 4) or 0
-    row[#row + 1] = fields.tyres and round(tyre.tyreCoreTemperature, 1) or 0
-    row[#row + 1] = fields.tyres and round(tyre.tyrePressure, 2) or 0
+    text = text .. string.format(',%.4f,%.1f,%.2f', tyre and tyre.tyreWear or 0,
+      tyre and tyre.tyreCoreTemperature or 0, tyre and tyre.tyrePressure or 0)
   end
+
+  return text
 end
 
 function round(value, decimals)

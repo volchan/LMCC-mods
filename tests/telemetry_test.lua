@@ -85,8 +85,9 @@ for _ = 1, 3 do script.update(0.05) end
 t.check('one request sent', #posts == 1)
 local body = posts[1].body
 t.check('authorised with the token', posts[1].headers.Authorization == 'Bearer tok')
-t.check('own car row', body:find('[0,1.23,2,3,100.1,0.5,3,4,0,1,0,2,-12.3,7000,0.5,-1,0.1,1,0,1,0,"Driver 1",50.5,0,0,0,0,0.25,0.1,80,27.5', 1, true) ~= nil)
-t.check('other car row', body:find('[1,1.23,2,3,100.1,0.5,3,4,0,1,0,2,-12.3,7000,0.5,-1,0.1,1,0,1,0,"Driver 1"]', 1, true) ~= nil)
+t.check('own car row', body:find('[0,1.23,2.00,3.00,100.1,0.50000,3,4,0,1.00,0.00,2,-12.3,7000,0.50,-1.00,0.100,1,0,1.00,0.00,"Driver 1",50.50,0.000,0.000,0.000,0.000,0.250,0.1000,80.0,27.50', 1, true) ~= nil)
+t.check('other car row', body:find('[1,1.23,2.00,3.00,100.1,0.50000,3,4,0,1.00,0.00,2,-12.3,7000,0.50,-1.00,0.100,1,0,1.00,0.00,"Driver 1"]', 1, true) ~= nil)
+t.check('frames spliced into the body', body:find('"frames":[{"t":0.100,"cars":[[0,', 1, true) and body:sub(-5) == ']]}]}')
 t.check('chat sent', body:find('"CUT DETECTED"', 1, true) and body:find('"hello"', 1, true))
 t.check('lap sent', body:find('"lapTimeMs":90000', 1, true) ~= nil)
 t.check('penalty sent', body:find('"parameter":5', 1, true) ~= nil)
@@ -175,7 +176,7 @@ script.update(0.05)
 t.check('read error shown', status()[1]:find('^read error') ~= nil)
 cars[1].position = position
 for _ = 1, 2 do script.update(0.05) end
-t.check('missing field reads 0', posts[1].body:find('[1,1.23,2,3,100.1,0.5,3,4,0,1,0,0,', 1, true) ~= nil)
+t.check('missing field reads 0', posts[1].body:find('[1,1.23,2.00,3.00,100.1,0.50000,3,4,0,1.00,0.00,0,', 1, true) ~= nil)
 
 -- Offline, or on another server: nothing recorded, and the window says why.
 sim.isOnlineRace = false
