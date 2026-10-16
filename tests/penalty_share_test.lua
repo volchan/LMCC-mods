@@ -12,7 +12,8 @@ local function codeOf(spec)
 end
 local GAS, DRIVE = codeOf(flags.GAS_CUT), codeOf(flags.forPenalty(P.TeleportToPits))
 t.check('every penalty is shared', GAS and DRIVE and codeOf(flags.forPenalty(P.MandatoryPits))
-  and codeOf(flags.forPenalty(P.SlowDown)) and codeOf(flags.forFlag(F.Stop)))
+  and codeOf(flags.forFlag(F.Stop)))
+t.check('retired slow down code kept in place', flags.SHARED[4].id == 'slowDown' and codeOf(flags.forFlag(F.Stop)) == 5)
 
 -- Sender: start and served messages only on changes.
 local sender = share.newSender()
@@ -45,11 +46,5 @@ t.check('unknown length kept a while, without seconds', #cuts == 1 and cuts[1].s
 t.check('unknown length dropped later', #board:gasCuts(300 + share.GAS_CUT_UNKNOWN + share.GRACE) == 0)
 board:receive(6, { code = 99, active = 1, parameter = 1 }, 400)
 t.check('unknown codes from newer versions ignored', board.cars[6] == nil)
-local SLOW = codeOf(flags.forPenalty(P.SlowDown))
-board:receive(7, { code = SLOW, active = 1, parameter = 6 }, 500)
-cuts = board:gasCuts(501)
-t.check('slow down penalty listed as a gas cut', #cuts == 1 and cuts[1].carIndex == 7 and cuts[1].secondsLeft == 5)
-board:receive(7, { code = GAS, active = 1, parameter = 6 }, 500)
-t.check('one gas cut per car when both signals are shared', #board:gasCuts(501) == 1)
 
 t.finish()

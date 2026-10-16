@@ -25,13 +25,6 @@ t.check('drive through kept on its last lap', p:effective(P.TeleportToPits, 0, f
 t.check('drive through kept in the pit lane', p:effective(P.TeleportToPits, 0, true) == P.TeleportToPits)
 t.check('drive through cleared after the pit lane', p:effective(P.TeleportToPits, 0, false) == P.None)
 
--- Slow down: timed, not served in the pits.
-p = penalty.new()
-t.check('slow down shown', p:effective(P.SlowDown, 5, false) == P.SlowDown)
-t.check('slow down ignores the pit lane', p:effective(P.SlowDown, 5, true) == P.SlowDown
-  and p:effective(P.SlowDown, 5, false) == P.SlowDown)
-t.check('slow down cleared at 0 seconds', p:effective(P.SlowDown, 0, false) == P.None)
-
 -- Black flag: only the game clears it.
 p = penalty.new()
 p:effective(P.BlackFlag, 0, true)
@@ -41,6 +34,6 @@ t.check('black flag not served in the pits', p:effective(P.BlackFlag, 0, false) 
 p = penalty.new()
 p:effective(P.MandatoryPits, 1, true)
 p:effective(P.MandatoryPits, 1, false)
-t.check('other penalty after a served one is shown', p:effective(P.SlowDown, 3, false) == P.SlowDown)
+t.check('other penalty after a served one is shown', p:effective(P.TeleportToPits, 3, false) == P.TeleportToPits)
 
 t.finish()

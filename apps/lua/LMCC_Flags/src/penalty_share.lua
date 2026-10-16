@@ -72,25 +72,19 @@ end
 ---@param now number @Seconds.
 ---@return SharedGasCut[]
 function Board:gasCuts(now)
-  local out = {}
+  local code, out = CODES[flags.GAS_CUT], {}
   for carIndex, car in pairs(self.cars) do
-    local cut
-    for spec in pairs(flags.GAS_CUTS) do
-      local code = CODES[spec]
-      local entry = car[code]
-      if entry then
-        local length = entry.parameter > 0 and entry.parameter or M.GAS_CUT_UNKNOWN
-        local elapsed = now - entry.since
-        if elapsed >= length + M.GRACE then
-          car[code] = nil
-        else
-          cut = { carIndex = carIndex,
-            secondsLeft = entry.parameter > 0 and math.max(0, math.ceil(entry.parameter - elapsed)) or nil }
-        end
+    local entry = car[code]
+    if entry then
+      local length = entry.parameter > 0 and entry.parameter or M.GAS_CUT_UNKNOWN
+      local elapsed = now - entry.since
+      if elapsed >= length + M.GRACE then
+        car[code] = nil
+      else
+        out[#out + 1] = { carIndex = carIndex,
+          secondsLeft = entry.parameter > 0 and math.max(0, math.ceil(entry.parameter - elapsed)) or nil }
       end
     end
-    -- One car serves one gas cut, whichever signal announced it.
-    out[#out + 1] = cut
   end
   return out
 end

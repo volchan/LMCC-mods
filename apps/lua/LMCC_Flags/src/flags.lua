@@ -57,7 +57,7 @@ M.BY_FLAG = {
   [M.FLAG.SlowVehicle] = spec('slowVehicle', 'SLOW VEHICLE', 'Slow vehicle on track', C.white, C.textDark, 55, S.caution, true),
   [M.FLAG.Ambulance] = spec('ambulance', 'AMBULANCE', 'Emergency vehicle on track', C.white, C.textDark, 65, S.caution, true),
   -- Checked in game: raised alone for a gas cut after cutting the track, and alongside every real penalty.
-  [M.FLAG.ReturnToPits] = spec('gasCut', 'RETURN TO PIT', string.format('Lift off for %%ds or drop below %d km/h', M.GAS_CUT_CLEAR_KMH), C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
+  [M.FLAG.ReturnToPits] = spec('gasCut', 'GAS CUT', string.format('Lift off for %%ds or drop below %d km/h', M.GAS_CUT_CLEAR_KMH), C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
   [M.FLAG.MechanicalFailure] = spec('mechanical', 'MECHANICAL', 'Car damaged: pit now', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
   [M.FLAG.Unsportsmanlike] = spec('warning', 'WARNING', 'Unsportsmanlike behaviour', C.black, C.textLight, 70, S.severe, true, P.diagonal, C.white),
   [M.FLAG.StopCancel] = spec('blackCancelled', 'BLACK CANCELLED', 'Black flag withdrawn', C.grey, C.textLight, 30, S.info, false),
@@ -84,13 +84,11 @@ end
 -- - TeleportToPits: a drive-through. The parameter is one more than the laps left: on a jump start
 --   the game reports 3 while its own message says "2 laps remaining". Unserved means disqualification.
 -- - MandatoryPits: a pit penalty with the same laps parameter (not yet seen in game).
--- - SlowDown: lift off for parameter seconds after cutting the track (RACE_GAS_PENALTY_DISABLED=0),
---   or drop below GAS_CUT_CLEAR_KMH to clear it at once (not yet seen in game).
+-- - SlowDown: never seen in game, the gas cut comes as the ReturnToPits flag. Not listed, so not shown.
 ---@type table<integer, FlagSpec>
 M.BY_PENALTY = {
   [M.PENALTY.MandatoryPits] = spec('pitPenalty', 'PIT PENALTY', 'Go through the pits, laps left: %d', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
   [M.PENALTY.TeleportToPits] = spec('driveThrough', 'DRIVE THROUGH', 'Drive through the pit lane, laps left: %d', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
-  [M.PENALTY.SlowDown] = spec('slowDown', 'GAS CUT', string.format('Lift off for %%ds or drop below %d km/h', M.GAS_CUT_CLEAR_KMH), C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
   [M.PENALTY.BlackFlag] = M.BY_FLAG[M.FLAG.Stop],
 }
 M.BY_PENALTY[M.PENALTY.MandatoryPits].parameterOffset = -1
@@ -116,12 +114,10 @@ M.SHARED = {
   M.BY_FLAG[M.FLAG.ReturnToPits], -- gas cut
   M.BY_PENALTY[M.PENALTY.TeleportToPits], -- drive-through
   M.BY_PENALTY[M.PENALTY.MandatoryPits],
-  M.BY_PENALTY[M.PENALTY.SlowDown],
+  { id = 'slowDown' }, -- retired: the slow down penalty, never seen in game; code kept unused
   M.BY_FLAG[M.FLAG.Stop], -- black flag, raised as a flag or a penalty
 }
 M.GAS_CUT = M.BY_FLAG[M.FLAG.ReturnToPits]
--- Signals that make the driver lift off: the return to pit flag and the slow down penalty.
-M.GAS_CUTS = { [M.GAS_CUT] = true, [M.BY_PENALTY[M.PENALTY.SlowDown]] = true }
 
 -- Raised by this app, not the game: another driver close ahead is serving a gas cut and will
 -- slow down. Below every game flag that asks for action, above the informative ones.

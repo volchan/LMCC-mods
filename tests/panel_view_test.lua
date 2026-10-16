@@ -13,14 +13,14 @@ local yellow = signal.resolve(F.Caution, P.None)
 local m = panel.model(yellow, 'Incident 200 m ahead')
 t.check('model has label, instruction, detail', m.label == 'YELLOW' and m.instruction == yellow[1].instruction
   and m.detail == 'Incident 200 m ahead' and m.extra == nil)
-local both = signal.resolve(F.FasterCar, P.SlowDown, 4)
+local both = signal.resolve(F.FasterCar, P.TeleportToPits, 4)
 m = panel.model(both, nil)
-t.check('second signal shown as extra line', m.label == 'GAS CUT' and m.extra == '+ BLUE: ' .. both[2].instruction)
+t.check('second signal shown as extra line', m.label == 'DRIVE THROUGH' and m.extra == '+ BLUE: ' .. both[2].instruction)
 local three = { signal.of(flags.GAS_CUT, 3), signal.of(flags.forPenalty(P.TeleportToPits), 3), signal.of(flags.forFlag(F.Caution)) }
 m = panel.model(three, nil)
-t.check('signals below the second are counted', m.label == 'RETURN TO PIT'
+t.check('signals below the second are counted', m.label == 'GAS CUT'
   and m.extra == '+ DRIVE THROUGH: ' .. three[2].instruction .. ' (+1)')
-local ownCut = signal.display(signal.resolve(F.None, P.SlowDown, 4), signal.of(flags.GAS_CUT_AHEAD))
+local ownCut = signal.display(signal.resolve(F.ReturnToPits, P.None, nil, 4), signal.of(flags.GAS_CUT_AHEAD))
 m = panel.model(ownCut, 'P5 Seygow 120 m, lift 4s')
 t.check('gas cut ahead shows the own gas cut status', m.label == 'GAS CUT AHEAD'
   and m.extra == '+ GAS CUT: Lift off for 4s or drop below 35 km/h')

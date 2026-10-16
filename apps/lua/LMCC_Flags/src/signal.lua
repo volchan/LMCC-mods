@@ -38,8 +38,6 @@ function M.resolve(flagType, penaltyType, penaltyParameter, flagParameter)
     result[1] = M.of(flag, flagParameter)
   end
   local penalty = flags.forPenalty(penaltyType)
-  -- The return to pit flag raised with a gas cut penalty is that gas cut: keep the penalty only.
-  if penalty and flags.GAS_CUTS[penalty] and flags.GAS_CUTS[flag] then result[1] = nil end
   -- A black flag penalty and a black race flag are the same signal: show it once.
   if penalty and penalty ~= flag then
     result[#result + 1] = M.of(penalty, penaltyParameter)
@@ -57,7 +55,7 @@ end
 function M.display(own, ahead)
   local gasCut = false
   for _, s in ipairs(own) do
-    if flags.GAS_CUTS[s.flag] then gasCut = true end
+    if s.flag == flags.GAS_CUT then gasCut = true end
   end
   local list = {}
   for _, s in ipairs(own) do
@@ -65,7 +63,7 @@ function M.display(own, ahead)
     if ahead and (penalty or s.flag.priority < ahead.flag.priority) then
       list[#list + 1], ahead = ahead, nil
     end
-    if not (gasCut and penalty and not flags.GAS_CUTS[s.flag]) then list[#list + 1] = s end
+    if not (gasCut and penalty and s.flag ~= flags.GAS_CUT) then list[#list + 1] = s end
   end
   list[#list + 1] = ahead
   return list

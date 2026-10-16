@@ -10,7 +10,7 @@ local M = {}
 M.__index = M
 
 M.DURATION = 6 -- seconds
-M.PENALTY_PARAMETER = 3 -- game parameter for penalty previews (laps or seconds)
+M.PENALTY_PARAMETER = 3 -- game parameter for penalty previews (laps), and gas cut seconds
 
 -- Fake surroundings so previews show a realistic location line.
 M.SAMPLE_CAUSE = { mySpline = 0.10, causeSpline = 0.1625, trackLength = 4000, causeName = 'Sample Driver', causeSector = 'Turn 1' }
@@ -78,7 +78,7 @@ end
 ---@param option PreviewOption
 ---@param now number @Seconds.
 function M:start(option, now)
-  self.signals = signal.resolve(option.flagType, option.penaltyType, M.PENALTY_PARAMETER)
+  self.signals = signal.resolve(option.flagType, option.penaltyType, M.PENALTY_PARAMETER, M.PENALTY_PARAMETER)
   if #self.signals == 0 then self.signals = { signal.of(option.flag) } end
   self.detail = M.sampleDetail(self.signals[1].flag, self.random(1, #M.SAMPLE_LAPPING))
   self.startedAt = now
