@@ -78,4 +78,23 @@ uiStub.reset()
 glow.draw({}, 400 + settled, screen, options)
 t.check('nothing drawn once slid out', #uiStub.calls == 0)
 
+-- The label is measured once per label and size, not per strip and frame; the window callback is reused.
+local measure, measured = ui.measureDWriteText, 0
+ui.measureDWriteText = function(...) measured = measured + 1; return measure(...) end
+local callbacks = {}
+local window = ui.transparentWindow
+ui.transparentWindow = function(...) callbacks[select(6, ...)] = true; return window(...) end
+local thick = { glowThickness = 0.07, glowPulse = true }
+glow.draw(yellow, 500, screen, thick)
+glow.draw(yellow, 500 + settled, screen, thick)
+glow.draw(yellow, 500 + settled + 1, screen, thick)
+t.check('label measured once', measured == 1)
+glow.draw(white, 600, screen, thick)
+glow.draw(white, 600 + settled * 2, screen, thick)
+t.check('new label measured again', measured == 2)
+local count = 0
+for _ in pairs(callbacks) do count = count + 1 end
+t.check('one window callback for every frame', count == 1)
+ui.measureDWriteText, ui.transparentWindow = measure, window
+
 t.finish()

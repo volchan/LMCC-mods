@@ -47,6 +47,13 @@ function M.scale(size)
   return math.min(size.x / M.BASE_WIDTH, size.y / M.BASE_HEIGHT)
 end
 
+-- One line of the text column from `y`; returns the next line's y. Not a closure: draw runs every frame.
+local function line(text, fontSize, color, x1, x2, y)
+  local h = fontSize * 1.25
+  draw.text(text, fontSize, vec2(x1, y), vec2(x2, y + h), color)
+  return y + h
+end
+
 local function drawIdle(width, height, s)
   draw.text(M.IDLE_TEXT, SMALL_SIZE * s, vec2(0, 0), vec2(width, height), COLORS.dim, ui.Alignment.Center)
 end
@@ -79,16 +86,10 @@ function M.draw(signals, detail, now)
 
   -- Text column.
   local x1, x2 = pad * 2 + chip, width - pad
-  local y = pad
-  local function line(text, fontSize, color)
-    local h = fontSize * 1.25
-    draw.text(text, fontSize, vec2(x1, y), vec2(x2, y + h), color)
-    y = y + h
-  end
-  line(model.label, LABEL_SIZE * s, COLORS.textLight)
-  line(model.instruction, INSTRUCTION_SIZE * s, COLORS.textLight)
-  if model.detail then line(model.detail, SMALL_SIZE * s, COLORS.dim) end
-  if model.extra then line(model.extra, SMALL_SIZE * s, COLORS.orange) end
+  local y = line(model.label, LABEL_SIZE * s, COLORS.textLight, x1, x2, pad)
+  y = line(model.instruction, INSTRUCTION_SIZE * s, COLORS.textLight, x1, x2, y)
+  if model.detail then y = line(model.detail, SMALL_SIZE * s, COLORS.dim, x1, x2, y) end
+  if model.extra then line(model.extra, SMALL_SIZE * s, COLORS.orange, x1, x2, y) end
 
   ui.popDWriteFont()
 end
