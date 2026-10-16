@@ -22,8 +22,8 @@ t.check('signals below the second are counted', m.label == 'GAS CUT'
   and m.extra == '+ DRIVE THROUGH: ' .. three[2].instruction .. ' (+1)')
 local ownCut = signal.display(signal.resolve(F.ReturnToPits, P.None, nil, 4), signal.of(flags.GAS_CUT_AHEAD))
 m = panel.model(ownCut, 'P5 Seygow 120 m, lift 4s')
-t.check('gas cut ahead shows the own gas cut status', m.label == 'GAS CUT AHEAD'
-  and m.extra == '+ GAS CUT: Lift off for 4s or drop below 35 km/h')
+t.check('own gas cut on top, gas cut ahead below', m.label == 'GAS CUT'
+  and m.instruction == 'Lift off for 4s or drop below 35 km/h' and m.extra == '+ GAS CUT AHEAD: ' .. flags.GAS_CUT_AHEAD.instruction)
 
 -- draw idle
 panel.draw({}, nil, 0)

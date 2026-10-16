@@ -47,8 +47,8 @@ function M.resolve(flagType, penaltyType, penaltyParameter, flagParameter)
 end
 
 ---Signals to show, from the driver's own ones (most urgent first). A gas cut replaces the other
----penalties until it is served, then they show again. The gas cut ahead alert goes above the
----driver's own penalties: that car slows down now.
+---penalties until it is served, then they show again. The gas cut ahead alert goes right below
+---the driver's own gas cut and above their other penalties: that car slows down now.
 ---@param own Signal[]
 ---@param ahead Signal? @Gas cut ahead alert, nil when none.
 ---@return Signal[]
@@ -59,11 +59,14 @@ function M.display(own, ahead)
   end
   local list = {}
   for _, s in ipairs(own) do
-    local penalty = s.flag.kind == flags.KIND.penalty
+    local penalty = s.flag.kind == flags.KIND.penalty and s.flag ~= flags.GAS_CUT
     if ahead and (penalty or s.flag.priority < ahead.flag.priority) then
       list[#list + 1], ahead = ahead, nil
     end
-    if not (gasCut and penalty and s.flag ~= flags.GAS_CUT) then list[#list + 1] = s end
+    if not (gasCut and penalty) then list[#list + 1] = s end
+    if ahead and s.flag == flags.GAS_CUT then
+      list[#list + 1], ahead = ahead, nil
+    end
   end
   list[#list + 1] = ahead
   return list

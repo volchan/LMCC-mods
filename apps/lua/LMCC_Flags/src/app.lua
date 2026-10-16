@@ -101,7 +101,8 @@ function M:describe(snap, top)
     if lapping then return lapping end
   end
   local cause = top.flag.causeAt and deps.game.cause(snap.flagCause, self.cause)
-  return context.describe(top.flag, cause or nil)
+  -- No location of its own (e.g. the driver's gas cut): show the cars ahead serving one, if any.
+  return context.describe(top.flag, cause or nil) or self.aheadDetail
 end
 
 ---@private

@@ -99,6 +99,7 @@ function M:start(option, now)
   signal.sort(own)
   self.signals = signal.display(own, ahead)
   self.detail = M.sampleDetail(self.signals[1].flag, self.random(1, #M.SAMPLE_LAPPING))
+    or (ahead and gasCutAhead.describe(M.SAMPLE_GAS_CUT))
   self.startedAt = now
 end
 
