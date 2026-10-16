@@ -43,6 +43,12 @@ limited = false
 s:flush()
 t.check('sent once allowed', #sent == 2 and sent[2].active == 0 and #s.queue == 0)
 
+-- Test penalty: sent like a real one, with the test code.
+local penaltyShare = require('src/penalty_share')
+s:test()
+t.check('test penalty sent', #sent == 3 and sent[3].code == penaltyShare.TEST and sent[3].active == 1
+  and sent[3].parameter == 0)
+
 -- Incoming: other drivers fill the board; own copies and server messages do not.
 now = 50
 deliver({ index = 2 }, { code = 1, active = 1, parameter = 6 })
@@ -51,5 +57,7 @@ deliver(nil, { code = 1, active = 1, parameter = 6 })
 now = 51
 local cuts = s:gasCuts()
 t.check('other driver gas cut on the board', #cuts == 1 and cuts[1].carIndex == 2 and cuts[1].secondsLeft == 5)
+deliver({ index = 3 }, { code = penaltyShare.TEST, active = 1, parameter = 0 })
+t.check('test penalties stay off the board', s.board.cars[3] == nil)
 
 t.finish()

@@ -114,12 +114,14 @@ end)
 | 3 | Pit penalty (`ac.PenaltyType.MandatoryPits`) | Raw game value, same convention as code 2 |
 | 4 | Slow down (`ac.PenaltyType.SlowDown`) | Seconds |
 | 5 | Black flag (flag or penalty) | `0` |
+| 0 | Test, no penalty: sent by the **Send test penalty** button of the setup window (Network tab), never by a race. Skip it unless you are checking the chain | `0` |
 
 Notes for readers:
 
 - "Served" is decided by the sending client: pit penalties once its car has been through the pit lane, the gas cut when the game lowers it, the slow down when its seconds reach 0.
 - A "served" message can be lost (rate limit, disconnection). LMCC Flags drops a gas cut 3 seconds after its length ends, or 10 seconds after it started when the length is unknown; do something similar.
 - Previews from the setup window are never sent.
+- LMCC Telemetry forwards every code to the stats site, the test one included; its own window has a **Send test penalty** button too, sent with `parameter` `1`, that only checks the trip from LMCC Telemetry to the site.
 
 #### Network test
 
@@ -180,7 +182,7 @@ apps/lua/LMCC_Flags/
   src/history_view.lua   history window
   src/setup_view.lua     setup window
 apps/lua/LMCC_Telemetry/
-  manifest.ini           window and its settings cog
+  manifest.ini           window, with its Status and Settings tabs
   LMCC_Telemetry.lua     samples every car and sends the batches
   src/token.lua          the site's token, empty in git, filled in the release zip
 scripts/gen_sounds.js    regenerates the wav files

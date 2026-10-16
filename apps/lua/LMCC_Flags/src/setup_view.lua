@@ -19,6 +19,9 @@ M.TEST_HINT = string.format('Click an alert to show it for %d s with its sound. 
 M.NO_GAME_DATA_TEXT = 'Waiting for the game...'
 M.PANEL_MISSING_TEXT = 'LMCC Flags panel not found: open it once from the apps bar.'
 M.NET_PING_LABEL = 'Send test ping'
+M.NET_PENALTY_LABEL = 'Send test penalty'
+M.NET_PENALTY_HELP = 'Sends a test penalty (code 0) as a real one would be: other LMCC Flags ignore it, '
+  .. 'LMCC Telemetry counts it as heard and forwards it to the stats site.'
 M.SILENT_TEXT = 'A dev install of LMCC Flags is running: this one stays silent until it stops.'
 M.NET_HELP = 'Checks that LMCC Flags clients can message each other on this server. Every other driver '
   .. 'running this version answers the ping; their replies prove alerts could be shared between drivers.'
@@ -71,6 +74,7 @@ end
 ---@field snap fun(preset: LayoutPreset)
 ---@field testSound fun(cue: string)
 ---@field netPing fun()
+---@field testPenalty fun()
 
 ---Width of one cell when `columns` cells share the line.
 local function cellWidth(columns)
@@ -234,6 +238,8 @@ local function drawNetwork(net, actions)
   if not net.online then ui.textColored(M.NET_OFFLINE_TEXT, COLORS.orange) end
   ui.text(net.direct and M.NET_DIRECT_TEXT or M.NET_CHAT_TEXT)
   if ui.button(M.NET_PING_LABEL) then actions.netPing() end
+  ui.textWrapped(M.NET_PENALTY_HELP)
+  if ui.button(M.NET_PENALTY_LABEL) then actions.testPenalty() end
   if net.pinged then
     if net.echoMs then
       ui.text(string.format('Own ping came back after %d ms (your ping to the server: %s)', net.echoMs,

@@ -37,6 +37,12 @@ function M:announce(signals)
   self:flush()
 end
 
+---Queues a test message (`penalty_share.TEST`), sent like a real penalty.
+function M:test()
+  self.queue[#self.queue + 1] = { code = penaltyShare.TEST, active = 1, parameter = 0 }
+  self:flush()
+end
+
 ---Sends queued messages as fast as the server allows. Cheap when nothing is queued.
 function M:flush()
   while self.queue[1] do
