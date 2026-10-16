@@ -28,10 +28,11 @@ local PANEL_TITLE = variant.title('LMCC Flags', dev)
 local devPresence = presence.new(dev, os.time, ac.store, ac.load)
 
 local prefs = settings.load()
+local penalties = share.new(os.preciseClock)
 local controller = app.new({
   game = game, sound = sound, settings = prefs, tracker = tracker.new(), preview = preview.new(),
   panel = { show = function() windowMover.show(PANEL_TITLE) end },
-  share = share.new(os.preciseClock),
+  share = penalties,
 })
 
 -- Real time for the lock animation, so it plays even while the game is paused.
@@ -57,6 +58,7 @@ local actions = {
   end,
   testSound = function(cue) controller:playCue(cue) end,
   netPing = function() netTest:ping() end,
+  testPenalty = function() penalties:test() end,
 }
 
 local function clearHistory()

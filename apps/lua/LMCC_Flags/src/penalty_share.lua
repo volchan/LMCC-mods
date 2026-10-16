@@ -6,6 +6,9 @@ local M = {}
 
 M.GAS_CUT_UNKNOWN = 10 -- seconds a gas cut of unknown length is kept without a "served" message
 M.GRACE = 3 -- seconds a gas cut is kept past its length, waiting for the "served" message
+-- Code of a test message: no penalty, so the boards ignore it (not in `flags.SHARED`), but LMCC
+-- Telemetry forwards it to the stats site like any other: proves the chain without a race.
+M.TEST = 0
 
 ---@class ShareMessage
 ---@field code integer @Index in `flags.SHARED`.

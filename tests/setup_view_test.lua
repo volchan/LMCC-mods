@@ -39,6 +39,7 @@ local actions = {
   snap = function(p) calls.snap = p end,
   testSound = function(cue) calls.test = cue end,
   netPing = function() calls.ping = true end,
+  testPenalty = function() calls.penalty = true end,
 }
 
 -- Layout: four tabs, every alert and preset gets a button, no status lines when idle.
@@ -172,9 +173,11 @@ t.check('no network tab without status', #uiStub.named('tab') == 4)
 local net = { online = false, direct = false, pinged = false, pingMs = -1, replies = {}, pingsFrom = {} }
 uiStub.reset()
 uiStub.clicks[setup.NET_PING_LABEL] = true
+uiStub.clicks[setup.NET_PENALTY_LABEL] = true
 setup.draw(s, idle({ net = net }), actions)
 t.check('network tab shown', #uiStub.named('tab') == 5)
 t.check('ping button fires', calls.ping == true)
+t.check('test penalty button fires', calls.penalty == true)
 t.check('offline and chat server explained', hasText(setup.NET_OFFLINE_TEXT) and hasText(setup.NET_CHAT_TEXT))
 t.check('empty lists say so', hasText(setup.NET_NONE_TEXT) and not hasText('Own ping came back: not yet'))
 net = { online = true, direct = true, pinged = true, echoMs = 30, pingMs = 40, echoRoute = 'server',
