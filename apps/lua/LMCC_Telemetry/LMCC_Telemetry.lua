@@ -13,7 +13,7 @@ local TOKEN = require('src/token')
 -- A piece of the league server's name: anywhere else, nothing is sent at all
 local SERVER_FILTER = 'dazworks'
 
--- The only setting left to the driver (the cog of the window), kept between runs
+-- The only setting left to the driver (the Settings tab), kept between runs
 local settings = ac.storage({
   -- Samples a second
   rate = 20,
@@ -151,7 +151,19 @@ function script.update(dt)
   end
 end
 
+-- One window, two tabs: what is sent, and the setting
 function script.windowMain(dt)
+  ui.tabBar('lmccTelemetry', function()
+    ui.tabItem('Status', drawStatus)
+    ui.tabItem('Settings', drawSettings)
+  end)
+end
+
+-- ------------------------------------------------------------------------------
+-- MARK: HELPERS
+-- ------------------------------------------------------------------------------
+
+function drawStatus()
   ui.text(statusLine())
   ui.text(string.format('%d frame(s) waiting', #frames))
   ui.text(string.format('Penalties heard: %d (%d own, %d from the server, %d not recording), %d sent',
@@ -163,13 +175,9 @@ function script.windowMain(dt)
   end
 end
 
-function script.windowSettings(dt)
+function drawSettings()
   settings.rate = ui.slider('##rate', settings.rate, 5, 30, 'Samples: %.0f a second', true)
 end
-
--- ------------------------------------------------------------------------------
--- MARK: HELPERS
--- ------------------------------------------------------------------------------
 
 -- Online on the league's server only: solo sessions, replays and other
 -- servers are nobody's business. The site checks the server again and refuses
