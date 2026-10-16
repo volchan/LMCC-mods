@@ -68,6 +68,12 @@ local function status(clicks, sliders)
   return uiStub.texts()
 end
 
+-- Server name unknown at first: nothing recorded, asked again later.
+serverName = nil
+script.update(0.05)
+t.check('nothing sampled without a server name', status()[2] == '0 frame(s) waiting')
+serverName = 'DazWorks LMCC #1'
+
 -- One sample a 1/20 s, one request a 0.2 s.
 script.update(0.05)
 t.check('one frame sampled', status()[2] == '1 frame(s) waiting')

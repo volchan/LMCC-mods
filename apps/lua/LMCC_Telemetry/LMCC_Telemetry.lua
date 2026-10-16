@@ -190,7 +190,14 @@ function recording()
   end
 
   if onLeagueServer == nil then
-    onLeagueServer = ac.getServerName():lower():find(SERVER_FILTER, 1, true) ~= nil
+    local name = ac.getServerName()
+
+    -- Nil until the game knows it: asked again next frame, never cached
+    if not name then
+      return false
+    end
+
+    onLeagueServer = name:lower():find(SERVER_FILTER, 1, true) ~= nil
   end
 
   return onLeagueServer
