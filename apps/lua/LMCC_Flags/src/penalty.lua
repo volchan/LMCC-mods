@@ -1,7 +1,6 @@
 -- Decides when the player's penalty is served. The game can keep reporting a penalty after
--- it was served, so the app clears it itself:
--- - pit penalties (laps based) once the car has been in the pit lane and left it again;
--- - the timed penalty (slow down) once its seconds reach 0.
+-- it was served, so the app clears pit penalties (laps based) once the car has been in the pit
+-- lane and left it again.
 local PENALTY = require('src/flags').PENALTY
 
 local M = {}
@@ -9,8 +8,6 @@ M.__index = M
 
 -- Served by going through the pit lane.
 M.PIT = { [PENALTY.MandatoryPits] = true, [PENALTY.TeleportToPits] = true }
--- Parameter counts seconds; 0 means nothing left to serve.
-M.TIMED = { [PENALTY.SlowDown] = true }
 
 function M.new()
   return setmetatable({ type = PENALTY.None, parameter = 0, visitedPit = false, served = false }, M)
@@ -34,7 +31,7 @@ function M:effective(penaltyType, parameter, inPitlane)
       self.served = true
     end
   end
-  if self.served or (M.TIMED[penaltyType] and parameter <= 0) then return PENALTY.None end
+  if self.served then return PENALTY.None end
   return penaltyType
 end
 

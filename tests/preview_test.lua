@@ -13,13 +13,13 @@ t.check('options sorted by priority', sorted)
 t.check('options carry their flag spec', options[1].flag == flags.forFlag(flags.FLAG.SessionSuspended))
 t.check('options start with the red flag', options[1].label == 'RED')
 t.check('black flag listed once despite penalty alias', labels['BLACK'] == 1)
-t.check('penalties listed', labels['SLOW DOWN'] == 1 and labels['DRIVE THROUGH'] == 1 and labels['PIT PENALTY'] == 1)
+t.check('penalties listed', labels['GAS CUT'] == 1 and labels['DRIVE THROUGH'] == 1 and labels['PIT PENALTY'] == 1)
 
 local flagCount = 0
 for _, v in pairs(flags.FLAG) do
   if flags.forFlag(v) then flagCount = flagCount + 1 end
 end
-t.check('every flag, three penalties and the gas cut ahead', #options == flagCount + 4)
+t.check('every flag, two penalties and the gas cut ahead', #options == flagCount + 3)
 local aheadOption
 for _, o in ipairs(options) do
   if o.flag == flags.GAS_CUT_AHEAD then aheadOption = o end
@@ -46,14 +46,14 @@ t.check('equal priorities ordered by label', tiesOrdered)
 local p = preview.new()
 t.check('inactive at start', p:active(0) == nil and p:remaining(0) == 0)
 
-local slowDown
+local gasCut
 for _, o in ipairs(options) do
-  if o.label == 'SLOW DOWN' then slowDown = o end
+  if o.label == 'GAS CUT' then gasCut = o end
 end
-p:start(slowDown, 10)
+p:start(gasCut, 10)
 local sig = p:active(11)
-t.check('preview resolves the option', sig and sig[1].flag.id == 'slowDown')
-t.check('penalty preview uses sample parameter', sig[1].instruction == 'Lift off for ' .. preview.PENALTY_PARAMETER .. 's or drop below 35 km/h')
+t.check('preview resolves the option', sig and sig[1].flag.id == 'gasCut')
+t.check('gas cut preview shows sample seconds', sig[1].instruction == 'Lift off for ' .. preview.PENALTY_PARAMETER .. 's or drop below 35 km/h')
 t.check('remaining time counts down', t.near(p:remaining(12), preview.DURATION - 2))
 t.check('expires after duration', p:active(10 + preview.DURATION) == nil and p:remaining(30) == 0)
 t.check('penalty preview has no location', p.detail == nil)
@@ -85,6 +85,27 @@ t.check('default random covers 1 to 3 cars', counts[1] and counts[2] and counts[
 
 p:start(options[1], 0)
 p:stop()
-t.check('stop ends preview', p:active(0) == nil)
+t.check('stop ends preview', p:active(0) == nil and p:label() == nil)
+
+-- Several alerts combined, as the game would show them.
+local byLabel = {}
+for _, o in ipairs(options) do byLabel[o.label] = o end
+p = preview.new(function() return 1 end)
+p:start(byLabel['BLUE'], 0)
+p:start(byLabel['YELLOW'], 2)
+t.check('second click adds an alert, most urgent first', p:label() == 'YELLOW + BLUE')
+t.check('adding restarts the time', t.near(p:remaining(3), preview.DURATION - 1))
+t.check('location follows the top alert', p.detail == preview.sampleDetail(flags.forFlag(F.Caution), 1))
+p:start(byLabel['YELLOW'], 3)
+t.check('same alert not added twice', p:label() == 'YELLOW + BLUE')
+p:start(byLabel['DRIVE THROUGH'], 3)
+p:start(byLabel['GAS CUT'], 3)
+t.check('gas cut hides the drive through', p:label() == 'GAS CUT + YELLOW + BLUE')
+p:start(byLabel['GAS CUT AHEAD'], 3)
+t.check('gas cut ahead right below the own gas cut', p:label() == 'GAS CUT + GAS CUT AHEAD + YELLOW + BLUE')
+t.check('gas cut ahead cars on the location line', p.detail == 'P4 Sample Driver 150 m, lift 4s')
+p:stop()
+p:start(byLabel['WHITE'], 4)
+t.check('a new test starts empty', p:label() == 'WHITE')
 
 t.finish()

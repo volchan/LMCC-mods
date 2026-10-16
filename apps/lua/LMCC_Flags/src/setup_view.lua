@@ -14,8 +14,8 @@ M.CUE_NAME_WIDTH = 70 -- px, column of cue names in the sound tab
 M.TEST_WIDTH = 50 -- px, sound test buttons
 M.SHOW_PANEL_LABEL = 'Show panel'
 M.LOCK_LABEL = 'Lock panel (or right click it)'
-M.TEST_HINT = string.format('Click an alert to show it for %d s with its sound. Tests are not saved in the history.',
-  preview.DURATION)
+M.TEST_HINT = string.format('Click an alert to show it for %d s with its sound. Click more during the test to '
+  .. 'combine them as in a race; Stop clears them. Tests are not saved in the history.', preview.DURATION)
 M.NO_GAME_DATA_TEXT = 'Waiting for the game...'
 M.PANEL_MISSING_TEXT = 'LMCC Flags panel not found: open it once from the apps bar.'
 M.NET_PING_LABEL = 'Send test ping'

@@ -10,7 +10,7 @@ local M = {}
 M.__index = M
 
 M.DURATION = 6 -- seconds
-M.PENALTY_PARAMETER = 3 -- game parameter for penalty previews (laps or seconds)
+M.PENALTY_PARAMETER = 3 -- game parameter for penalty previews (laps), and gas cut seconds
 
 -- Fake surroundings so previews show a realistic location line.
 M.SAMPLE_CAUSE = { mySpline = 0.10, causeSpline = 0.1625, trackLength = 4000, causeName = 'Sample Driver', causeSector = 'Turn 1' }
@@ -72,16 +72,44 @@ end
 
 ---@param random (fun(m: integer, n: integer): integer)? @Picks the sample car count, `math.random` by default.
 function M.new(random)
-  return setmetatable({ signals = nil, detail = nil, startedAt = 0, random = random or math.random }, M)
+  return setmetatable({ signals = nil, picked = {}, detail = nil, startedAt = 0, random = random or math.random }, M)
 end
 
+---Adds an alert to the running preview, or starts one, and restarts its time: several alerts
+---can be tested together, shown as the game would combine them.
 ---@param option PreviewOption
 ---@param now number @Seconds.
 function M:start(option, now)
-  self.signals = signal.resolve(option.flagType, option.penaltyType, M.PENALTY_PARAMETER)
-  if #self.signals == 0 then self.signals = { signal.of(option.flag) } end
+  if not self.signals then self.picked = {} end
+  local picked, found = self.picked, false
+  for _, o in ipairs(picked) do
+    if o == option then found = true end
+  end
+  if not found then picked[#picked + 1] = option end
+  local own, ahead = {}, nil
+  for _, o in ipairs(picked) do
+    if o.flag == flags.GAS_CUT_AHEAD then
+      ahead = signal.of(o.flag)
+    else
+      for _, s in ipairs(signal.resolve(o.flagType, o.penaltyType, M.PENALTY_PARAMETER, M.PENALTY_PARAMETER)) do
+        own[#own + 1] = s
+      end
+    end
+  end
+  signal.sort(own)
+  self.signals = signal.display(own, ahead)
   self.detail = M.sampleDetail(self.signals[1].flag, self.random(1, #M.SAMPLE_LAPPING))
+    or (ahead and gasCutAhead.describe(M.SAMPLE_GAS_CUT))
   self.startedAt = now
+end
+
+---Labels of the alerts shown, joined, nil when not previewing.
+---@return string?
+function M:label()
+  if not self.signals then return nil end
+  local labels = {}
+  for i, s in ipairs(self.signals) do labels[i] = s.flag.label end
+  return table.concat(labels, ' + ')
 end
 
 function M:stop()

@@ -164,12 +164,13 @@ a:update()
 local jump = a:signals()
 t.check('jump start shows a drive through alone', #jump == 1 and jump[1].flag.id == 'driveThrough'
   and jump[1].instruction == 'Drive through the pit lane, laps left: 2')
--- Track cut before serving it: the gas cut must be done this lap, so it goes on top.
+-- Track cut before serving it: the gas cut must be done now, so it replaces the drive-through.
 state.now, state.penaltyTime = 50.5, 2.5
 a:update()
 local stack = a:signals()
-t.check('gas cut stacked above the drive through', #stack == 2 and stack[1].flag.id == 'gasCut'
-  and stack[1].instruction == 'Lift off for 3s or drop below 35 km/h' and stack[2].flag.id == 'driveThrough')
+t.check('gas cut replaces the drive through', #stack == 1 and stack[1].flag.id == 'gasCut'
+  and stack[1].instruction == 'Lift off for 3s or drop below 35 km/h')
+t.check('drive through still shared during the gas cut', a.own[2] and a.own[2].flag.id == 'driveThrough')
 state.now, state.penaltyTime = 50.8, 0
 a:update()
 t.check('drive through alone again once the gas cut is done', #a:signals() == 1
@@ -230,9 +231,21 @@ state.now = 71 + 3 * app.DETAIL_INTERVAL
 a:update()
 local both = a:signals()
 t.check('own flag ranks above the gas cut ahead', #both == 2 and both[1].flag.id == 'yellow' and both[2].flag == flags.GAS_CUT_AHEAD)
+state.flagType, state.penaltyTime = F.ReturnToPits, 3
+state.now = 71 + 4 * app.DETAIL_INTERVAL
+a:update()
+local cutAndAhead = a:signals()
+t.check('own gas cut on top, gas cut ahead below', #cutAndAhead == 2 and cutAndAhead[1].flag.id == 'gasCut'
+  and cutAndAhead[2].flag == flags.GAS_CUT_AHEAD)
+t.check('cars ahead on the location line of the own gas cut', a:displayDetail() == 'P5 Seygow 120 m, lift 4s')
+state.flagType, state.penaltyTime = F.None, 0
+state.now = 71 + 5 * app.DETAIL_INTERVAL
+a:update()
+t.check('gas cut ahead still shown once the own gas cut is done', #a:signals() == 1
+  and a:signals()[1].flag == flags.GAS_CUT_AHEAD and a:displayDetail() == 'P5 Seygow 120 m, lift 4s')
 sharedCuts = {}
 state.flagType = F.None
-state.now = 71 + 4 * app.DETAIL_INTERVAL
+state.now = 71 + 6 * app.DETAIL_INTERVAL
 a:update()
 t.check('alert cleared when the gas cut ends', #a:signals() == 0)
 

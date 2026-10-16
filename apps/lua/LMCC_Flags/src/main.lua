@@ -92,8 +92,8 @@ function script.windowSetup(dt)
     return
   end
   local p = controller.deps.preview
-  local previewing = p:active(controller.now)
-  setupState.previewLabel = previewing and previewing[1] and previewing[1].flag.label or nil
+  p:active(controller.now) -- expires a finished preview
+  setupState.previewLabel = p:label()
   setupState.previewRemaining = p:remaining(controller.now)
   setupState.locked = panelLock.locked
   setupState.net = netTest:status()

@@ -46,6 +46,38 @@ function M.resolve(flagType, penaltyType, penaltyParameter, flagParameter)
   return result
 end
 
+---Signals to show, from the driver's own ones (most urgent first). A gas cut replaces the other
+---penalties until it is served, then they show again. The gas cut ahead alert goes right below
+---the driver's own gas cut; without one, below the flags that outrank it and above the driver's
+---other penalties: that car slows down now, a pit penalty can wait a lap.
+---@param own Signal[]
+---@param ahead Signal? @Gas cut ahead alert, nil when none.
+---@return Signal[]
+function M.display(own, ahead)
+  local gasCut = false
+  for _, s in ipairs(own) do
+    if s.flag == flags.GAS_CUT then gasCut = true end
+  end
+  local shown = {}
+  for _, s in ipairs(own) do
+    if not (gasCut and s.flag.kind == flags.KIND.penalty and s.flag ~= flags.GAS_CUT) then shown[#shown + 1] = s end
+  end
+  if not ahead then return shown end
+  local list, rest = {}, {}
+  for _, s in ipairs(shown) do
+    local above
+    if gasCut then
+      above = s.flag.priority >= flags.GAS_CUT.priority
+    else
+      above = s.flag.kind ~= flags.KIND.penalty and s.flag.priority > ahead.flag.priority
+    end
+    if above then list[#list + 1] = s else rest[#rest + 1] = s end
+  end
+  list[#list + 1] = ahead
+  for _, s in ipairs(rest) do list[#list + 1] = s end
+  return list
+end
+
 ---Identifier of the most urgent signal, or `M.NONE` when the track is clear.
 ---@param signals Signal[]
 ---@return string
