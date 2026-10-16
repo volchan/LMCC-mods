@@ -51,6 +51,10 @@ local ignored = false
 local onLeagueServer = nil
 -- Which of the optional fields this CSP version has (see detectFields)
 local fields = nil
+-- Code of LMCC Flags' test penalty (src/penalty_share.lua): no penalty, it
+-- proves the chain without a race. Its parameter tells who made it: 0 LMCC
+-- Flags (its Setup, Network tab), 1 this window
+local TEST_PENALTY = 0
 
 -- Every chat line the game receives, the server's included: a penalty such as
 -- "CUT DETECTED, SLOW DOWN" may only ever reach the driver, never the Server
@@ -152,6 +156,11 @@ function script.windowMain(dt)
   ui.text(string.format('%d frame(s) waiting', #frames))
   ui.text(string.format('Penalties heard: %d (%d own, %d from the server, %d not recording), %d sent',
     heard.total, heard.own, heard.server, heard.notRecording, heard.sent))
+
+  -- Only this app to the site: LMCC Flags' own test button checks the rest
+  if ui.button('Send test penalty') then
+    addTestPenalty()
+  end
 end
 
 function script.windowSettings(dt)
@@ -239,6 +248,21 @@ function sample()
 
   frames[#frames + 1] = { t = round(clock, 3), cars = cars }
   frames = trim(frames)
+end
+
+-- Off the league server nothing is recorded: the status line says why
+function addTestPenalty()
+  if not recording() then
+    return
+  end
+
+  penalties[#penalties + 1] = {
+    t = round(clock, 3),
+    driver = ac.getDriverName(0),
+    code = TEST_PENALTY,
+    active = 1,
+    parameter = 1,
+  }
 end
 
 -- `sender` is this game's own driver, car 0; `sentAt` dates the frames
