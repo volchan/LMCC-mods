@@ -38,9 +38,11 @@ local frames = {}
 local messages = {}
 local laps = {}
 local penalties = {}
+local raisedFlags = {}
 -- LMCC Flags' announcements this app heard and sent, shown in the window:
 -- whether they reach it at all
 local heard = { total = 0, own = 0, server = 0, notRecording = 0, sent = 0 }
+local flagsHeard = { total = 0, sent = 0 }
 local sending = false
 local status = 'waiting'
 -- Set once the site has refused this server: nothing more sent until the
@@ -126,6 +128,30 @@ ac.OnlineEvent({
   }
 end)
 
+-- The race flag each LMCC Flags game raises for its driver, this one's
+-- included: the yellows and blues no Server Manager reports, for the stream
+-- overlays and the stewards. Same key and layout as LMCC Flags
+-- (src/flag_share.lua). `cause` is a session ID: the same in every game, unlike
+-- car indexes
+ac.OnlineEvent({
+  ac.StructItem.key('dazworks.flags.flag'),
+  flag = ac.StructItem.byte(),
+  cause = ac.StructItem.int32(),
+}, function(sender, message)
+  -- nil: sent by the server, not a driver's flag
+  if not sender or not recording() then
+    return
+  end
+
+  flagsHeard.total = flagsHeard.total + 1
+  raisedFlags[#raisedFlags + 1] = {
+    t = round(clock, 3),
+    driver = ac.getDriverName(sender.index),
+    flag = tonumber(message.flag),
+    cause = driverBySession(tonumber(message.cause)),
+  }
+end)
+
 function script.update(dt)
   clock = clock + dt
   sinceSample = sinceSample + dt
@@ -145,7 +171,7 @@ function script.update(dt)
     end
   end
 
-  if sinceSend >= sendEvery and not sending and (#frames > 0 or #messages > 0 or #laps > 0 or #penalties > 0) then
+  if sinceSend >= sendEvery and not sending and (#frames > 0 or #messages > 0 or #laps > 0 or #penalties > 0 or #raisedFlags > 0) then
     sinceSend = 0
     send()
   end
@@ -168,6 +194,7 @@ function drawStatus()
   ui.text(string.format('%d frame(s) waiting', #frames))
   ui.text(string.format('Penalties heard: %d (%d own, %d from the server, %d not recording), %d sent',
     heard.total, heard.own, heard.server, heard.notRecording, heard.sent))
+  ui.text(string.format('Flags heard: %d, %d sent', flagsHeard.total, flagsHeard.sent))
 
   -- Only this app to the site: LMCC Flags' own test button checks the rest
   if ui.button('Send test penalty') then
@@ -280,9 +307,11 @@ function send()
   local said = messages
   local completed = laps
   local announced = penalties
+  local raised = raisedFlags
   messages = {}
   laps = {}
   penalties = {}
+  raisedFlags = {}
   sending = true
 
   local body = JSON.stringify({
@@ -295,6 +324,7 @@ function send()
     messages = said,
     laps = completed,
     penalties = announced,
+    flags = raised,
   })
   local headers = {
     ['Authorization'] = 'Bearer ' .. TOKEN,
@@ -313,6 +343,7 @@ function send()
       messages = {}
       laps = {}
       penalties = {}
+      raisedFlags = {}
       status = 'other server, ignored (expected: '
         .. tostring(expected.expected and expected.expected.server)
         .. ')'
@@ -322,12 +353,13 @@ function send()
     if err or not response or response.status >= 300 then
       status = 'error: ' .. tostring(err or (response and response.status))
       sendEvery = math.min(math.max(sendEvery * 2, 1), MAX_RETRY_S)
-      restore(batch, said, completed, announced)
+      restore(batch, said, completed, announced, raised)
       return
     end
 
     sendEvery = SEND_EVERY_S
     heard.sent = heard.sent + #announced
+    flagsHeard.sent = flagsHeard.sent + #raised
     status = 'sent at ' .. os.date('%H:%M:%S')
   end)
 end
@@ -369,8 +401,25 @@ function driverNames()
   return names
 end
 
+-- The name of the car with this session ID, nil for none or a car gone
+function driverBySession(sessionID)
+  if not sessionID or sessionID < 0 then
+    return nil
+  end
+
+  for i = 0, ac.getSim().carsCount - 1 do
+    local car = ac.getCar(i)
+
+    if car and car.sessionID == sessionID then
+      return ac.getDriverName(i)
+    end
+  end
+
+  return nil
+end
+
 -- A failed batch goes back in front of what was taken since
-function restore(batch, said, completed, announced)
+function restore(batch, said, completed, announced, raised)
   for _, frame in ipairs(frames) do
     batch[#batch + 1] = frame
   end
@@ -387,10 +436,15 @@ function restore(batch, said, completed, announced)
     announced[#announced + 1] = penalty
   end
 
+  for _, flag in ipairs(raisedFlags) do
+    raised[#raised + 1] = flag
+  end
+
   frames = batch
   messages = said
   laps = completed
   penalties = announced
+  raisedFlags = raised
   frames = trim(frames)
 end
 
