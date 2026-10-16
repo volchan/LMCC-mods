@@ -23,8 +23,8 @@ local settings = ac.storage({
 local SEND_EVERY_S = 0.2
 -- What is kept while the site cannot be reached, in seconds
 local MAX_PENDING_S = 60
--- Laps and penalties kept at most while the site cannot be reached: they
--- cannot grow without end
+-- Laps, penalties and flags kept at most while the site cannot be reached:
+-- they cannot grow without end
 local MAX_PENDING_EVENTS = 500
 -- Items of each list a request carries at most: after an outage the backlog
 -- goes in small pieces, never all at once in a frame
@@ -43,9 +43,11 @@ local sendEvery = SEND_EVERY_S
 local frames = {}
 local laps = {}
 local penalties = {}
+local raisedFlags = {}
 -- LMCC Flags' announcements this app heard and sent, shown in the window:
 -- whether they reach it at all
 local heard = { total = 0, own = 0, server = 0, notRecording = 0, sent = 0 }
+local flagsHeard = { total = 0, sent = 0 }
 local sending = false
 local status = 'waiting'
 -- Set once the site has refused this server: nothing more sent until the
@@ -118,6 +120,30 @@ ac.OnlineEvent({
   })
 end)
 
+-- The race flag each LMCC Flags game raises for its driver, this one's
+-- included: the yellows and blues no Server Manager reports, for the stream
+-- overlays and the stewards. Same key and layout as LMCC Flags
+-- (src/flag_share.lua). `cause` is a session ID: the same in every game, unlike
+-- car indexes
+ac.OnlineEvent({
+  ac.StructItem.key('dazworks.flags.flag'),
+  flag = ac.StructItem.byte(),
+  cause = ac.StructItem.int32(),
+}, function(sender, message)
+  -- nil: sent by the server, not a driver's flag
+  if not sender or not recording() then
+    return
+  end
+
+  flagsHeard.total = flagsHeard.total + 1
+  raisedFlags = enqueue(raisedFlags, {
+    t = round(clock, 3),
+    driver = ac.getDriverName(sender.index),
+    flag = tonumber(message.flag),
+    cause = driverBySession(tonumber(message.cause)),
+  })
+end)
+
 function script.update(dt)
   clock = clock + dt
   sinceSample = sinceSample + dt
@@ -137,7 +163,7 @@ function script.update(dt)
     end
   end
 
-  if sinceSend >= sendEvery and not sending and (#frames > 0 or #laps > 0 or #penalties > 0) then
+  if sinceSend >= sendEvery and not sending and (#frames > 0 or #laps > 0 or #penalties > 0 or #raisedFlags > 0) then
     sinceSend = 0
     send()
   end
@@ -160,6 +186,7 @@ function drawStatus()
   ui.text(string.format('%d frame(s) waiting', #frames))
   ui.text(string.format('Penalties heard: %d (%d own, %d from the server, %d not recording), %d sent',
     heard.total, heard.own, heard.server, heard.notRecording, heard.sent))
+  ui.text(string.format('Flags heard: %d, %d sent', flagsHeard.total, flagsHeard.sent))
 
   -- Only this app to the site: LMCC Flags' own test button checks the rest
   if ui.button('Send test penalty') then
@@ -261,10 +288,11 @@ end
 -- `sender` is this game's own driver, car 0; `sentAt` dates the frames
 -- against the arrival time
 function send()
-  local batch, completed, announced
+  local batch, completed, announced, raised
   batch, frames = take(frames)
   completed, laps = take(laps)
   announced, penalties = take(penalties)
+  raised, raisedFlags = take(raisedFlags)
   sending = true
 
   local head = JSON.stringify({
@@ -275,6 +303,7 @@ function send()
     drivers = driverNames(),
     laps = completed,
     penalties = announced,
+    flags = raised,
   })
   -- The frames are JSON text already: spliced in before the closing brace
   local body = head:sub(1, -2) .. ',"frames":[' .. table.concat(batch, ',') .. ']}'
@@ -294,6 +323,7 @@ function send()
       frames = {}
       laps = {}
       penalties = {}
+      raisedFlags = {}
       status = 'other server, ignored (expected: '
         .. tostring(expected.expected and expected.expected.server)
         .. ')'
@@ -309,7 +339,7 @@ function send()
       local refused = response and response.status >= 400 and response.status < 500 and response.status ~= 429
 
       if not refused then
-        restore(batch, completed, announced)
+        restore(batch, completed, announced, raised)
       end
 
       return
@@ -317,6 +347,7 @@ function send()
 
     sendEvery = SEND_EVERY_S
     heard.sent = heard.sent + #announced
+    flagsHeard.sent = flagsHeard.sent + #raised
     status = 'sent at ' .. os.date('%H:%M:%S')
   end)
 end
@@ -356,14 +387,32 @@ function driverNames()
   return names
 end
 
+-- The name of the car with this session ID, nil for none or a car gone
+function driverBySession(sessionID)
+  if not sessionID or sessionID < 0 then
+    return nil
+  end
+
+  for i = 0, ac.getSim().carsCount - 1 do
+    local car = ac.getCar(i)
+
+    if car and car.sessionID == sessionID then
+      return ac.getDriverName(i)
+    end
+  end
+
+  return nil
+end
+
 -- A failed batch goes back in front of what was taken since
-function restore(batch, completed, announced)
+function restore(batch, completed, announced, raised)
   frames = trimFrames(append(batch, frames))
   laps = trim(append(completed, laps), MAX_PENDING_EVENTS, MAX_PER_SEND)
   penalties = trim(append(announced, penalties), MAX_PENDING_EVENTS, MAX_PER_SEND)
+  raisedFlags = trim(append(raised, raisedFlags), MAX_PENDING_EVENTS, MAX_PER_SEND)
 end
 
--- A lap or penalty at the end of its list, kept to the newest
+-- A lap, penalty or flag at the end of its list, kept to the newest
 -- MAX_PENDING_EVENTS: they may arrive faster than requests carry them
 function enqueue(list, item)
   list[#list + 1] = item

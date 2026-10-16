@@ -22,6 +22,7 @@ M.DETAIL_INTERVAL = 0.25 -- seconds between distance updates
 ---@field preview table @From `preview.new()`.
 ---@field panel {show: fun()} @Opens the panel window, even after the driver closed it.
 ---@field share {announce: fun(self, signals: Signal[]), flush: fun(self), gasCuts: fun(self): SharedGasCut[]} @Penalties shared between drivers.
+---@field flagShare {announce: fun(self, flagType: integer, causeIndex: integer), flush: fun(self)} @Race flag shared with the apps following the field.
 
 ---@param deps AppDeps
 function M.new(deps)
@@ -140,6 +141,9 @@ function M:update()
   self:refreshAhead(snap)
   self:refreshDetail(snap)
   self.deps.share:flush()
+  -- The raw flag, not the hidden one: what the game raised, for whoever follows the field
+  self.deps.flagShare:announce(snap.flagType, snap.flagCause)
+  self.deps.flagShare:flush()
   local stamp = self.stamp
   stamp.lap, stamp.sessionTime, stamp.detail = snap.lap, snap.sessionTime, self.detail
   local event = self.deps.tracker:update(self.now, self.visible, stamp)

@@ -123,6 +123,33 @@ Notes for readers:
 - Previews from the setup window are never sent.
 - LMCC Telemetry forwards every code to the stats site, the test one included; its own window has a **Send test penalty** button too, sent with `parameter` `1`, that only checks the trip from LMCC Telemetry to the site.
 
+#### Flags
+
+Key `dazworks.flags.flag`. Each client sends the race flag its game raises for it, every time the flag or the car that caused it changes. A clear track at the start is not sent; going back to a clear track is. Nothing is sent periodically either: a client that joins later learns a flag at its next change.
+
+```lua
+local flagEvent = ac.OnlineEvent({
+  ac.StructItem.key('dazworks.flags.flag'),
+  flag = ac.StructItem.byte(),
+  cause = ac.StructItem.int32(),
+}, function(sender, message)
+  -- sender: ac.StateCar of the driver who sees the flag. Index 0 is your own game.
+  if not sender then return end
+  ac.log(ac.getDriverName(sender.index), message.flag, message.cause)
+end)
+```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `flag` | byte | The raw `ac.FlagType` (`0` none, `1` green, `2` yellow, `5` black, `8` gas cut, `12` blue, `13` checkered…), as the game raises it: not hidden like on the panel. |
+| `cause` | int32 | Session ID (`ac.StateCar.sessionID`) of the car that caused it, `-1` when none. Car indexes differ from one game to the next, session IDs do not. |
+
+Notes for readers:
+
+- A yellow is local: every driver close to the incident sees it and sends it, each with the same cause.
+- The game keeps green raised for the whole session and checkered until the session ends: decide yourself how long they matter.
+- With the original AC server only the latest state is sent when the rate limit holds a change back: a short flag can be skipped.
+
 #### Network test
 
 Key `dazworks.flags.netTest`, used by the setup Network tab. Other mods normally have no reason to send these, but a reader must not answer them.
@@ -220,7 +247,7 @@ tests/                   one *_test.lua per module, helper.lua and ui_stub.lua s
 
 Sends every car the game knows to the LMCC stats site (lmcc.seygow.fr), for the race direction: replays, contact clips and lap comparisons. Folder `apps/lua/LMCC_Telemetry`, ported from the site's own app (`telemetry-app/` of ac-championship-stats) with its address, token and server filter fixed for the league.
 
-- **What is sent**, several times a second (20 by default, 5 to 30 in the window's settings): position, speed, gear, pedals, steering, rpm, lap and pit lane of every connected car (whether its driver runs the app or not), every penalty LMCC Flags announces (start and served, any driver), the laps of your own car, and for your own car only its fuel, damage and tyres. **Never the chat**, neither the drivers' nor the server's.
+- **What is sent**, several times a second (20 by default, 5 to 30 in the window's settings): position, speed, gear, pedals, steering, rpm, lap and pit lane of every connected car (whether its driver runs the app or not), every penalty LMCC Flags announces (start and served, any driver), every flag a driver's LMCC Flags shares with its cause, the laps of your own car, and for your own car only its fuel, damage and tyres. **Never the chat**, neither the drivers' nor the server's.
 - **Where**: only online, on a server whose name contains "DazWorks", never in a replay or solo session. The site refuses batches from any other server, and the app then stays silent until the game restarts.
 - **Token**: never committed. `src/token.lua` is empty in git, so a dev or local install sends nothing; the release zip gets it from the `TELEMETRY_TOKEN` secret. It is not a secret (every install and release zip holds it): the site takes a batch only from a driver on the server, from the address that first spoke for them, at the app's pace.
 

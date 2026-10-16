@@ -36,7 +36,7 @@ local cars = { [0] = newCar(0), [1] = newCar(1) }
 for w = 1, 3 do cars[0].wheels[w] = cars[0].wheels[0] end
 local serverName = 'DazWorks LMCC #1'
 local posts = {}
-local chat, lap, online
+local chat, lap, online, flag
 -- A lap of this time, so a test can find it in a body
 local function lapOf(ms) lap(0, ms, true, 0, 1) end
 
@@ -51,7 +51,10 @@ ac = {
   onChatMessage = function(cb) chat = cb end,
   onLapCompleted = function(_, cb) lap = cb end,
   StructItem = { key = function(k) return k end, byte = function() end, int32 = function() end },
-  OnlineEvent = function(_, cb) online = cb end,
+  -- One callback per key: the penalties and the flags LMCC Flags shares
+  OnlineEvent = function(layout, cb)
+    if layout[1] == 'dazworks.flags.flag' then flag = cb else online = cb end
+  end,
 }
 web = { post = function(url, headers, body, cb) posts[#posts + 1] = { url = url, headers = headers, body = body, cb = cb } end }
 JSON = {
@@ -81,6 +84,9 @@ script.update(0.05)
 t.check('one frame sampled', status()[2] == '1 frame(s) waiting')
 lap(0, 90000, true, 0, 4)
 online({ index = 1 }, { code = 2, active = 1, parameter = 5 })
+cars[0].sessionID = 7
+flag({ index = 1 }, { flag = 6, cause = 7 })
+flag(nil, { flag = 1, cause = -1 })
 for _ = 1, 3 do script.update(0.05) end
 t.check('one request sent', #posts == 1)
 local body = posts[1].body
@@ -91,6 +97,8 @@ t.check('frames spliced into the body', body:find('"frames":[{"t":0.100,"cars":[
 t.check('chat neither listened to nor sent', chat == nil and not body:find('"messages"', 1, true))
 t.check('lap sent', body:find('"lapTimeMs":90000', 1, true) ~= nil)
 t.check('penalty sent', body:find('"parameter":5', 1, true) ~= nil)
+t.check('flag sent with its cause', body:find('"flags":[{"cause":"Driver 0","driver":"Driver 1","flag":6,', 1, true) ~= nil)
+t.check('server flag ignored', select(2, body:gsub('"flag":', '')) == 1)
 t.check('names sent', body:find('"1":"Driver 1"', 1, true) ~= nil)
 
 -- No second request while one is on its way.
