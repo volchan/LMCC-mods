@@ -85,6 +85,26 @@ t.check('default random covers 1 to 3 cars', counts[1] and counts[2] and counts[
 
 p:start(options[1], 0)
 p:stop()
-t.check('stop ends preview', p:active(0) == nil)
+t.check('stop ends preview', p:active(0) == nil and p:label() == nil)
+
+-- Several alerts combined, as the game would show them.
+local byLabel = {}
+for _, o in ipairs(options) do byLabel[o.label] = o end
+p = preview.new(function() return 1 end)
+p:start(byLabel['BLUE'], 0)
+p:start(byLabel['YELLOW'], 2)
+t.check('second click adds an alert, most urgent first', p:label() == 'YELLOW + BLUE')
+t.check('adding restarts the time', t.near(p:remaining(3), preview.DURATION - 1))
+t.check('location follows the top alert', p.detail == preview.sampleDetail(flags.forFlag(F.Caution), 1))
+p:start(byLabel['YELLOW'], 3)
+t.check('same alert not added twice', p:label() == 'YELLOW + BLUE')
+p:start(byLabel['DRIVE THROUGH'], 3)
+p:start(byLabel['GAS CUT'], 3)
+t.check('gas cut hides the drive through', p:label() == 'GAS CUT + YELLOW + BLUE')
+p:start(byLabel['GAS CUT AHEAD'], 3)
+t.check('gas cut ahead above the own penalties', p:label() == 'GAS CUT AHEAD + GAS CUT + YELLOW + BLUE')
+p:stop()
+p:start(byLabel['WHITE'], 4)
+t.check('a new test starts empty', p:label() == 'WHITE')
 
 t.finish()

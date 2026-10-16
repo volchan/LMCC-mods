@@ -19,7 +19,7 @@ It uses the flags and penalties the game already raises, so it works on any serv
 - **Sound cues**: a short sound when the flag changes. Four cues: caution (yellow, code 60, slippery, slow vehicle, ambulance), blue, severe (black, red, penalties), info (green, white, checkered, pit closed).
 - **Flag history**: every flag of the session with lap, session time, duration and location.
 - **Setup window**, in tabs:
-  - Alerts: test any alert for 6 seconds (panel, strips and sound, with sample location text), never written to the history. Buttons in the flag colours, grouped as race flags, penalties and server script flags. "Game data" shows the raw values the game reports.
+  - Alerts: test any alert for 6 seconds (panel, strips and sound, with sample location text), never written to the history. Clicking more alerts during a test combines them as in a race (most urgent on top, the gas cut hiding the drive-through); Stop clears them. Buttons in the flag colours, grouped as race flags, penalties and server script flags. "Game data" shows the raw values the game reports.
   - Panel: reopen the panel window, lock it, and snap it to a screen position on a 3x3 grid.
   - Display: pulse urgent flags, show or hide the green flag (shown 5 seconds, since the game keeps it raised all session), strip height, blue flag search range (100 to 1000 m behind you), gas cut ahead range (100 to 1000 m ahead).
   - Sound: sound on or off, master volume, volume per cue with a test button (hover a cue name to see its alerts).
@@ -157,7 +157,7 @@ apps/lua/LMCC_Flags/
   src/context.lua        distance, sector and driver of the flag cause
   src/blue.lua           cars about to lap the player
   src/tracker.lua        debounce, change events, history
-  src/preview.lua        timed test of any flag
+  src/preview.lua        timed test of any flags, combined
   src/app.lua            per-frame flow, dependencies injected
   src/game.lua           the only module reading the sim
   src/sound.lua          plays cues

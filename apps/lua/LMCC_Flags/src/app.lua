@@ -158,11 +158,11 @@ function M:displayDetail()
   return self.detail
 end
 
+---Adds an alert to the preview and plays its cue.
 ---@param option PreviewOption
 function M:startPreview(option)
   self.deps.preview:start(option, self.now)
-  local top = self.deps.preview:active(self.now)[1]
-  if top then self:announce(top.flag) end
+  self:announce(option.flag)
 end
 
 function M:stopPreview()
