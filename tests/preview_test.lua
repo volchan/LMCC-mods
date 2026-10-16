@@ -13,7 +13,7 @@ t.check('options sorted by priority', sorted)
 t.check('options carry their flag spec', options[1].flag == flags.forFlag(flags.FLAG.SessionSuspended))
 t.check('options start with the red flag', options[1].label == 'RED')
 t.check('black flag listed once despite penalty alias', labels['BLACK'] == 1)
-t.check('penalties listed', labels['SLOW DOWN'] == 1 and labels['DRIVE THROUGH'] == 1 and labels['PIT PENALTY'] == 1)
+t.check('penalties listed', labels['GAS CUT'] == 1 and labels['RETURN TO PIT'] == 1 and labels['DRIVE THROUGH'] == 1 and labels['PIT PENALTY'] == 1)
 
 local flagCount = 0
 for _, v in pairs(flags.FLAG) do
@@ -48,7 +48,7 @@ t.check('inactive at start', p:active(0) == nil and p:remaining(0) == 0)
 
 local slowDown
 for _, o in ipairs(options) do
-  if o.label == 'SLOW DOWN' then slowDown = o end
+  if o.label == 'GAS CUT' then slowDown = o end
 end
 p:start(slowDown, 10)
 local sig = p:active(11)
