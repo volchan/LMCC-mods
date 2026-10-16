@@ -23,9 +23,12 @@ local settings = ac.storage({
 local SEND_EVERY_S = 0.2
 -- What is kept while the site cannot be reached, in seconds
 local MAX_PENDING_S = 60
--- Frames a request carries at most: after an outage the backlog goes in
--- small pieces, never stringified all at once in a frame
-local MAX_FRAMES_PER_SEND = 25
+-- Chat lines, laps and penalties kept at most while the site cannot be
+-- reached: a driver spamming the chat cannot grow them without end
+local MAX_PENDING_EVENTS = 500
+-- Items of each list a request carries at most: after an outage the backlog
+-- goes in small pieces, never all at once in a frame
+local MAX_PER_SEND = 25
 -- Seconds between tries while the site fails, doubling up to this
 local MAX_RETRY_S = 10
 -- One car's row up to its inputs, the closing bracket left out for the own
@@ -251,7 +254,7 @@ function sample()
   end
 
   frames[#frames + 1] = string.format('{"t":%.3f,"cars":[%s]}', clock, table.concat(cars, ','))
-  frames = trim(frames)
+  frames = trimFrames(frames)
 end
 
 -- Off the league server nothing is recorded: the status line says why
@@ -272,13 +275,11 @@ end
 -- `sender` is this game's own driver, car 0; `sentAt` dates the frames
 -- against the arrival time
 function send()
-  local batch = takeFrames()
-  local said = messages
-  local completed = laps
-  local announced = penalties
-  messages = {}
-  laps = {}
-  penalties = {}
+  local batch, said, completed, announced
+  batch, frames = take(frames)
+  said, messages = take(messages)
+  completed, laps = take(laps)
+  announced, penalties = take(penalties)
   sending = true
 
   local head = JSON.stringify({
@@ -329,27 +330,25 @@ function send()
   end)
 end
 
--- The oldest frames, MAX_FRAMES_PER_SEND at most; the rest waits its turn
-function takeFrames()
-  if #frames <= MAX_FRAMES_PER_SEND then
-    local all = frames
-    frames = {}
-    return all
+-- The oldest items of a list, MAX_PER_SEND at most, and the rest, which waits
+-- its turn
+function take(list)
+  if #list <= MAX_PER_SEND then
+    return list, {}
   end
 
   local batch = {}
   local rest = {}
 
-  for index, frame in ipairs(frames) do
-    if index <= MAX_FRAMES_PER_SEND then
-      batch[#batch + 1] = frame
+  for index, item in ipairs(list) do
+    if index <= MAX_PER_SEND then
+      batch[#batch + 1] = item
     else
-      rest[#rest + 1] = frame
+      rest[#rest + 1] = item
     end
   end
 
-  frames = rest
-  return batch
+  return batch, rest
 end
 
 function driverNames()
@@ -368,41 +367,36 @@ end
 
 -- A failed batch goes back in front of what was taken since
 function restore(batch, said, completed, announced)
-  for _, frame in ipairs(frames) do
-    batch[#batch + 1] = frame
-  end
-
-  for _, message in ipairs(messages) do
-    said[#said + 1] = message
-  end
-
-  for _, lap in ipairs(laps) do
-    completed[#completed + 1] = lap
-  end
-
-  for _, penalty in ipairs(penalties) do
-    announced[#announced + 1] = penalty
-  end
-
-  frames = batch
-  messages = said
-  laps = completed
-  penalties = announced
-  frames = trim(frames)
+  frames = trimFrames(append(batch, frames))
+  messages = trim(append(said, messages), MAX_PENDING_EVENTS, MAX_PER_SEND)
+  laps = trim(append(completed, laps), MAX_PENDING_EVENTS, MAX_PER_SEND)
+  penalties = trim(append(announced, penalties), MAX_PENDING_EVENTS, MAX_PER_SEND)
 end
 
--- The oldest frames go first once the site has been away too long: a second
--- more than needed, in one pass, so this runs once a second at most
-function trim(list)
-  local limit = MAX_PENDING_S * settings.rate
+function append(list, items)
+  for _, item in ipairs(items) do
+    list[#list + 1] = item
+  end
 
+  return list
+end
+
+-- The last minute of frames, with a second of slack so the trim runs once a
+-- second at most
+function trimFrames(list)
+  return trim(list, MAX_PENDING_S * settings.rate, settings.rate)
+end
+
+-- The oldest items go first once the site has been away too long: `slack`
+-- more than needed, in one pass, so this does not run on every new item
+function trim(list, limit, slack)
   if #list <= limit then
     return list
   end
 
   local kept = {}
 
-  for index = #list - limit + settings.rate + 1, #list do
+  for index = #list - limit + slack + 1, #list do
     kept[#kept + 1] = list[index]
   end
 

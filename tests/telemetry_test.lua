@@ -134,7 +134,8 @@ local function answer(err, response)
 end
 
 -- A long outage at 5 samples a second: the backlog keeps the last minute.
-for _ = 1, 600 do
+for i = 1, 600 do
+  chat('spam ' .. i, 1)
   script.update(0.2)
   answer('down', nil)
 end
@@ -146,7 +147,19 @@ for _ = 1, 60 do script.update(0.2) end
 answer(nil, { status = 200 })
 script.update(0.2)
 local _, rows = posts[#posts].body:gsub('"t":', '')
-t.check('backlog sent in pieces', rows == 25)
+local _, texts = posts[#posts].body:gsub('"text":', '')
+t.check('backlog sent in pieces', rows - texts == 25)
+t.check('chat sent in pieces', texts == 25)
+
+-- Drained: the chat kept is the newest 500 at most.
+local sent, newest = texts, false
+for _ = 1, 60 do
+  answer(nil, { status = 200 })
+  script.update(0.2)
+  sent = sent + select(2, posts[#posts].body:gsub('"text":', ''))
+  newest = newest or posts[#posts].body:find('"spam 600"', 1, true) ~= nil
+end
+t.check('chat backlog capped', sent > 400 and sent <= 500 and newest)
 
 -- Another server than the league's: everything dropped, nothing more sent.
 posts[#posts].cb(nil, { status = 409, body = '{"expected":{"server":"DazWorks"}}' })
