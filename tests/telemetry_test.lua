@@ -161,8 +161,36 @@ for _ = 1, 60 do
 end
 t.check('chat backlog capped', sent > 400 and sent <= 500 and newest)
 
+-- Drains the queue, then sends a chat line in a request of its own.
+local function sendAlone(text)
+  for _ = 1, 60 do
+    answer(nil, { status = 200 })
+    script.update(0.2)
+  end
+  answer(nil, { status = 200 })
+  chat(text, 1)
+  for _ = 1, 5 do script.update(0.2) end
+end
+
+-- Too many requests or a server error: the batch is kept. Refused: dropped.
+local function retried(code)
+  sendAlone('code ' .. code)
+  answer(nil, { status = code })
+  local refusedAt, found = #posts, false
+  for _ = 1, 60 do
+    script.update(0.2)
+    found = found or #posts > refusedAt and posts[#posts].body:find('"code ' .. code .. '"', 1, true) ~= nil
+    answer(nil, { status = 200 })
+  end
+  return found
+end
+t.check('429 retried', retried(429))
+t.check('500 retried', retried(500))
+t.check('400 dropped', not retried(400))
+
 -- Another server than the league's: everything dropped, nothing more sent.
-posts[#posts].cb(nil, { status = 409, body = '{"expected":{"server":"DazWorks"}}' })
+sendAlone('last')
+answer(nil, { status = 409, body = '{"expected":{"server":"DazWorks"}}' })
 t.check('other server shown', status()[1] == 'other server, ignored (expected: DazWorks)')
 local count = #posts
 for _ = 1, 10 do script.update(0.2) end

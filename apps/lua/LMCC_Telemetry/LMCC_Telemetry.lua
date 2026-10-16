@@ -320,7 +320,15 @@ function send()
     if err or not response or response.status >= 300 then
       status = 'error: ' .. tostring(err or (response and response.status))
       sendEvery = math.min(math.max(sendEvery * 2, 1), MAX_RETRY_S)
-      restore(batch, said, completed, announced)
+
+      -- The site refusing this batch: sent again, it would block the queue.
+      -- 429 is "too many", worth a retry.
+      local refused = response and response.status >= 400 and response.status < 500 and response.status ~= 429
+
+      if not refused then
+        restore(batch, said, completed, announced)
+      end
+
       return
     end
 
