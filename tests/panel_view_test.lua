@@ -20,6 +20,10 @@ local three = { signal.of(flags.GAS_CUT, 3), signal.of(flags.forPenalty(P.Telepo
 m = panel.model(three, nil)
 t.check('signals below the second are counted', m.label == 'RETURN TO PIT'
   and m.extra == '+ DRIVE THROUGH: ' .. three[2].instruction .. ' (+1)')
+local ownCut = signal.display(signal.resolve(F.None, P.SlowDown, 4), signal.of(flags.GAS_CUT_AHEAD))
+m = panel.model(ownCut, 'P5 Seygow 120 m, lift 4s')
+t.check('gas cut ahead shows the own gas cut status', m.label == 'GAS CUT AHEAD'
+  and m.extra == '+ GAS CUT: Lift off for 4s or drop below 35 km/h')
 
 -- draw idle
 panel.draw({}, nil, 0)

@@ -56,5 +56,8 @@ t.check('gas cut ahead below a flag that is no penalty',
 t.check('gas cut ahead last when it is the most urgent', ids(signal.display(signal.resolve(F.OneLapLeft, P.None), ahead)) == 'gasCutAhead,white')
 t.check('gas cut ahead alone', ids(signal.display({}, ahead)) == 'gasCutAhead')
 t.check('nothing to display', #signal.display({}) == 0)
+local slowDown = signal.resolve(F.ReturnToPits, P.SlowDown, 4, 3)
+t.check('return to pit flag dropped under a gas cut penalty', ids(slowDown) == 'slowDown' and slowDown[1].parameter == 4)
+t.check('own gas cut kept below the gas cut ahead', ids(signal.display(slowDown, ahead)) == 'gasCutAhead,slowDown')
 
 t.finish()

@@ -120,6 +120,8 @@ M.SHARED = {
   M.BY_FLAG[M.FLAG.Stop], -- black flag, raised as a flag or a penalty
 }
 M.GAS_CUT = M.BY_FLAG[M.FLAG.ReturnToPits]
+-- Signals that make the driver lift off: the return to pit flag and the slow down penalty.
+M.GAS_CUTS = { [M.GAS_CUT] = true, [M.BY_PENALTY[M.PENALTY.SlowDown]] = true }
 
 -- Raised by this app, not the game: another driver close ahead is serving a gas cut and will
 -- slow down. Below every game flag that asks for action, above the informative ones.
