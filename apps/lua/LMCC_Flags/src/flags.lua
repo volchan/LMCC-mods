@@ -84,13 +84,11 @@ end
 -- - TeleportToPits: a drive-through. The parameter is one more than the laps left: on a jump start
 --   the game reports 3 while its own message says "2 laps remaining". Unserved means disqualification.
 -- - MandatoryPits: a pit penalty with the same laps parameter (not yet seen in game).
--- - SlowDown: lift off for parameter seconds after cutting the track (RACE_GAS_PENALTY_DISABLED=0),
---   or drop below GAS_CUT_CLEAR_KMH to clear it at once (not yet seen in game).
+-- - SlowDown: never seen in game, the gas cut comes as the ReturnToPits flag. Not listed, so not shown.
 ---@type table<integer, FlagSpec>
 M.BY_PENALTY = {
   [M.PENALTY.MandatoryPits] = spec('pitPenalty', 'PIT PENALTY', 'Go through the pits, laps left: %d', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
   [M.PENALTY.TeleportToPits] = spec('driveThrough', 'DRIVE THROUGH', 'Drive through the pit lane, laps left: %d', C.black, C.textLight, 80, S.severe, true, P.disc, C.orange),
-  [M.PENALTY.SlowDown] = spec('slowDown', 'SLOW DOWN', string.format('Lift off for %%ds or drop below %d km/h', M.GAS_CUT_CLEAR_KMH), C.black, C.textLight, 85, S.severe, true, P.disc, C.orange),
   [M.PENALTY.BlackFlag] = M.BY_FLAG[M.FLAG.Stop],
 }
 M.BY_PENALTY[M.PENALTY.MandatoryPits].parameterOffset = -1
@@ -116,7 +114,7 @@ M.SHARED = {
   M.BY_FLAG[M.FLAG.ReturnToPits], -- gas cut
   M.BY_PENALTY[M.PENALTY.TeleportToPits], -- drive-through
   M.BY_PENALTY[M.PENALTY.MandatoryPits],
-  M.BY_PENALTY[M.PENALTY.SlowDown],
+  { id = 'slowDown' }, -- retired: the slow down penalty, never seen in game; code kept unused
   M.BY_FLAG[M.FLAG.Stop], -- black flag, raised as a flag or a penalty
 }
 M.GAS_CUT = M.BY_FLAG[M.FLAG.ReturnToPits]

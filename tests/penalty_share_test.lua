@@ -12,7 +12,8 @@ local function codeOf(spec)
 end
 local GAS, DRIVE = codeOf(flags.GAS_CUT), codeOf(flags.forPenalty(P.TeleportToPits))
 t.check('every penalty is shared', GAS and DRIVE and codeOf(flags.forPenalty(P.MandatoryPits))
-  and codeOf(flags.forPenalty(P.SlowDown)) and codeOf(flags.forFlag(F.Stop)))
+  and codeOf(flags.forFlag(F.Stop)))
+t.check('retired slow down code kept in place', flags.SHARED[4].id == 'slowDown' and codeOf(flags.forFlag(F.Stop)) == 5)
 
 -- Sender: start and served messages only on changes.
 local sender = share.newSender()

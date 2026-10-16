@@ -15,11 +15,11 @@ It uses the flags and penalties the game already raises, so it works on any serv
   - blue: every car about to lap you, closest first, with race position and gap: `Let 2 cars pass: P1 A. Fast 80 m, P3 B. Quick 240 m`
   - several signals at once are stacked by priority: the most urgent fills the panel, the next one is shown on an extra line with the count of the others (`+ DRIVE THROUGH: Drive through the pit lane, laps left: 2 (+1)`). A gas cut taken while a drive through is pending goes on top, since it must be done during the current lap.
 - **Screen-edge strips**: solid strips in the flag colour along the top and bottom of the screen with the flag name scrolling across, in the style of the CMRT HUD flag banner. They slide in when a flag appears or changes, slide out when it clears and pulse for urgent flags, so the flag is seen without looking at the panel. Always on: drivers cannot turn them off.
-- **Penalties shared between drivers**: every Flags client tells the others when one of its penalties starts (gas cut with its seconds, drive through, pit penalty, slow down, black flag) and when it is served. Only gas cuts are shown: **GAS CUT AHEAD** warns when a car close ahead (300 m by default) must lift off, with its position, gap and seconds left (`P5 Seygow 120 m, lift 4s`). It ranks below every game flag. Works on the original AC server (messages travel as hidden chat); every driver needs this version.
+- **Penalties shared between drivers**: every Flags client tells the others when one of its penalties starts (gas cut with its seconds, drive through, pit penalty, black flag) and when it is served. Only gas cuts are shown: **GAS CUT AHEAD** warns when a car close ahead (300 m by default) must lift off, with its position, gap and seconds left (`P5 Seygow 120 m, lift 4s`). A driver serving their own gas cut sees it on top, the alert right below and the cars ahead on the location line; once their gas cut is done the alert stays while cars ahead still serve one. It ranks above the driver's other penalties and below every other game flag that asks for action. Works on the original AC server (messages travel as hidden chat); every driver needs this version.
 - **Sound cues**: a short sound when the flag changes. Four cues: caution (yellow, code 60, slippery, slow vehicle, ambulance), blue, severe (black, red, penalties), info (green, white, checkered, pit closed).
 - **Flag history**: every flag of the session with lap, session time, duration and location.
 - **Setup window**, in tabs:
-  - Alerts: test any alert for 6 seconds (panel, strips and sound, with sample location text), never written to the history. Buttons in the flag colours, grouped as race flags, penalties and server script flags. "Game data" shows the raw values the game reports.
+  - Alerts: test any alert for 6 seconds (panel, strips and sound, with sample location text), never written to the history. Clicking more alerts during a test combines them as in a race (most urgent on top, the gas cut hiding the drive-through, the gas cut ahead right below the gas cut); Stop clears them. Buttons in the flag colours, grouped as race flags, penalties and server script flags. "Game data" shows the raw values the game reports.
   - Panel: reopen the panel window, lock it, and snap it to a screen position on a 3x3 grid.
   - Display: pulse urgent flags, show or hide the green flag (shown 5 seconds, since the game keeps it raised all session), strip height, blue flag search range (100 to 1000 m behind you), gas cut ahead range (100 to 1000 m ahead).
   - Sound: sound on or off, master volume, volume per cue with a test button (hover a cue name to see its alerts).
@@ -112,13 +112,13 @@ end)
 | 1 | Gas cut (lift off after cutting the track, clears below 35 km/h) | Seconds of lifting left, rounded up; `0` if the game did not report it |
 | 2 | Drive-through (jump start), reported by the game as `ac.PenaltyType.TeleportToPits` | Raw game value: laps left to serve it plus one (3 means "2 laps remaining") |
 | 3 | Pit penalty (`ac.PenaltyType.MandatoryPits`) | Raw game value, same convention as code 2 |
-| 4 | Slow down (`ac.PenaltyType.SlowDown`) | Seconds |
+| 4 | Retired, never sent (was the slow down penalty, never seen in game) | `0` |
 | 5 | Black flag (flag or penalty) | `0` |
 | 0 | Test, no penalty: sent by the **Send test penalty** button of the setup window (Network tab), never by a race. Skip it unless you are checking the chain | `0` |
 
 Notes for readers:
 
-- "Served" is decided by the sending client: pit penalties once its car has been through the pit lane, the gas cut when the game lowers it, the slow down when its seconds reach 0.
+- "Served" is decided by the sending client: pit penalties once its car has been through the pit lane, the gas cut when the game lowers it.
 - A "served" message can be lost (rate limit, disconnection). LMCC Flags drops a gas cut 3 seconds after its length ends, or 10 seconds after it started when the length is unknown; do something similar.
 - Previews from the setup window are never sent.
 - LMCC Telemetry forwards every code to the stats site, the test one included; its own window has a **Send test penalty** button too, sent with `parameter` `1`, that only checks the trip from LMCC Telemetry to the site.
@@ -184,7 +184,7 @@ apps/lua/LMCC_Flags/
   src/context.lua        distance, sector and driver of the flag cause
   src/blue.lua           cars about to lap the player
   src/tracker.lua        debounce, change events, history
-  src/preview.lua        timed test of any flag
+  src/preview.lua        timed test of any flags, combined
   src/app.lua            per-frame flow, dependencies injected
   src/game.lua           the only module reading the sim
   src/sound.lua          plays cues
@@ -240,7 +240,7 @@ tests/                   one *_test.lua per module, helper.lua and ui_stub.lua s
 - Flags come from the game only. Championship-specific signals (full course yellow, safety car) need a server script that raises the matching game flag.
 - The blue flag list uses race order, so in practice and qualifying (ordered by best lap) it can list cars that are simply faster.
 - Very long location lines are clipped to the panel width; widen the panel if needed.
-- The game can keep reporting a penalty after it is served, so the app clears it itself: pit penalties (DRIVE THROUGH, PIT PENALTY) once the car has been in the pit lane and left it, SLOW DOWN when its seconds reach 0. A black flag only clears when the game removes it.
+- The game can keep reporting a penalty after it is served, so the app clears it itself: pit penalties (DRIVE THROUGH, PIT PENALTY) once the car has been in the pit lane and left it. A black flag only clears when the game removes it.
 - The game also keeps some flags raised long after they matter, so the app hides them: green after 5 seconds, checkered once you cross the line or enter the pit lane (shown at least 5 seconds), the gas cut flag when it is raised with a penalty not yet served (the game raises it with every penalty; the penalty has the exact instruction). A gas cut after a served penalty shows normally, and so does a gas cut taken before a penalty is served, while its lift seconds run. Yellow, blue, white and black are lowered by the game itself.
 
 ## LMCC Telemetry

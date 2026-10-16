@@ -49,7 +49,7 @@ t.check('no spec for no penalty', flags.forPenalty(P.None) == nil)
 t.check('released black flag is not a signal', flags.forPenalty(P.ReleaseBlackFlag) == nil)
 t.check('black flag penalty reuses black flag', flags.forPenalty(P.BlackFlag) == flags.forFlag(F.Stop))
 local penaltiesValid = true
-for _, value in pairs({ P.MandatoryPits, P.TeleportToPits, P.SlowDown }) do
+for _, value in pairs({ P.MandatoryPits, P.TeleportToPits }) do
   local f = flags.forPenalty(value)
   if not f or not f.instruction:find('%%d') then penaltiesValid = false end
 end
@@ -72,7 +72,7 @@ end
 t.check('every cue is used by a flag', everyCueUsed)
 
 -- Instruction formatting.
-t.check('instruction fills parameter', flags.instruction(flags.forPenalty(P.SlowDown), 5) == 'Lift off for 5s or drop below 35 km/h')
+t.check('slow down penalty never shown', flags.forPenalty(P.SlowDown) == nil)
 local gasCut = flags.forFlag(F.ReturnToPits)
 t.check('gas cut uses the seconds when known', flags.instruction(gasCut, 5) == 'Lift off for 5s or drop below 35 km/h')
 t.check('gas cut without seconds gives the speed rule', flags.instruction(gasCut) == 'Lift off or drop below 35 km/h')

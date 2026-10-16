@@ -68,14 +68,7 @@ end
 ---Visible signals: own ones, plus the gas cut ahead alert while a car ahead serves one.
 ---@private
 function M:compose()
-  if not self.aheadDetail then
-    self.visible = self.own
-    return
-  end
-  local list = { self.aheadSignal }
-  for _, s in ipairs(self.own) do list[#list + 1] = s end
-  signal.sort(list)
-  self.visible = list
+  self.visible = signal.display(self.own, self.aheadDetail and self.aheadSignal)
 end
 
 ---Gas cuts other drivers share, kept only for cars close ahead. 4 Hz like the location line.
@@ -109,7 +102,8 @@ function M:describe(snap, top)
     if lapping then return lapping end
   end
   local cause = top.flag.causeAt and deps.game.cause(snap.flagCause, self.cause)
-  return context.describe(top.flag, cause or nil)
+  -- No location of its own (e.g. the driver's gas cut): show the cars ahead serving one, if any.
+  return context.describe(top.flag, cause or nil) or self.aheadDetail
 end
 
 ---@private
@@ -169,11 +163,11 @@ function M:displayDetail()
   return self.detail
 end
 
+---Adds an alert to the preview and plays its cue.
 ---@param option PreviewOption
 function M:startPreview(option)
   self.deps.preview:start(option, self.now)
-  local top = self.deps.preview:active(self.now)[1]
-  if top then self:announce(top.flag) end
+  self:announce(option.flag)
 end
 
 function M:stopPreview()
