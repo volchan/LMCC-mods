@@ -37,6 +37,8 @@ for w = 1, 3 do cars[0].wheels[w] = cars[0].wheels[0] end
 local serverName = 'DazWorks LMCC #1'
 local posts = {}
 local chat, lap, online, flag
+-- A lap of this time, so a test can find it in a body
+local function lapOf(ms) lap(0, ms, true, 0, 1) end
 
 package.loaded['src/token'] = 'tok'
 ac = {
@@ -80,8 +82,6 @@ serverName = 'DazWorks LMCC #1'
 -- One sample a 1/20 s, one request a 0.2 s.
 script.update(0.05)
 t.check('one frame sampled', status()[2] == '1 frame(s) waiting')
-chat('CUT DETECTED', -1)
-chat('hello', 1)
 lap(0, 90000, true, 0, 4)
 online({ index = 1 }, { code = 2, active = 1, parameter = 5 })
 cars[0].sessionID = 7
@@ -94,7 +94,7 @@ t.check('authorised with the token', posts[1].headers.Authorization == 'Bearer t
 t.check('own car row', body:find('[0,1.23,2.00,3.00,100.1,0.50000,3,4,0,1.00,0.00,2,-12.3,7000,0.50,-1.00,0.100,1,0,1.00,0.00,"Driver 1",50.50,0.000,0.000,0.000,0.000,0.250,0.1000,80.0,27.50', 1, true) ~= nil)
 t.check('other car row', body:find('[1,1.23,2.00,3.00,100.1,0.50000,3,4,0,1.00,0.00,2,-12.3,7000,0.50,-1.00,0.100,1,0,1.00,0.00,"Driver 1"]', 1, true) ~= nil)
 t.check('frames spliced into the body', body:find('"frames":[{"t":0.100,"cars":[[0,', 1, true) and body:sub(-5) == ']]}]}')
-t.check('chat sent', body:find('"CUT DETECTED"', 1, true) and body:find('"hello"', 1, true))
+t.check('chat neither listened to nor sent', chat == nil and not body:find('"messages"', 1, true))
 t.check('lap sent', body:find('"lapTimeMs":90000', 1, true) ~= nil)
 t.check('penalty sent', body:find('"parameter":5', 1, true) ~= nil)
 t.check('flag sent with its cause', body:find('"flags":[{"cause":"Driver 0","driver":"Driver 1","flag":6,', 1, true) ~= nil)
@@ -108,7 +108,6 @@ t.check('one request at a time', #posts == 1)
 -- What arrives while a request is on its way goes after the failed batch.
 online(nil, { code = 2, active = 1, parameter = 6 })
 online({ index = 0 }, { code = 2, active = 1, parameter = 7 })
-chat('late', 1)
 lap(0, 91000, false, 1, 5)
 
 -- A failed request puts its batch back in front, then waits a second.
@@ -118,9 +117,8 @@ script.update(0.05)
 t.check('retry waits', #posts == 1)
 for _ = 1, 20 do script.update(0.05) end
 t.check('retried', #posts == 2)
-t.check('failed batch sent again', posts[2].body:find('"CUT DETECTED"', 1, true) ~= nil)
-t.check('later items follow', posts[2].body:find('"hello".*"late"') and posts[2].body:find('"parameter":5.*"parameter":7')
-  and posts[2].body:find('91000', 1, true))
+t.check('failed batch sent again', posts[2].body:find('90000', 1, true) ~= nil)
+t.check('later items follow', posts[2].body:find('90000.*91000') and posts[2].body:find('"parameter":5.*"parameter":7'))
 t.check('penalties heard', status()[3] == 'Penalties heard: 3 (1 own, 1 from the server, 0 not recording), 0 sent')
 
 -- Success: back to 0.2 s.
@@ -143,7 +141,7 @@ end
 
 -- A long outage at 5 samples a second: the backlog keeps the last minute.
 for i = 1, 600 do
-  chat('spam ' .. i, 1)
+  lapOf(100000 + i)
   script.update(0.2)
   answer('down', nil)
 end
@@ -155,19 +153,19 @@ for _ = 1, 60 do script.update(0.2) end
 answer(nil, { status = 200 })
 script.update(0.2)
 local _, rows = posts[#posts].body:gsub('"t":', '')
-local _, texts = posts[#posts].body:gsub('"text":', '')
+local _, texts = posts[#posts].body:gsub('"lapTimeMs":', '')
 t.check('backlog sent in pieces', rows - texts == 25)
-t.check('chat sent in pieces', texts == 25)
+t.check('laps sent in pieces', texts == 25)
 
--- Drained: the chat kept is the newest 500 at most.
+-- Drained: the laps kept are the newest 500 at most.
 local sent, newest = texts, false
 for _ = 1, 60 do
   answer(nil, { status = 200 })
   script.update(0.2)
-  sent = sent + select(2, posts[#posts].body:gsub('"text":', ''))
-  newest = newest or posts[#posts].body:find('"spam 600"', 1, true) ~= nil
+  sent = sent + select(2, posts[#posts].body:gsub('"lapTimeMs":', ''))
+  newest = newest or posts[#posts].body:find('100600', 1, true) ~= nil
 end
-t.check('chat backlog capped', sent > 400 and sent <= 500 and newest)
+t.check('lap backlog capped', sent > 400 and sent <= 500 and newest)
 
 -- More than the cap arriving while a request is on its way, then a success: still the newest 500 at most.
 for _ = 1, 60 do
@@ -175,35 +173,35 @@ for _ = 1, 60 do
   script.update(0.2)
 end
 script.update(0.2)
-for i = 1, 700 do chat('flood ' .. i, 1) end
+for i = 1, 700 do lapOf(200000 + i) end
 sent, newest = 0, false
 for _ = 1, 60 do
   answer(nil, { status = 200 })
   script.update(0.2)
-  sent = sent + select(2, posts[#posts].body:gsub('"flood ', ''))
-  newest = newest or posts[#posts].body:find('"flood 700"', 1, true) ~= nil
+  sent = sent + select(2, posts[#posts].body:gsub('"lapTimeMs":2', ''))
+  newest = newest or posts[#posts].body:find('200700', 1, true) ~= nil
 end
-t.check('chat capped while a request is pending', sent > 400 and sent <= 500 and newest)
+t.check('laps capped while a request is pending', sent > 400 and sent <= 500 and newest)
 
--- Drains the queue, then sends a chat line in a request of its own.
-local function sendAlone(text)
+-- Drains the queue, then sends a lap in a request of its own.
+local function sendAlone(ms)
   for _ = 1, 60 do
     answer(nil, { status = 200 })
     script.update(0.2)
   end
   answer(nil, { status = 200 })
-  chat(text, 1)
+  lapOf(ms)
   for _ = 1, 5 do script.update(0.2) end
 end
 
 -- Too many requests or a server error: the batch is kept. Refused: dropped.
 local function retried(code)
-  sendAlone('code ' .. code)
+  sendAlone(code)
   answer(nil, { status = code })
   local refusedAt, found = #posts, false
   for _ = 1, 60 do
     script.update(0.2)
-    found = found or #posts > refusedAt and posts[#posts].body:find('"code ' .. code .. '"', 1, true) ~= nil
+    found = found or #posts > refusedAt and posts[#posts].body:find('"lapTimeMs":' .. code, 1, true) ~= nil
     answer(nil, { status = 200 })
   end
   return found
@@ -213,7 +211,7 @@ t.check('500 retried', retried(500))
 t.check('400 dropped', not retried(400))
 
 -- Another server than the league's: everything dropped, nothing more sent.
-sendAlone('last')
+sendAlone(1)
 answer(nil, { status = 409, body = '{"expected":{"server":"DazWorks"}}' })
 t.check('other server shown', status()[1] == 'other server, ignored (expected: DazWorks)')
 local count = #posts
@@ -250,7 +248,6 @@ sim.isOnlineRace = true
 serverName = 'Other server'
 reload('tok')
 t.check('other server shown before sending', status()[1] == 'Not the league server: nothing is sent')
-chat('ignored', 1)
 lap(0, 1, true, 0, 1)
 online({ index = 1 }, { code = 2, active = 1, parameter = 5 })
 status({ ['Send test penalty'] = true })

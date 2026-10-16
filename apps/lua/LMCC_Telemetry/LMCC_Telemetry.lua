@@ -23,8 +23,8 @@ local settings = ac.storage({
 local SEND_EVERY_S = 0.2
 -- What is kept while the site cannot be reached, in seconds
 local MAX_PENDING_S = 60
--- Chat lines, laps, penalties and flags kept at most while the site cannot
--- be reached: a driver spamming the chat cannot grow them without end
+-- Laps, penalties and flags kept at most while the site cannot be reached:
+-- they cannot grow without end
 local MAX_PENDING_EVENTS = 500
 -- Items of each list a request carries at most: after an outage the backlog
 -- goes in small pieces, never all at once in a frame
@@ -41,7 +41,6 @@ local sinceSend = 0
 -- Seconds between two requests: SEND_EVERY_S, longer while the site fails
 local sendEvery = SEND_EVERY_S
 local frames = {}
-local messages = {}
 local laps = {}
 local penalties = {}
 local raisedFlags = {}
@@ -64,21 +63,8 @@ local fields = nil
 -- Flags (its Setup, Network tab), 1 this window
 local TEST_PENALTY = 0
 
--- Every chat line the game receives, the server's included: a penalty such as
--- "CUT DETECTED, SLOW DOWN" may only ever reach the driver, never the Server
--- Manager. ponytail: a guess that it comes as a chat line; check the first
--- batch after a cut
-ac.onChatMessage(function(message, senderCarIndex)
-  if not recording() then
-    return
-  end
-
-  messages = enqueue(messages, {
-    t = round(clock, 3),
-    driver = senderCarIndex >= 0 and ac.getDriverName(senderCarIndex) or nil,
-    text = message,
-  })
-end)
+-- No chat: 47 recorded sessions showed no penalty ever comes that way, only
+-- the drivers' own talk, which is not the site's to keep
 
 -- Each lap this game's own car completes, valid or not: the game knows at
 -- once what the server only learns, and only as a count, with the lap time.
@@ -177,7 +163,7 @@ function script.update(dt)
     end
   end
 
-  if sinceSend >= sendEvery and not sending and (#frames > 0 or #messages > 0 or #laps > 0 or #penalties > 0 or #raisedFlags > 0) then
+  if sinceSend >= sendEvery and not sending and (#frames > 0 or #laps > 0 or #penalties > 0 or #raisedFlags > 0) then
     sinceSend = 0
     send()
   end
@@ -302,9 +288,8 @@ end
 -- `sender` is this game's own driver, car 0; `sentAt` dates the frames
 -- against the arrival time
 function send()
-  local batch, said, completed, announced, raised
+  local batch, completed, announced, raised
   batch, frames = take(frames)
-  said, messages = take(messages)
   completed, laps = take(laps)
   announced, penalties = take(penalties)
   raised, raisedFlags = take(raisedFlags)
@@ -316,7 +301,6 @@ function send()
     track = ac.getTrackID(),
     sentAt = round(clock, 3),
     drivers = driverNames(),
-    messages = said,
     laps = completed,
     penalties = announced,
     flags = raised,
@@ -337,7 +321,6 @@ function send()
       local expected = JSON.parse(response.body or '{}') or {}
       ignored = true
       frames = {}
-      messages = {}
       laps = {}
       penalties = {}
       raisedFlags = {}
@@ -356,7 +339,7 @@ function send()
       local refused = response and response.status >= 400 and response.status < 500 and response.status ~= 429
 
       if not refused then
-        restore(batch, said, completed, announced, raised)
+        restore(batch, completed, announced, raised)
       end
 
       return
@@ -422,15 +405,14 @@ function driverBySession(sessionID)
 end
 
 -- A failed batch goes back in front of what was taken since
-function restore(batch, said, completed, announced, raised)
+function restore(batch, completed, announced, raised)
   frames = trimFrames(append(batch, frames))
-  messages = trim(append(said, messages), MAX_PENDING_EVENTS, MAX_PER_SEND)
   laps = trim(append(completed, laps), MAX_PENDING_EVENTS, MAX_PER_SEND)
   penalties = trim(append(announced, penalties), MAX_PENDING_EVENTS, MAX_PER_SEND)
   raisedFlags = trim(append(raised, raisedFlags), MAX_PENDING_EVENTS, MAX_PER_SEND)
 end
 
--- A chat line, lap, penalty or flag at the end of its list, kept to the newest
+-- A lap, penalty or flag at the end of its list, kept to the newest
 -- MAX_PENDING_EVENTS: they may arrive faster than requests carry them
 function enqueue(list, item)
   list[#list + 1] = item
