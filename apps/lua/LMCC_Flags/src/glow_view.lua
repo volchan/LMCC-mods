@@ -24,11 +24,23 @@ function M.thickness(screen, fraction)
   return math.min(screen.x, screen.y) * fraction
 end
 
-local function drawStrip(flag, now, p1, p2, screenWidth)
+-- Last label measured: a DirectWrite layout only when the label or its size changes, not twice a frame.
+local measuredLabel, measuredSize, measuredWidth = nil, nil, 0
+
+local function labelWidth(label, size)
+  if label ~= measuredLabel or size ~= measuredSize then
+    measuredLabel, measuredSize = label, size
+    measuredWidth = ui.measureDWriteText(label, size).x
+  end
+  return measuredWidth
+end
+
+-- `height` is the thickness for both strips: the bottom one's p2.y - p1.y differs from it by a rounding
+-- error, which would measure the label twice.
+local function drawStrip(flag, now, p1, p2, height, screenWidth)
   ui.drawRectFilled(p1, p2, fill)
-  local height = p2.y - p1.y
   local size = height * M.TEXT_SIZE
-  local width = ui.measureDWriteText(flag.label, size).x
+  local width = labelWidth(flag.label, size)
   local period = width + size * strip.TEXT_GAP
   ui.pushClipRect(p1, p2)
   local x = strip.scrollOffset(now, period, height * strip.SCROLL_SPEED)
@@ -37,6 +49,18 @@ local function drawStrip(flag, now, p1, p2, screenWidth)
     x = x + period
   end
   ui.popClipRect()
+end
+
+-- Frame state read by drawStrips, set just before the window call: one callback made once instead of a
+-- closure every frame.
+local frameFlag, frameNow, frameScreen, frameThickness, frameLength
+
+local function drawStrips()
+  local screen, t, length = frameScreen, frameThickness, frameLength
+  ui.pushDWriteFont(draw.font())
+  drawStrip(frameFlag, frameNow, vec2(screen.x - length, 0), vec2(screen.x, t), t, screen.x)
+  drawStrip(frameFlag, frameNow, vec2(0, screen.y - t), vec2(length, screen.y), t, screen.x)
+  ui.popDWriteFont()
 end
 
 ---Draws the strips for the most urgent signal, sliding them out once it clears.
@@ -51,14 +75,10 @@ function M.draw(signals, now, screen, options)
   local c = flag.color
   fill.r, fill.g, fill.b = c.r, c.g, c.b
   fill.mult = M.STRENGTH * pulse.alpha(now, options.glowPulse and flag.pulse)
-  local t = M.thickness(screen, options.glowThickness)
-  local length = screen.x * fraction
-  ui.transparentWindow(M.WINDOW_ID, vec2(0, 0), screen, true, false, function()
-    ui.pushDWriteFont(draw.font())
-    drawStrip(flag, now, vec2(screen.x - length, 0), vec2(screen.x, t), screen.x)
-    drawStrip(flag, now, vec2(0, screen.y - t), vec2(length, screen.y), screen.x)
-    ui.popDWriteFont()
-  end)
+  frameFlag, frameNow, frameScreen = flag, now, screen
+  frameThickness = M.thickness(screen, options.glowThickness)
+  frameLength = screen.x * fraction
+  ui.transparentWindow(M.WINDOW_ID, vec2(0, 0), screen, true, false, drawStrips)
 end
 
 return M

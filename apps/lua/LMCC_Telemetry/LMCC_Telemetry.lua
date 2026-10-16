@@ -23,11 +23,17 @@ local settings = ac.storage({
 local SEND_EVERY_S = 0.2
 -- What is kept while the site cannot be reached, in seconds
 local MAX_PENDING_S = 60
--- Frames a request carries at most: after an outage the backlog goes in
--- small pieces, never stringified all at once in a frame
-local MAX_FRAMES_PER_SEND = 25
+-- Chat lines, laps, penalties and flags kept at most while the site cannot
+-- be reached: a driver spamming the chat cannot grow them without end
+local MAX_PENDING_EVENTS = 500
+-- Items of each list a request carries at most: after an outage the backlog
+-- goes in small pieces, never all at once in a frame
+local MAX_PER_SEND = 25
 -- Seconds between tries while the site fails, doubling up to this
 local MAX_RETRY_S = 10
+-- One car's row up to its inputs, the closing bracket left out for the own
+-- car's extra values (see sample)
+local ROW = '[%d,%.2f,%.2f,%.2f,%.1f,%.5f,%d,%d,%d,%.2f,%.2f,%d,%.1f,%d,%.2f,%.2f,%.3f,%d,%d,%.2f,%.2f,%s'
 
 local clock = 0
 local sinceSample = 0
@@ -67,11 +73,11 @@ ac.onChatMessage(function(message, senderCarIndex)
     return
   end
 
-  messages[#messages + 1] = {
+  messages = enqueue(messages, {
     t = round(clock, 3),
     driver = senderCarIndex >= 0 and ac.getDriverName(senderCarIndex) or nil,
     text = message,
-  }
+  })
 end)
 
 -- Each lap this game's own car completes, valid or not: the game knows at
@@ -82,14 +88,14 @@ pcall(ac.onLapCompleted, 0, function(carIndex, lapTime, valid, cuts, lapsCount)
     return
   end
 
-  laps[#laps + 1] = {
+  laps = enqueue(laps, {
     t = round(clock, 3),
     driver = ac.getDriverName(carIndex),
     lapTimeMs = lapTime,
     valid = valid,
     cuts = cuts,
     laps = lapsCount,
-  }
+  })
 end)
 
 -- Every penalty LMCC Flags announces, this driver's own included (its copy
@@ -119,13 +125,13 @@ ac.OnlineEvent({
   end
 
   -- Plain numbers, whatever the struct hands over, for the JSON
-  penalties[#penalties + 1] = {
+  penalties = enqueue(penalties, {
     t = round(clock, 3),
     driver = ac.getDriverName(sender.index),
     code = tonumber(message.code),
     active = tonumber(message.active),
     parameter = tonumber(message.parameter),
-  }
+  })
 end)
 
 -- The race flag each LMCC Flags game raises for its driver, this one's
@@ -144,12 +150,12 @@ ac.OnlineEvent({
   end
 
   flagsHeard.total = flagsHeard.total + 1
-  raisedFlags[#raisedFlags + 1] = {
+  raisedFlags = enqueue(raisedFlags, {
     t = round(clock, 3),
     driver = ac.getDriverName(sender.index),
     flag = tonumber(message.flag),
     cause = driverBySession(tonumber(message.cause)),
-  }
+  })
 end)
 
 function script.update(dt)
@@ -217,7 +223,14 @@ function recording()
   end
 
   if onLeagueServer == nil then
-    onLeagueServer = ac.getServerName():lower():find(SERVER_FILTER, 1, true) ~= nil
+    local name = ac.getServerName()
+
+    -- Nil until the game knows it: asked again next frame, never cached
+    if not name then
+      return false
+    end
+
+    onLeagueServer = name:lower():find(SERVER_FILTER, 1, true) ~= nil
   end
 
   return onLeagueServer
@@ -249,6 +262,8 @@ end
 -- pressure (psi)] per connected car, positions in the track's world coordinates as the Server
 -- Manager reports them. Indexes are this game's own: the names go with the
 -- batch.
+-- Each frame is JSON text from the start: no table per car for the collector,
+-- and no stringify of the whole batch in the frame that sends it.
 function sample()
   local cars = {}
   fields = fields or detectFields(ac.getCar(0))
@@ -257,32 +272,16 @@ function sample()
     local car = ac.getCar(i)
 
     if car and car.isConnected then
-      cars[#cars + 1] = {
-        i,
-        round(car.position.x, 2),
-        round(car.position.y, 2),
-        round(car.position.z, 2),
-        round(car.speedKmh, 1),
-        round(car.splinePosition, 5),
-        car.lapCount,
-        car.gear,
-        car.isInPitlane and 1 or 0,
-        round(car.gas, 2),
-        round(car.brake, 2),
-        wheelsOutside(car),
-        round(car.steer, 1),
-        math.floor(car.rpm),
-      }
-      appendInputs(cars[#cars], car)
-
-      if i == 0 then
-        appendOwnCar(cars[#cars], car)
-      end
+      local p = car.position
+      local row = string.format(ROW, i, p.x, p.y, p.z, car.speedKmh, car.splinePosition, car.lapCount, car.gear,
+        car.isInPitlane and 1 or 0, car.gas, car.brake, wheelsOutside(car), car.steer, math.floor(car.rpm),
+        inputs(car))
+      cars[#cars + 1] = (i == 0 and row .. ownCar(car) or row) .. ']'
     end
   end
 
-  frames[#frames + 1] = { t = round(clock, 3), cars = cars }
-  frames = trim(frames)
+  frames[#frames + 1] = string.format('{"t":%.3f,"cars":[%s]}', clock, table.concat(cars, ','))
+  frames = trimFrames(frames)
 end
 
 -- Off the league server nothing is recorded: the status line says why
@@ -291,41 +290,39 @@ function addTestPenalty()
     return
   end
 
-  penalties[#penalties + 1] = {
+  penalties = enqueue(penalties, {
     t = round(clock, 3),
     driver = ac.getDriverName(0),
     code = TEST_PENALTY,
     active = 1,
     parameter = 1,
-  }
+  })
 end
 
 -- `sender` is this game's own driver, car 0; `sentAt` dates the frames
 -- against the arrival time
 function send()
-  local batch = takeFrames()
-  local said = messages
-  local completed = laps
-  local announced = penalties
-  local raised = raisedFlags
-  messages = {}
-  laps = {}
-  penalties = {}
-  raisedFlags = {}
+  local batch, said, completed, announced, raised
+  batch, frames = take(frames)
+  said, messages = take(messages)
+  completed, laps = take(laps)
+  announced, penalties = take(penalties)
+  raised, raisedFlags = take(raisedFlags)
   sending = true
 
-  local body = JSON.stringify({
+  local head = JSON.stringify({
     sender = ac.getDriverName(0),
     server = ac.getServerName(),
     track = ac.getTrackID(),
     sentAt = round(clock, 3),
     drivers = driverNames(),
-    frames = batch,
     messages = said,
     laps = completed,
     penalties = announced,
     flags = raised,
   })
+  -- The frames are JSON text already: spliced in before the closing brace
+  local body = head:sub(1, -2) .. ',"frames":[' .. table.concat(batch, ',') .. ']}'
   local headers = {
     ['Authorization'] = 'Bearer ' .. TOKEN,
     ['Content-Type'] = 'application/json',
@@ -353,7 +350,15 @@ function send()
     if err or not response or response.status >= 300 then
       status = 'error: ' .. tostring(err or (response and response.status))
       sendEvery = math.min(math.max(sendEvery * 2, 1), MAX_RETRY_S)
-      restore(batch, said, completed, announced, raised)
+
+      -- The site refusing this batch: sent again, it would block the queue.
+      -- 429 is "too many", worth a retry.
+      local refused = response and response.status >= 400 and response.status < 500 and response.status ~= 429
+
+      if not refused then
+        restore(batch, said, completed, announced, raised)
+      end
+
       return
     end
 
@@ -364,27 +369,25 @@ function send()
   end)
 end
 
--- The oldest frames, MAX_FRAMES_PER_SEND at most; the rest waits its turn
-function takeFrames()
-  if #frames <= MAX_FRAMES_PER_SEND then
-    local all = frames
-    frames = {}
-    return all
+-- The oldest items of a list, MAX_PER_SEND at most, and the rest, which waits
+-- its turn
+function take(list)
+  if #list <= MAX_PER_SEND then
+    return list, {}
   end
 
   local batch = {}
   local rest = {}
 
-  for index, frame in ipairs(frames) do
-    if index <= MAX_FRAMES_PER_SEND then
-      batch[#batch + 1] = frame
+  for index, item in ipairs(list) do
+    if index <= MAX_PER_SEND then
+      batch[#batch + 1] = item
     else
-      rest[#rest + 1] = frame
+      rest[#rest + 1] = item
     end
   end
 
-  frames = rest
-  return batch
+  return batch, rest
 end
 
 function driverNames()
@@ -420,46 +423,44 @@ end
 
 -- A failed batch goes back in front of what was taken since
 function restore(batch, said, completed, announced, raised)
-  for _, frame in ipairs(frames) do
-    batch[#batch + 1] = frame
-  end
-
-  for _, message in ipairs(messages) do
-    said[#said + 1] = message
-  end
-
-  for _, lap in ipairs(laps) do
-    completed[#completed + 1] = lap
-  end
-
-  for _, penalty in ipairs(penalties) do
-    announced[#announced + 1] = penalty
-  end
-
-  for _, flag in ipairs(raisedFlags) do
-    raised[#raised + 1] = flag
-  end
-
-  frames = batch
-  messages = said
-  laps = completed
-  penalties = announced
-  raisedFlags = raised
-  frames = trim(frames)
+  frames = trimFrames(append(batch, frames))
+  messages = trim(append(said, messages), MAX_PENDING_EVENTS, MAX_PER_SEND)
+  laps = trim(append(completed, laps), MAX_PENDING_EVENTS, MAX_PER_SEND)
+  penalties = trim(append(announced, penalties), MAX_PENDING_EVENTS, MAX_PER_SEND)
+  raisedFlags = trim(append(raised, raisedFlags), MAX_PENDING_EVENTS, MAX_PER_SEND)
 end
 
--- The oldest frames go first once the site has been away too long: a second
--- more than needed, in one pass, so this runs once a second at most
-function trim(list)
-  local limit = MAX_PENDING_S * settings.rate
+-- A chat line, lap, penalty or flag at the end of its list, kept to the newest
+-- MAX_PENDING_EVENTS: they may arrive faster than requests carry them
+function enqueue(list, item)
+  list[#list + 1] = item
+  return trim(list, MAX_PENDING_EVENTS, MAX_PER_SEND)
+end
 
+function append(list, items)
+  for _, item in ipairs(items) do
+    list[#list + 1] = item
+  end
+
+  return list
+end
+
+-- The last minute of frames, with a second of slack so the trim runs once a
+-- second at most
+function trimFrames(list)
+  return trim(list, MAX_PENDING_S * settings.rate, settings.rate)
+end
+
+-- The oldest items go first once the site has been away too long: `slack`
+-- more than needed, in one pass, so this does not run on every new item
+function trim(list, limit, slack)
   if #list <= limit then
     return list
   end
 
   local kept = {}
 
-  for index = #list - limit + settings.rate + 1, #list do
+  for index = #list - limit + slack + 1, #list do
     kept[#kept + 1] = list[index]
   end
 
@@ -524,34 +525,40 @@ function wheelsOutside(car)
   return tonumber(car.wheelsOutside) or 0
 end
 
--- How the car moves and how it is driven, seen from any game
-function appendInputs(row, car)
+-- How the car moves and how it is driven, seen from any game: the last 8
+-- values of ROW
+function inputs(car)
   local hit = fields.collidedWith and car.collidedWith or -1
-  row[#row + 1] = fields.acceleration and round(car.acceleration.x, 2) or 0
-  row[#row + 1] = fields.acceleration and round(car.acceleration.z, 2) or 0
-  row[#row + 1] = fields.angularVelocity and round(car.localAngularVelocity.y, 3) or 0
-  row[#row + 1] = fields.abs and car.absInAction and 1 or 0
-  row[#row + 1] = fields.tractionControl and car.tractionControlInAction and 1 or 0
-  row[#row + 1] = fields.clutch and round(car.clutch, 2) or 0
-  row[#row + 1] = fields.handbrake and round(car.handbrake, 2) or 0
-  row[#row + 1] = hit >= 0 and (ac.getDriverName(hit) or '') or ''
+  local acceleration = fields.acceleration and car.acceleration
+
+  return acceleration and acceleration.x or 0,
+    acceleration and acceleration.z or 0,
+    fields.angularVelocity and car.localAngularVelocity.y or 0,
+    fields.abs and car.absInAction and 1 or 0,
+    fields.tractionControl and car.tractionControlInAction and 1 or 0,
+    fields.clutch and car.clutch or 0,
+    fields.handbrake and car.handbrake or 0,
+    -- A driver's name may hold quotes: the JSON library escapes it
+    hit >= 0 and JSON.stringify(ac.getDriverName(hit) or '') or '""'
 end
 
 -- Only this game simulates its own car: the others get no fuel, damage nor
 -- tyres over the network
-function appendOwnCar(row, car)
-  row[#row + 1] = fields.fuel and round(car.fuel, 2) or 0
+function ownCar(car)
+  local damage = fields.damage and car.damage
+  local text = string.format(',%.2f', fields.fuel and car.fuel or 0)
 
   for part = 0, 4 do
-    row[#row + 1] = fields.damage and round(car.damage[part], 3) or 0
+    text = text .. string.format(',%.3f', damage and damage[part] or 0)
   end
 
   for wheel = 0, 3 do
     local tyre = fields.tyres and car.wheels[wheel]
-    row[#row + 1] = fields.tyres and round(tyre.tyreWear, 4) or 0
-    row[#row + 1] = fields.tyres and round(tyre.tyreCoreTemperature, 1) or 0
-    row[#row + 1] = fields.tyres and round(tyre.tyrePressure, 2) or 0
+    text = text .. string.format(',%.4f,%.1f,%.2f', tyre and tyre.tyreWear or 0,
+      tyre and tyre.tyreCoreTemperature or 0, tyre and tyre.tyrePressure or 0)
   end
+
+  return text
 end
 
 function round(value, decimals)
