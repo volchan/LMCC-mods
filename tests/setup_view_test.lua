@@ -120,9 +120,11 @@ t.check('cue tooltip on hover', #uiStub.named('tooltip') == 4)
 uiStub.reset()
 uiStub.clicks['Sound cues'] = true
 uiStub.clicks['Pulse urgent flags'] = true
+uiStub.clicks['Scroll the flag name'] = true
 setup.draw(s, idle(), actions)
 t.check('sound toggled off', s.sound == false)
 t.check('pulse toggled off', s.glowPulse == false)
+t.check('scroll toggled off', s.glowScroll == false)
 t.check('no strips toggle', s.glow == nil)
 
 -- Sliders write back their values.

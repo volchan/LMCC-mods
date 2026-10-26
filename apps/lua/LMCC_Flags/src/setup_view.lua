@@ -186,6 +186,7 @@ local function drawDisplay(s)
   toggle(s, 'glowPulse', 'Pulse urgent flags')
   toggle(s, 'showGreen', 'Show the green flag (5 s)')
   ui.header('Screen strips')
+  toggle(s, 'glowScroll', 'Scroll the flag name')
   ui.setNextItemWidth(ui.availableSpaceX())
   local value, changed = ui.slider('##glowThickness', s.glowThickness * 100, 1, 15, 'Strip height: %.0f%% of screen')
   if changed then s.glowThickness = value / 100 end

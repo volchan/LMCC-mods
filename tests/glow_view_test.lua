@@ -10,7 +10,7 @@ local glow = require('src/glow_view')
 local F, P = flags.FLAG, flags.PENALTY
 
 local screen = vec2(1920, 1080)
-local options = { glowThickness = 0.05, glowPulse = true }
+local options = { glowThickness = 0.05, glowPulse = true, glowScroll = true }
 local settled = strip.SLIDE_TIME * 2
 
 t.check('thickness from shorter side', glow.thickness(screen, 0.05) == 54)
@@ -48,6 +48,19 @@ t.check('name in flag text colour and size', first.args[1] == yellowSpec.label a
   and first.args[8] == yellowSpec.text)
 t.check('first name starts left of the screen', first.args[3].x <= 0 and first.args[3].x > -period)
 t.check('last name reaches the right edge', texts[perStrip].args[4].x >= 1920)
+
+-- scrolling moves the names; still mode keeps them in place
+local firstX = first.args[3].x
+uiStub.reset()
+glow.draw(yellow, settled + pulse.PERIOD / 2 + 0.1, screen, options)
+t.check('scrolling moves the name', uiStub.named('text')[1].args[3].x ~= firstX)
+local still = { glowThickness = 0.05, glowPulse = true, glowScroll = false }
+uiStub.reset()
+glow.draw(yellow, settled + 1, screen, still)
+local stillX = uiStub.named('text')[1].args[3].x
+uiStub.reset()
+glow.draw(yellow, settled + 2, screen, still)
+t.check('still name does not move', uiStub.named('text')[1].args[3].x == stillX)
 
 -- sliding in: top strip enters from the right, bottom from the left
 glow.motion = strip.new()
