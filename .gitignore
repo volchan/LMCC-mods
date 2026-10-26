@@ -10,5 +10,5 @@ CLAUDE.local.md
 dist/
 
 # Scratch files
-tmp/
+tmp/*
 !tmp/.gitkeep
