@@ -210,6 +210,7 @@ apps/lua/LMCC_Flags/
   src/setup_view.lua     setup window
 apps/lua/LMCC_Telemetry/
   manifest.ini           window, with its Status and Settings tabs
+  icon.png               DazWorks logo, white, for the apps bar
   LMCC_Telemetry.lua     samples every car and sends the batches
   src/token.lua          the site's token, empty in git, filled in the release zip
 scripts/gen_sounds.js    regenerates the wav files
