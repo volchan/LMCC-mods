@@ -186,16 +186,17 @@ local function drawDisplay(s)
   toggle(s, 'glowPulse', 'Pulse urgent flags')
   toggle(s, 'showGreen', 'Show the green flag (5 s)')
   ui.header('Screen strips')
+  toggle(s, 'glowScroll', 'Scroll the flag name')
   ui.setNextItemWidth(ui.availableSpaceX())
-  local value, changed = ui.slider('##glowThickness', s.glowThickness * 100, 1, 15, 'Strip height: %.0f%% of screen')
+  local value, changed = ui.slider('##glowThickness', s.glowThickness * 100, 3, 15, 'Strip height: %.0f%% of screen')
   if changed then s.glowThickness = value / 100 end
   ui.header('Blue flag')
   ui.setNextItemWidth(ui.availableSpaceX())
-  local range, rangeChanged = ui.slider('##blueRange', s.blueRange, 100, 1000, 'List cars within %.0f m behind')
+  local range, rangeChanged = ui.slider('##blueRange', s.blueRange, 200, 1000, 'List cars within %.0f m behind')
   if rangeChanged then s.blueRange = range end
   ui.header('Gas cut ahead')
   ui.setNextItemWidth(ui.availableSpaceX())
-  local cutRange, cutChanged = ui.slider('##gasCutRange', s.gasCutRange, 100, 1000, 'Warn about cars within %.0f m ahead')
+  local cutRange, cutChanged = ui.slider('##gasCutRange', s.gasCutRange, 200, 1000, 'Warn about cars within %.0f m ahead')
   if cutChanged then s.gasCutRange = cutRange end
 end
 

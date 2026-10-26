@@ -16,9 +16,17 @@ function M.font()
   return font
 end
 
+---Whole-pixel font size: fractional sizes from the scaled panel make DirectWrite mix glyphs
+---rasterized at neighbouring sizes, so some letters look bolder after a resize.
+---@param size number
+---@return integer
+function M.fontSize(size)
+  return math.floor(size + 0.5)
+end
+
 ---@param align ui.Alignment? @Horizontal, default start.
 function M.text(text, size, p1, p2, color, align)
-  ui.dwriteDrawTextClipped(text, size, p1, p2, align or ui.Alignment.Start, ui.Alignment.Center, false, color)
+  ui.dwriteDrawTextClipped(text, M.fontSize(size), p1, p2, align or ui.Alignment.Start, ui.Alignment.Center, false, color)
 end
 
 -- Reused every frame to avoid allocations.

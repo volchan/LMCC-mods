@@ -14,14 +14,14 @@ It uses the flags and penalties the game already raises, so it works on any serv
   - yellow family: `Incident 250 m ahead, Turn 1, J. Doe`
   - blue: every car about to lap you, closest first, with race position and gap: `Let 2 cars pass: P1 A. Fast 80 m, P3 B. Quick 240 m`
   - several signals at once are stacked by priority: the most urgent fills the panel, the next one is shown on an extra line with the count of the others (`+ DRIVE THROUGH: Drive through the pit lane, laps left: 2 (+1)`). A gas cut taken while a drive through is pending goes on top, since it must be done during the current lap.
-- **Screen-edge strips**: solid strips in the flag colour along the top and bottom of the screen with the flag name scrolling across, in the style of the CMRT HUD flag banner. They slide in when a flag appears or changes, slide out when it clears and pulse for urgent flags, so the flag is seen without looking at the panel. Always on: drivers cannot turn them off.
+- **Screen-edge strips**: solid strips in the flag colour along the top and bottom of the screen with the flag name scrolling across (can be kept still in the setup), in the style of the CMRT HUD flag banner. They slide in when a flag appears or changes, slide out when it clears and pulse for urgent flags, so the flag is seen without looking at the panel. Always on: drivers cannot turn them off.
 - **Penalties shared between drivers**: every Flags client tells the others when one of its penalties starts (gas cut with its seconds, drive through, pit penalty, black flag) and when it is served. Only gas cuts are shown: **GAS CUT AHEAD** warns when a car close ahead (300 m by default) must lift off, with its position, gap and seconds left (`P5 Seygow 120 m, lift 4s`). A driver serving their own gas cut sees it on top, the alert right below and the cars ahead on the location line; once their gas cut is done the alert stays while cars ahead still serve one. It ranks above the driver's other penalties and below every other game flag that asks for action. Works on the original AC server (messages travel as hidden chat); every driver needs this version.
 - **Sound cues**: a short sound when the flag changes. Four cues: caution (yellow, code 60, slippery, slow vehicle, ambulance), blue, severe (black, red, penalties), info (green, white, checkered, pit closed).
 - **Flag history**: every flag of the session with lap, session time, duration and location.
 - **Setup window**, in tabs:
   - Alerts: test any alert for 6 seconds (panel, strips and sound, with sample location text), never written to the history. Clicking more alerts during a test combines them as in a race (most urgent on top, the gas cut hiding the drive-through, the gas cut ahead right below the gas cut); Stop clears them. Buttons in the flag colours, grouped as race flags, penalties and server script flags. "Game data" shows the raw values the game reports.
   - Panel: reopen the panel window, lock it, and snap it to a screen position on a 3x3 grid.
-  - Display: pulse urgent flags, show or hide the green flag (shown 5 seconds, since the game keeps it raised all session), strip height, blue flag search range (100 to 1000 m behind you), gas cut ahead range (100 to 1000 m ahead).
+  - Display: pulse urgent flags, show or hide the green flag (shown 5 seconds, since the game keeps it raised all session), strip height (3 to 15% of the screen, default 5%), scroll or still flag name on the strips, blue flag search range (200 to 1000 m behind you, default 200 m), gas cut ahead range (200 to 1000 m ahead, default 300 m).
   - Sound: sound on or off, master volume, volume per cue with a test button (hover a cue name to see its alerts).
   - Network: checks that LMCC Flags clients can message each other on the server (needed to share alerts between drivers). "Send test ping" reaches every driver running the same version; each one answers and is listed with its round trip time. Also shows whether the server relays messages directly (custom server) or as hidden chat (original AC server). Alone on the server, the time your own ping takes to come back, compared with your ping, tells whether it went through the server or stayed a local copy.
 
@@ -172,6 +172,7 @@ On the original AC server, CSP carries these messages as hidden chat: one messag
 ```
 apps/lua/LMCC_Flags/
   manifest.ini           windows and the fullscreen strips callback
+  icon.png               DazWorks logo, white, for the apps bar
   LMCC_Flags.lua         entry: loads src/main.lua
   src/main.lua           wiring only
   src/variant.lua        dev or release install, from the folder name

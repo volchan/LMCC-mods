@@ -16,10 +16,11 @@ local cars = {
   car(6, 'Pitting', 0.49, 4, false),     -- not running: ignore
 }
 
-local list = blue.approaching(me, cars, 4000, blue.DEFAULT_RANGE)
+local list = blue.approaching(me, cars, 4000, 400)
 t.check('two cars to let pass', #list == 2)
 t.check('closest first', list[1].name == 'A. Fast' and list[2].name == 'B. Quick')
 t.check('gap in metres', t.near(list[1].gap, 80) and list[1].racePosition == 1)
+t.check('default range keeps the close car only', #blue.approaching(me, cars, 4000, blue.DEFAULT_RANGE) == 1)
 
 t.check('wraps over the line', #blue.approaching({ index = 0, spline = 0.01, racePosition = 5 },
   { car(1, 'X', 0.99, 1) }, 4000, 100) == 1)

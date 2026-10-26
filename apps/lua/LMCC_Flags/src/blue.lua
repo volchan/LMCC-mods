@@ -4,7 +4,7 @@ local context = require('src/context')
 
 local M = {}
 
-M.DEFAULT_RANGE = 400 -- metres behind the player
+M.DEFAULT_RANGE = 200 -- metres behind the player
 M.MAX_LISTED = 3 -- names shown in the summary line
 
 ---@class CarInfo

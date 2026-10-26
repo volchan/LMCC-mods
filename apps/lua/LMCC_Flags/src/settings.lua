@@ -8,6 +8,7 @@ local M = {}
 M.DEFAULTS = {
   glowThickness = 0.05, -- fraction of the shorter screen side
   glowPulse = true,
+  glowScroll = true, -- scroll the flag name along the strips; off keeps it still
   sound = true,
   volume = 0.8, -- master volume, multiplied by the volume of each cue
   showGreen = true, -- show the green flag for a few seconds at race start and when the track clears

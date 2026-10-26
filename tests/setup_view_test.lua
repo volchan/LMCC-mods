@@ -120,9 +120,11 @@ t.check('cue tooltip on hover', #uiStub.named('tooltip') == 4)
 uiStub.reset()
 uiStub.clicks['Sound cues'] = true
 uiStub.clicks['Pulse urgent flags'] = true
+uiStub.clicks['Scroll the flag name'] = true
 setup.draw(s, idle(), actions)
 t.check('sound toggled off', s.sound == false)
 t.check('pulse toggled off', s.glowPulse == false)
+t.check('scroll toggled off', s.glowScroll == false)
 t.check('no strips toggle', s.glow == nil)
 
 -- Sliders write back their values.
@@ -139,6 +141,14 @@ uiStub.reset()
 uiStub.sliders['##blueRange'] = 600
 setup.draw(s, idle(), actions)
 t.check('blue range written', s.blueRange == 600)
+local function sliderMin(label)
+  for _, c in ipairs(uiStub.named('slider')) do
+    if c.args[1] == label then return c.args[3] end
+  end
+end
+t.check('strip height at least 3%', sliderMin('##glowThickness') == 3)
+t.check('blue range at least 200 m', sliderMin('##blueRange') == 200)
+t.check('gas cut ahead range at least 200 m', sliderMin('##gasCutRange') == 200)
 uiStub.reset()
 uiStub.sliders['##gasCutRange'] = 450
 setup.draw(s, idle(), actions)

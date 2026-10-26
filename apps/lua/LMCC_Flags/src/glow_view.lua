@@ -39,7 +39,7 @@ end
 -- error, which would measure the label twice.
 local function drawStrip(flag, now, p1, p2, height, screenWidth)
   ui.drawRectFilled(p1, p2, fill)
-  local size = height * M.TEXT_SIZE
+  local size = draw.fontSize(height * M.TEXT_SIZE)
   local width = labelWidth(flag.label, size)
   local period = width + size * strip.TEXT_GAP
   ui.pushClipRect(p1, p2)
@@ -67,7 +67,7 @@ end
 ---@param signals Signal[]
 ---@param now number @Seconds, drives the slide, scroll and pulse.
 ---@param screen vec2 @Screen size in UI pixels.
----@param options {glowThickness: number, glowPulse: boolean}
+---@param options {glowThickness: number, glowPulse: boolean, glowScroll: boolean}
 function M.draw(signals, now, screen, options)
   local top = signals[1]
   local flag, fraction = M.motion:update(top and top.flag, now)
@@ -75,7 +75,8 @@ function M.draw(signals, now, screen, options)
   local c = flag.color
   fill.r, fill.g, fill.b = c.r, c.g, c.b
   fill.mult = M.STRENGTH * pulse.alpha(now, options.glowPulse and flag.pulse)
-  frameFlag, frameNow, frameScreen = flag, now, screen
+  -- A fixed clock keeps the name still.
+  frameFlag, frameNow, frameScreen = flag, options.glowScroll and now or 0, screen
   frameThickness = M.thickness(screen, options.glowThickness)
   frameLength = screen.x * fraction
   ui.transparentWindow(M.WINDOW_ID, vec2(0, 0), screen, true, false, drawStrips)
