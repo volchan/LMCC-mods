@@ -141,6 +141,12 @@ uiStub.reset()
 uiStub.sliders['##blueRange'] = 600
 setup.draw(s, idle(), actions)
 t.check('blue range written', s.blueRange == 600)
+local function sliderMin(label)
+  for _, c in ipairs(uiStub.named('slider')) do
+    if c.args[1] == label then return c.args[3] end
+  end
+end
+t.check('strip height at least 3%', sliderMin('##glowThickness') == 3)
 uiStub.reset()
 uiStub.sliders['##gasCutRange'] = 450
 setup.draw(s, idle(), actions)

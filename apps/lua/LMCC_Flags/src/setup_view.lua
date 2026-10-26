@@ -188,7 +188,7 @@ local function drawDisplay(s)
   ui.header('Screen strips')
   toggle(s, 'glowScroll', 'Scroll the flag name')
   ui.setNextItemWidth(ui.availableSpaceX())
-  local value, changed = ui.slider('##glowThickness', s.glowThickness * 100, 1, 15, 'Strip height: %.0f%% of screen')
+  local value, changed = ui.slider('##glowThickness', s.glowThickness * 100, 3, 15, 'Strip height: %.0f%% of screen')
   if changed then s.glowThickness = value / 100 end
   ui.header('Blue flag')
   ui.setNextItemWidth(ui.availableSpaceX())
