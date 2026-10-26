@@ -15,6 +15,10 @@ t.check('text defaults to start alignment, centred vertically', call.args[1] == 
 uiStub.reset()
 draw.text('X', 10, vec2(0, 0), vec2(1, 1), 'c', ui.Alignment.End)
 t.check('text alignment override', uiStub.named('text')[1].args[5] == ui.Alignment.End)
+uiStub.reset()
+draw.text('X', 13.6, vec2(0, 0), vec2(1, 1), 'c')
+t.check('text size rounded to whole pixels', uiStub.named('text')[1].args[2] == 14)
+t.check('font size rounds half up', draw.fontSize(12.5) == 13 and draw.fontSize(12.4) == 12)
 
 -- dim
 uiStub.reset()

@@ -39,7 +39,7 @@ end
 -- error, which would measure the label twice.
 local function drawStrip(flag, now, p1, p2, height, screenWidth)
   ui.drawRectFilled(p1, p2, fill)
-  local size = height * M.TEXT_SIZE
+  local size = draw.fontSize(height * M.TEXT_SIZE)
   local width = labelWidth(flag.label, size)
   local period = width + size * strip.TEXT_GAP
   ui.pushClipRect(p1, p2)

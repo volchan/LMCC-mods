@@ -39,7 +39,7 @@ t.check('text clipped to each strip', #uiStub.named('pushClipRect') == 2 and #ui
 t.check('font pushed and popped', #uiStub.named('pushDWriteFont') == 1 and #uiStub.named('popDWriteFont') == 1)
 
 local texts = uiStub.named('text')
-local size = 54 * glow.TEXT_SIZE
+local size = require('src/draw').fontSize(54 * glow.TEXT_SIZE)
 local width = #yellowSpec.label * size * 0.5
 local period = width + size * strip.TEXT_GAP
 local perStrip = #texts / 2
