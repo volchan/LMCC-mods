@@ -8,3 +8,7 @@ CLAUDE.local.md
 
 # Release builds
 dist/
+
+# Scratch files
+tmp/
+!tmp/.gitkeep
