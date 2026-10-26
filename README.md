@@ -172,6 +172,7 @@ On the original AC server, CSP carries these messages as hidden chat: one messag
 ```
 apps/lua/LMCC_Flags/
   manifest.ini           windows and the fullscreen strips callback
+  icon.png               DazWorks logo, white, for the apps bar
   LMCC_Flags.lua         entry: loads src/main.lua
   src/main.lua           wiring only
   src/variant.lua        dev or release install, from the folder name
