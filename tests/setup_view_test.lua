@@ -148,6 +148,7 @@ local function sliderMin(label)
 end
 t.check('strip height at least 3%', sliderMin('##glowThickness') == 3)
 t.check('blue range at least 200 m', sliderMin('##blueRange') == 200)
+t.check('gas cut ahead range at least 200 m', sliderMin('##gasCutRange') == 200)
 uiStub.reset()
 uiStub.sliders['##gasCutRange'] = 450
 setup.draw(s, idle(), actions)

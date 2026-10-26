@@ -196,7 +196,7 @@ local function drawDisplay(s)
   if rangeChanged then s.blueRange = range end
   ui.header('Gas cut ahead')
   ui.setNextItemWidth(ui.availableSpaceX())
-  local cutRange, cutChanged = ui.slider('##gasCutRange', s.gasCutRange, 100, 1000, 'Warn about cars within %.0f m ahead')
+  local cutRange, cutChanged = ui.slider('##gasCutRange', s.gasCutRange, 200, 1000, 'Warn about cars within %.0f m ahead')
   if cutChanged then s.gasCutRange = cutRange end
 end
 
